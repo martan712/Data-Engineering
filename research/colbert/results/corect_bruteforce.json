@@ -1,0 +1,22 @@
+{
+  "dataset": "scifact",
+  "model": "lightonai/GTE-ModernColBERT-v1",
+  "retrieval": "brute_force_maxsim",
+  "corpus_size": 5183,
+  "n_queries": 300,
+  "top_k": 100,
+  "timing": {
+    "encode_corpus_s": 1191.81,
+    "encode_queries_s": 6.95,
+    "retrieve_s": 39.29,
+    "ms_per_query": 130.95
+  },
+  "metrics": {
+    "ndcg@10": 0.7598,
+    "ndcg@100": 0.78,
+    "recall@10": 0.8739,
+    "recall@100": 0.96,
+    "map@10": 0.7177,
+    "mrr@10": 0.7299
+  }
+}
