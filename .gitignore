@@ -1,3 +1,6 @@
 *.npy
 *.pt
 *.pkl
+*.csv
+*.png 
+Notes/
