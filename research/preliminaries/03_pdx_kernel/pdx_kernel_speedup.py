@@ -8,10 +8,10 @@ The core PDX layout advantage for partial inner products:
   Row-major slice A[:, :k]  — non-contiguous, stride = 128 floats  (bad for prefetch)
   Col-major slice B[:k, :]  — contiguous, stride = 1               (SIMD-friendly)
 
-Three cases measured per (N, k):
-  1. row      : Q @ A[:, :k].T          — strided, BLAS may internally copy
-  2. pdx      : Q[:, :k] @ B[:k, :]    — contiguous, no copy
-  3. row+copy : Q @ C[:k, :].T         — explicit copy to contiguous before BLAS
+Three cases measured per (N, k), all with the query sliced to Q[:, :k]:
+  1. row      : Q[:, :k] @ A_row[:, :k].T              — strided slice, BLAS may internally copy
+  2. pdx      : Q[:, :k] @ A_col[:k, :]                — contiguous col slice, no copy
+  3. row+copy : Q[:, :k] @ ascontiguous(A_row[:, :k]).T — explicit copy to contiguous before BLAS
 
 Decision gate: ≥1.5x speedup (pdx / row). If < 1.2x at 128D, the layout
 advantage is too thin to justify the storage change.
@@ -64,8 +64,6 @@ def run_benchmarks() -> dict:
         A_row = rng.standard_normal((N, DIM)).astype(np.float32)
         # Col-major (PDX): (128, N)
         A_col = np.asfortranarray(A_row.T)       # (128, N), Fortran order = column-contiguous
-        # Contiguous row for copy baseline: (128, N) C-order
-        A_col_c = np.ascontiguousarray(A_row.T)  # same data, C-order
 
         Q = rng.standard_normal((N_QUERIES, DIM)).astype(np.float32)
 
