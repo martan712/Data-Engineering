@@ -34,11 +34,13 @@ MAX_QUERIES  = 100   # qrels-matched queries per dataset
 MAX_DOCS     = 2_000 # docs to score per query (random sample from corpus)
 
 # Datasets available in 02_bond_variance cache that also have BEIR qrels via ir_datasets
+# IDs that have qrels in ir_datasets. nfcorpus/scifact expose a /test split;
+# scidocs and arguana keep their qrels under the base ID (no /test split).
 DATASETS = {
     "NFCorpus": "beir/nfcorpus/test",
     "SciFact":  "beir/scifact/test",
-    "SCIDOCS":  "beir/scidocs/test",
-    "FiQA":     "beir/fiqa/test",
+    "ArguAna":  "beir/arguana",
+    "SCIDOCS":  "beir/scidocs",
 }
 
 
@@ -119,11 +121,14 @@ def analyze_dataset(ds_name: str, ir_name: str) -> dict | None:
         q_idx = qid_to_idx[qid]
         if q_idx >= len(qry_embs):
             continue
-        q_emb   = qry_embs[q_idx]
+        # Coerce to a real float32 matrix. Exp-02 cached embeddings as
+        # dtype=object; uniform-length token sets (e.g. ArguAna) collapse into a
+        # 3-D object array of Python floats, which breaks np.sqrt downstream.
+        q_emb   = np.asarray(qry_embs[q_idx], dtype=np.float32)
         rel_ids = set(qrels[qid].keys())
 
         for d_local_idx, d_global_idx in enumerate(doc_indices):
-            d_emb = doc_embs[d_global_idx]
+            d_emb = np.asarray(doc_embs[d_global_idx], dtype=np.float32)
             # Map global doc index back to ir_datasets doc_id
             if d_global_idx < len(ir_docids):
                 did = ir_docids[d_global_idx]
