@@ -54,10 +54,17 @@ void scan_partial_blocked(const float* Bk, const float* q, const uint32_t* order
 //   prune candidate when  partial_sqdist(visited) > kth_best_dist * ratios[visited]
 //   - exact / monotone bound (recall=1):  ratios[v] = 1 for all v
 //   - ADSampling (approximate):           ratios[v] = (v/D)*(1+alpha/sqrt(v))^2  (data+query pre-rotated)
-// `order` is the dimension scan order (length D). Returns total dims scanned over all vectors.
+// `order` is the dimension scan order (length D).
+//
+// `fetch_schedule` is PDX's adaptive Warmup→Prune cadence (DIMENSIONS_FETCHING_SIZES):
+// the prune predicate is evaluated once per *block* of dims, not after every single dim.
+// This matches PDX's real access granularity (cheap-predicate / fewer-passes trade-off,
+// pdxearch.hpp:87). The schedule is consumed in order; if it runs out, the last entry is
+// reused. Returns total dims scanned over all vectors.
 
 unsigned long long knn_l2_blocked(const float* Bk, const float* q, const uint32_t* order,
-                                  const float* ratios, size_t N, size_t D, size_t BS,
+                                  const float* ratios, const uint32_t* fetch_schedule, size_t n_fetch,
+                                  size_t N, size_t D, size_t BS,
                                   size_t knn, uint32_t* topk_id, float* topk_dist) {
     std::vector<float>    best_d(knn, 1e30f);
     std::vector<uint32_t> best_i(knn, 0xffffffffu);
@@ -81,22 +88,29 @@ unsigned long long knn_l2_blocked(const float* Bk, const float* q, const uint32_
         for (size_t j = 0; j < BS; ++j) { partial[j] = 0.0f; live[j] = (uint32_t)j; scanned[j] = 0; }
         size_t n_live = BS;
 
-        for (size_t i = 0; i < D && n_live > 0; ++i) {
-            uint32_t d = order[i];
-            float qd = q[d];
-            const float* col = bp + (size_t)d * BS;
-            // accumulate only over the dense live set (pruned lanes skipped entirely)
-            for (size_t a = 0; a < n_live; ++a) {
-                uint32_t j = live[a];
-                float diff = qd - col[j];
-                partial[j] += diff * diff;
-                scanned[j] = (uint32_t)(i + 1);
+        size_t cur = 0, fidx = 0;
+        while (cur < D && n_live > 0) {
+            size_t blk  = fetch_schedule[fidx < n_fetch ? fidx : n_fetch - 1];
+            size_t end  = cur + blk < D ? cur + blk : D;
+            ++fidx;
+            // scan this block of dims over the dense live set (pruned lanes skipped entirely)
+            for (size_t i = cur; i < end; ++i) {
+                uint32_t d = order[i];
+                float qd = q[d];
+                const float* col = bp + (size_t)d * BS;
+                for (size_t a = 0; a < n_live; ++a) {
+                    uint32_t j = live[a];
+                    float diff = qd - col[j];
+                    partial[j] += diff * diff;
+                }
             }
-            // compact: keep only lanes still within the bound
-            float bound = threshold * ratios[i + 1];
+            cur = end;
+            // evaluate the prune predicate once per block; compact survivors
+            float bound = threshold * ratios[cur];
             size_t w = 0;
             for (size_t a = 0; a < n_live; ++a) {
                 uint32_t j = live[a];
+                scanned[j] = (uint32_t)cur;
                 if (partial[j] <= bound) live[w++] = j;
             }
             n_live = w;
