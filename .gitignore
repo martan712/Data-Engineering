@@ -4,3 +4,9 @@
 *.csv
 *.png 
 Notes/
+.venv/
+.cache/
+artifacts/
+external/PDX/
+__pycache__/
+*.pyc

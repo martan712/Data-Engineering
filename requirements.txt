@@ -1,0 +1,6 @@
+pylate==1.5.0
+cmake==4.3.2
+pybind11==3.0.4
+h5py==3.16.0
+faiss-cpu==1.14.2
+matplotlib>=3.8
