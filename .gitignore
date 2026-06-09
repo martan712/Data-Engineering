@@ -1,12 +1,8 @@
-*.npy
-*.pt
-*.pkl
-*.csv
-*.png 
-Notes/
 .venv/
 .cache/
 artifacts/
-external/PDX/
 __pycache__/
 *.pyc
+
+# Third-party source checkout used for inspection/build attempts.
+external/PDX/

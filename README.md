@@ -1,8 +1,9 @@
 # Accelerating ColBERT Multi-Vector Search with PDX
 
-Data Engineering project. Goal: make **ColBERT-style multi-vector retrieval**
-faster using the **PDX** vector library and the **BOND** branch-and-bound idea
-(SIGMOD 2002), and evaluate it honestly against established baselines.
+Data Engineering project. **Primary goal:** test whether **PDX-BOND**
+(branch-and-bound on vertically decomposed vectors, SIGMOD 2002) can speed up
+**ColBERT-style multi-vector retrieval** using the PDX library, in an information
+retrieval setting (BEIR benchmarks; CoRECT-scale evaluation as a follow-up).
 
 ColBERT represents every document as a *variable-length set of token vectors*
 and scores with **MaxSim**:
@@ -11,32 +12,48 @@ and scores with **MaxSim**:
 score(query, document) = sum over query tokens q_i of  max over document tokens d_j of  <q_i, d_j>
 ```
 
-This is the single source of truth for the repo. It covers setup, how to
-reproduce everything, the results, and the full iteration history.
+This README is the single source of truth for the repo: what we tested, what
+failed, what worked as a fallback, and how to reproduce it.
 
 ---
 
-## TL;DR — what we found
+## TL;DR — main result: PDX-BOND did not speed up ColBERT search
 
-1. **The fast, quality-preserving recipe is two-stage:** IVF (cluster) candidate
-   generation over the flat token-vector index, then **exact MaxSim re-rank** on
-   the small candidate pool. On full SciFact this gives a **~30–40x speedup that
-   grows with corpus size, with no loss in qrels recall@10 (0.938 = exact)**, and
-   it **replicates on a second dataset (NFCorpus): ~32x at ~97% of exact recall.**
-2. **The win is architectural, not PDX-specific.** FAISS-IVF reproduces the
-   *identical* recall at a similar speedup, so the result is the *recipe*, and
-   PDX is a valid engine for it. PLAID (the ColBERT SOTA) was slower and lower
-   quality on CPU because its quantized scoring trades recall; our exact re-rank
-   preserves it.
-3. **The professor's dimension-level BOND does not transfer to ColBERT MaxSim at
-   d=128** — ColBERT spreads energy nearly uniformly over the 128 dims, so the
-   pruning bound stays loose (≤1.1x even with a perfect threshold). An
-   energy-concentrating **PCA rotation** partially revives it (~1.2–1.7x), but
-   that is a secondary optimization, not the headline.
+**We tested the proposed idea thoroughly. In our ColBERT setup it does not
+deliver a meaningful speedup.**
+
+1. **Flat PDX-BOND (`IndexPDXBONDFlat`) was slower than exact NumPy MaxSim.**
+   Each query token triggers a near-exhaustive scan over all document token
+   vectors (~230k–1.2M). BOND prunes *dimensions*, not documents/clusters, and
+   at d=128 ColBERT embeddings spread energy nearly uniformly — so the bound
+   stays loose and almost nothing gets skipped.
+2. **We also instrumented MaxSim-aware, document-level BOND** (script 33).
+   Provably exact (0 true top-k wrongly pruned), but the ceiling is only
+   **~1.1x** on raw embeddings (~1.2x realistic with PCA rotation). This is not
+   a useful speedup for the project goal.
+3. **Ruled-out alternatives confirm the diagnosis:** batching PDX Python calls
+   (~1.0x), shared scan without pruning (0.26x — slower). The bottleneck is the
+   search kernel doing too much work, not call overhead.
+
+**What we tested and ruled out (BOND as the speedup mechanism):**
+
+![BOND pruning](docs/figures/fig3_bond_pruning.png)
+
+---
+
+### Secondary finding: what actually worked
+
+While pursuing the BOND hypothesis we built a full ColBERT-on-PDX pipeline and
+found a **practical fallback** that does speed up search — but the speedup comes
+from **IVF cluster pruning**, not from BOND dimension pruning:
+
+- **IVF candidate generation + exact MaxSim re-rank** over the flat token index.
+- ~30x on full SciFact, replicates on NFCorpus; FAISS-IVF gets the same pattern
+  → the win is the *recipe*, not PDX-specific magic.
+- Quality is preserved (exact re-rank); tunable via re-rank budget `C`.
 
 ![IVF scaling](docs/figures/fig1_ivf_scaling.png)
 ![Baselines](docs/figures/fig2_baselines.png)
-![BOND pruning](docs/figures/fig3_bond_pruning.png)
 
 ---
 
@@ -44,30 +61,46 @@ reproduce everything, the results, and the full iteration history.
 
 ```text
 .
-├── README.md                     # this file (the definitive documentation)
-├── requirements.txt              # Windows venv deps (PyLate, FAISS, matplotlib, ...)
-├── experiments/                  # the active, reproducible pipeline
-│   ├── utils_colbert.py          # shared helpers (packed embeddings, MaxSim, metrics)
-│   ├── 29_prepare_beir_benchmark.py        # download + subset any BEIR dataset
-│   ├── 30_export_beir_pylate_embeddings.py # encode corpus/queries with ColBERT
-│   ├── 31_beir_ivf_benchmark.py            # exact MaxSim vs IVF-on-PDX (+ rerank)  [WSL]
-│   ├── 32_baselines_full_scifact.py        # PLAID + FAISS-IVF baselines
-│   ├── 33_maxsim_bond_instrumentation.py   # multi-vector MaxSim-BOND pruning study
-│   ├── 34_make_writeup_figures.py          # regenerate the figures below
-│   └── archive/                  # 28 earlier exploratory scripts (iterations 1–14)
-├── docs/figures/                 # PNG figures used in this README
-├── artifacts/                    # data + embeddings + result JSONs (git-ignored bulk)
-│   ├── <name>_benchmark/             # documents.jsonl, queries.jsonl, qrels.json
-│   ├── <name>_benchmark_embeddings/  # documents_packed.npz, queries_packed.npz
-│   └── results/                      # all measured result JSONs
-└── external/PDX/                 # vendored PDX library (do not edit; built in WSL)
+├── README.md
+├── requirements.txt
+├── experiments/
+│   ├── _paths.py                 # shared project-root / import helper
+│   ├── utils_colbert.py          # MaxSim, packed embeddings, metrics
+│   ├── pipeline/                 # ← run these (7 scripts, in order)
+│   │   ├── 01_prepare_beir_benchmark.py
+│   │   ├── 02_export_embeddings.py
+│   │   ├── 03_beir_ivf_benchmark.py      [WSL / PDX]
+│   │   ├── 04_baselines.py
+│   │   ├── 05_maxsim_bond_instrumentation.py   ★ primary hypothesis test
+│   │   ├── 06_make_figures.py
+│   │   └── 07_selector_gap_sweep.py
+│   └── archive/                  # earlier iterations, grouped by phase
+│       ├── phase01_setup/        # 01–03  PyLate + PDX smoke test
+│       ├── phase02_toy/          # 04–05  toy corpus, token PDX
+│       ├── phase03_local/        # 06–10  174-doc local corpus
+│       ├── phase04_realish/      # 11–18  600-doc corpus + selector studies
+│       ├── phase05_scifact_flat_bond/  # 19–24  SciFact subset, flat BOND (slow)
+│       ├── phase06_kernel_prototypes/  # 25–26  batch / shared-scan (ruled out)
+│       └── phase07_ivf_discovery/      # 27–28  IVF breakthrough (superseded by pipeline/03)
+├── docs/figures/
+├── artifacts/
+│   ├── <name>_benchmark/
+│   ├── <name>_benchmark_embeddings/
+│   └── results/
+└── external/PDX/
 ```
 
-> The `experiments/archive/` folder holds the superseded exploratory scripts
-> (toy corpus, "realish" corpus, SciFact-subset candidate/selector studies, and
-> the PDX batch / shared-scan kernel prototypes). They are kept for provenance
-> and are summarized in the [Iteration history](#iteration-history) below. You do
-> not need them to run the current pipeline.
+### Experiment map (what to run vs what is history)
+
+| Folder | Purpose | Run it? |
+| --- | --- | --- |
+| `experiments/pipeline/` | Current reproducible workflow | **Yes** — steps 01→07 |
+| `experiments/archive/phase01–04` | Early corpora + selector debugging | No — background only |
+| `experiments/archive/phase05` | SciFact @ 1k docs, **flat BOND slower than exact** | No — shows the failure |
+| `experiments/archive/phase06` | Ruled out batching / shared scan | No — negative results |
+| `experiments/archive/phase07` | First IVF results (SciFact-only scripts) | No — use `pipeline/03` instead |
+
+Old script numbers (e.g. `29_…`, `33_…`) map to `pipeline/01_…`, `pipeline/05_…`, etc.
 
 ---
 
@@ -85,10 +118,10 @@ python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-This covers: preparing/encoding datasets (29, 30), the FAISS-IVF + PLAID
-baselines (32), the MaxSim-BOND instrumentation (33), and the figures (34).
+This covers: `pipeline/01–02` (prepare/encode), `04` (baselines), `05` (BOND
+study), `06` (figures), and `07` (selector sweep).
 
-### 2. WSL2 / Linux PDX build (only needed for script 31's PDX path)
+### 2. WSL2 / Linux PDX build (only needed for `pipeline/03`)
 
 Build PDX in **native WSL storage** (not `/mnt/c/...`; mounted paths caused venv
 and git-submodule permission errors on this machine). Tested on Ubuntu WSL2,
@@ -121,7 +154,7 @@ python examples/pdxearch_simple.py   # smoke test
 Scripts that need PDX are run through this interpreter, e.g.:
 
 ```powershell
-wsl -e /bin/bash -lc "cd '<repo path>' && /home/<user>/data-engineering-pdx/.venv-pdx/bin/python experiments/31_beir_ivf_benchmark.py --corpus-dir ... --embeddings-dir ... --output ..."
+wsl -e /bin/bash -lc "cd '<repo path>' && /home/<user>/data-engineering-pdx/.venv-pdx/bin/python experiments/pipeline/03_beir_ivf_benchmark.py --corpus-dir ... --embeddings-dir ... --output ..."
 ```
 
 **Key API note:** the PDX Python API exposes the `l2sq` metric only. ColBERT
@@ -133,39 +166,83 @@ We convert back with `cosine = 1 - l2sq/2`. l2/IP/cosine orderings all coincide.
 
 ## Reproduce the pipeline
 
-The current pipeline is dataset-agnostic (any BEIR dataset; `--max-documents 0`
-= full corpus). Example used for the headline results (full SciFact: 5183 docs,
-50 queries):
+Scripts live in `experiments/pipeline/`. **Step 05 is the primary hypothesis test**
+(BOND pruning); steps 03–04 and 07 are secondary IVF/rerank work. Example on full
+SciFact (5183 docs, 50 queries):
 
 ```powershell
-# 1. Prepare the benchmark (downloads BEIR SciFact, writes documents/queries/qrels)
-.\.venv\Scripts\python experiments\29_prepare_beir_benchmark.py --dataset scifact --max-documents 0 --max-queries 50 --name scifact_full
+# 01 — Prepare benchmark
+.\.venv\Scripts\python experiments/pipeline/01_prepare_beir_benchmark.py --dataset scifact --max-documents 0 --max-queries 50 --name scifact_full
 
-# 2. Encode with ColBERT (lightonai/GTE-ModernColBERT-v1, CPU ~23 min for 5183 docs)
-.\.venv\Scripts\python experiments\30_export_beir_pylate_embeddings.py --corpus-dir artifacts/scifact_full_benchmark --output-dir artifacts/scifact_full_benchmark_embeddings --batch-size 16
+# 02 — Encode with ColBERT (~23 min CPU for 5183 docs)
+.\.venv\Scripts\python experiments/pipeline/02_export_embeddings.py --corpus-dir artifacts/scifact_full_benchmark --output-dir artifacts/scifact_full_benchmark_embeddings --batch-size 16
 
-# 3. Exact MaxSim vs IVF-on-PDX candidate gen + exact rerank  (RUN IN WSL — needs PDX)
-wsl -e /bin/bash -lc "cd '<repo path>' && /home/<user>/data-engineering-pdx/.venv-pdx/bin/python experiments/31_beir_ivf_benchmark.py --corpus-dir artifacts/scifact_full_benchmark --embeddings-dir artifacts/scifact_full_benchmark_embeddings --output artifacts/results/scifact_full_ivf_benchmark.json"
+# 03 — Exact MaxSim vs IVF-on-PDX  (RUN IN WSL — needs PDX)
+wsl -e /bin/bash -lc "cd '<repo path>' && /home/<user>/data-engineering-pdx/.venv-pdx/bin/python experiments/pipeline/03_beir_ivf_benchmark.py --corpus-dir artifacts/scifact_full_benchmark --embeddings-dir artifacts/scifact_full_benchmark_embeddings --output artifacts/results/scifact_full_ivf_benchmark.json"
 
-# 4. Baselines: PLAID + FAISS-IVF on the same corpus  (Windows venv)
-.\.venv\Scripts\python experiments\32_baselines_full_scifact.py --corpus-dir artifacts/scifact_full_benchmark --embeddings-dir artifacts/scifact_full_benchmark_embeddings --pdx-result artifacts/results/scifact_full_ivf_benchmark.json --output artifacts/results/scifact_full_baselines.json
+# 04 — Baselines: PLAID + FAISS-IVF
+.\.venv\Scripts\python experiments/pipeline/04_baselines.py --corpus-dir artifacts/scifact_full_benchmark --embeddings-dir artifacts/scifact_full_benchmark_embeddings --pdx-result artifacts/results/scifact_full_ivf_benchmark.json --output artifacts/results/scifact_full_baselines.json
 
-# 5. MaxSim multi-vector BOND pruning study  (Windows venv; --rotation pca to test the revival)
-.\.venv\Scripts\python experiments\33_maxsim_bond_instrumentation.py --embeddings-dir artifacts/scifact_full_benchmark_embeddings --k 10 --output artifacts/results/maxsim_bond_instrumentation_scifact_full.json
+# 05 — ★ Primary: MaxSim multi-vector BOND pruning study
+.\.venv\Scripts\python experiments/pipeline/05_maxsim_bond_instrumentation.py --embeddings-dir artifacts/scifact_full_benchmark_embeddings --k 10 --output artifacts/results/maxsim_bond_instrumentation_scifact_full.json
 
-# 6. Regenerate the figures in docs/figures/
-.\.venv\Scripts\python experiments\34_make_writeup_figures.py
+# 07 — Selector-gap sweep (re-rank budget C)
+.\.venv\Scripts\python experiments/pipeline/07_selector_gap_sweep.py --corpus-dir artifacts/scifact_full_benchmark --embeddings-dir artifacts/scifact_full_benchmark_embeddings --output artifacts/results/scifact_full_selector_gap_sweep.json
+
+# 06 — Regenerate figures
+.\.venv\Scripts\python experiments/pipeline/06_make_figures.py
 ```
 
 All numbers come from the JSON files in `artifacts/results/`.
 
 ---
 
-## Results (full SciFact: 5183 docs, 50 queries)
+## Results
 
-### IVF candidate generation scales (Figure 1)
+### 1. Primary — PDX-BOND does not speed up ColBERT (Figure 3)
 
-`nprobe=8, L=100`, speedup = exact MaxSim time / IVF candidate-gen time:
+We tested BOND at three levels; none gave a useful speedup for ColBERT MaxSim
+search in our setup (`GTE-ModernColBERT-v1`, d=128, BEIR SciFact up to 5183 docs).
+
+**Flat PDX-BOND (the direct re-implementation path)**
+
+| corpus | exact MaxSim | flat PDX-BOND candidate gen | outcome |
+| ---: | ---: | ---: | --- |
+| 1000 docs | ~1.6–2.5 s | ~3.6 s (`L=50`) | **slower than exact** |
+| 5183 docs | ~7.8 s | not competitive | motivated switch to IVF |
+
+Flat BOND scans essentially all token vectors per query token. Dimension pruning
+barely reduces work because ColBERT energy is spread across all 128 dimensions.
+
+**MaxSim-aware document-level BOND instrumentation** (script 33; provably exact,
+0 true top-k wrongly pruned):
+
+| setting | ceiling speedup = 1/work-ratio |
+| --- | ---: |
+| raw ColBERT, oracle threshold | 1.10x |
+| PCA-rotated, realistic threshold | 1.22x |
+| PCA-rotated, oracle threshold | 1.68x |
+
+**Why it fails:** BOND's Cauchy-Schwarz bound needs early dimensions to carry
+enough signal to eliminate documents. ColBERT's L2-normalized 128-dim embeddings
+do not concentrate energy that way. PCA rotation partially helps but remains far
+below what IVF delivers.
+
+**Conclusion for the project proposal:** re-implementing BOND for ColBERT
+multi-vector search, as originally scoped, **did not achieve the speedup goal**.
+The negative result is well-supported and reproducible (see script 33 and
+iterations 11–14, 19–20 in the history below).
+
+---
+
+### 2. Secondary — IVF + exact rerank (what worked instead)
+
+After flat BOND failed, we switched to **`IndexPDXBONDIVFFlat`** (IVF cluster
+pruning, then BOND inside probed clusters). The speedup comes from **IVF
+skipping whole clusters**, not from BOND dimension pruning. FAISS-IVF reproduces
+the same recall/speedup pattern on the same data.
+
+**IVF scaling on SciFact** (Figure 1; `nprobe=8, L=100`):
 
 | corpus size | exact (s) | IVF gen (s) | speedup | pool recall@10 | reranked qrels recall@10 |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -174,11 +251,7 @@ All numbers come from the JSON files in `artifacts/results/`.
 | 1000 | 1.45 | 0.16 | 8.9x  | 1.00 | 0.938 |
 | 5183 | 7.78 | 0.26 | 29.8x | 1.00 | 0.938 |
 
-Candidate generation stays nearly flat while exact MaxSim grows linearly, so the
-speedup grows with corpus size. Quality is preserved because the exact re-rank on
-the candidate pool fixes the final order.
-
-### Baselines (Figure 2; exact/FAISS/PLAID measured on the same Windows machine)
+**Baselines on full SciFact** (Figure 2; exact/FAISS/PLAID same Windows machine):
 
 | method | time (50 q) | qrels recall@10 |
 | --- | ---: | ---: |
@@ -187,24 +260,11 @@ the candidate pool fixes the final order.
 | PLAID (ColBERT SOTA, CPU, nbits=4) | 56.0 s | 0.794 |
 | PDX-IVF + exact rerank (WSL) | 0.29 s | 0.938 |
 
-FAISS-IVF reproduces the exact recall at ~39x → the win is the two-stage recipe.
-PLAID's quantization loses recall on CPU; exact re-rank keeps it. (PDX time is
-from a different machine/env (WSL), so its *absolute* value is not directly
-comparable to the same-machine FAISS/PLAID times — only the relative picture is.)
+IVF is standard ANN practice, not a novel contribution. Its value here is as a
+**validated fallback pipeline** for fast ColBERT retrieval on PDX, discovered
+after the BOND hypothesis failed.
 
-### MaxSim-BOND dimension pruning (Figure 3; provably exact, 0 true top-k pruned)
-
-| setting | ceiling speedup = 1/work-ratio |
-| --- | ---: |
-| raw ColBERT, oracle threshold | 1.10x |
-| PCA-rotated, realistic threshold | 1.22x |
-| PCA-rotated, oracle threshold | 1.68x |
-
-Dimension-level branch-and-bound is effectively dead on raw ColBERT (the bound
-stays loose until ~all dims are read). A PCA rotation concentrates energy and
-partially revives it, but it remains a secondary optimization.
-
-### Generality check — second dataset (NFCorpus: 3633 docs, 50 queries)
+### 2b. Generality — second dataset (NFCorpus: 3633 docs, 50 queries)
 
 To confirm the recipe is not SciFact-specific we re-ran the same pipeline on
 BEIR **NFCorpus**, a denser-relevance dataset (1739 qrels labels, ~865k document
@@ -224,21 +284,53 @@ help) — the same signal as SciFact that the fixed `C=50` re-rank budget, not
 candidate coverage, is the remaining quality limiter. Note the PDX path (script
 31, WSL) has not yet been run on NFCorpus; FAISS stands in for the IVF engine here.
 
+### 2c. Selector-gap sweep (Figure 4) — the C=50 plateau is a budget artifact
+
+The sweep in `35_selector_gap_sweep.py` fixes candidate generation
+(`nprobe=8, L=100`) and grows the re-rank budget `C` (selection policy turns out
+to barely matter). Agreement with the exact top-10 rises smoothly with `C` and
+reaches the pool-coverage limit when the **entire pool** (~400–600 docs) is
+re-ranked — at a latency still far below exact:
+
+| dataset | C=50 | C=100 | C=200 | C=pool | pool coverage@10 | time @ C=pool | speedup |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SciFact-full | 0.862 | 0.932 | 0.968 | **1.000** | 1.000 | 1.78 s | 8.0x |
+| NFCorpus | 0.840 | 0.916 | 0.960 | **0.978** | 0.940 | 0.89 s | 8.9x |
+
+Practical sweet spots: `C=100` keeps ~30x at agreement ≥0.92; `C=200` keeps
+~16–20x at ~0.96. On SciFact, re-ranking the full pool gives **perfect (1.000)
+agreement with exact MaxSim at 8x speedup**. On NFCorpus the full-pool residual
+(0.978) is exactly the pool-coverage limit; widening candidate generation to
+`nprobe=32` with `C=200` recovers **qrels recall@10 = 0.1942 = exact** at 0.98 s
+(7.4x). So the earlier 0.84 plateau was not structural: quality vs speed is a
+smooth, tunable budget curve, and exact-quality operating points exist at ~7–8x.
+
+![Selector gap](docs/figures/fig4_selector_gap.png)
+
 ---
 
 ## Conclusions and next steps
 
-- **Headline contribution:** IVF candidate generation + exact MaxSim re-rank is
-  a large, growing, quality-preserving speedup, triangulated three ways (vs
-  NumPy, FAISS, PLAID).
-- **Useful negative result:** classic dimension-decomposition BOND does not
-  transfer to ColBERT MaxSim at d=128, with a clear explanation (uniform energy);
-  PCA rotation only partially revives it.
-- **Open follow-ups (rough priority):** (1) scale to more/larger BEIR or a CoRECT
-  MS-MARCO subset (scripts 29–31 already support it); (2) a fairer PLAID ceiling
-  (GPU and/or higher `nbits`/`n_full_scores`); (3) tune the rerank budget `C` to
-  close the selector gap; (4) if pursuing a kernel, a combined PCA + IVF-seeded
-  threshold + document-MaxSim-bound scan that stacks the two pruning effects.
+**Primary (answers the project proposal):**
+
+- We implemented and tested PDX-BOND for ColBERT multi-vector search as
+  proposed. **It did not deliver a meaningful speedup** in our experiments:
+  flat BOND was slower than exact search; MaxSim-aware dimension BOND caps at
+  ~1.1x (raw) / ~1.2x (PCA). We have a clear explanation (uniform energy across
+  128 dims → loose pruning bounds) and reproducible instrumentation (script 33).
+- This is the main empirical contribution relative to the SIGMOD 2002 idea
+  applied to modern ColBERT IR.
+
+**Secondary (practical outcome discovered along the way):**
+
+- **IVF cluster pruning + exact MaxSim re-rank** does speed up ColBERT search
+  (~30x on SciFact, replicates on NFCorpus). FAISS-IVF matches the pattern → IVF
+  is the mechanism, not BOND. Quality is tunable via re-rank budget `C`.
+- IVF is not novel; it is the fallback that worked after BOND failed.
+
+**Open follow-ups:** (1) CoRECT / larger BEIR scale-up; (2) PDX path on NFCorpus
+in WSL; (3) fairer PLAID comparison; (4) only if revisiting BOND: IVF-seeded
+thresholds + document-level MaxSim bounds (modest ceiling from instrumentation).
 
 ---
 
@@ -268,6 +360,7 @@ Condensed log of how the project got here. Scripts 1–14 referenced below live 
 | 19 | MaxSim-BOND instrumentation | Dimension BOND dead on raw ColBERT (≤1.10x even with oracle threshold). Provably exact. |
 | 20 | PCA rotation revival | Partially revives pruning (1.22x realistic / 1.68x oracle); secondary optimization. |
 | 21 | Generality check on NFCorpus (2nd dataset) | Recipe transfers: FAISS-IVF + rerank ~32x at 0.188 vs 0.194 exact qrels recall@10 (~97%); CPU-PLAID again slower + lower quality. Selector gap recurs (agreement@10 ~0.84). |
+| 22 | Selector-gap sweep (script 35) | The C=50 plateau is a budget artifact. Agreement rises smoothly with C; full-pool re-rank = 1.000 agreement at 8x (SciFact); `nprobe=32, C=200` = exact qrels recall at 7.4x (NFCorpus). Policy choice barely matters. |
 
 ### Caveats
 
