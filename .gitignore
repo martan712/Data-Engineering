@@ -6,3 +6,10 @@ __pycache__/
 
 # Third-party source checkout used for inspection/build attempts.
 external/PDX/
+
+*.npy
+*.pt
+*.pkl
+*.csv
+*.png 
+Notes/
