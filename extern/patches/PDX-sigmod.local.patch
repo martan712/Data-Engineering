@@ -1,0 +1,15 @@
+diff --git a/benchmarks/python_scripts/setup_settings.py b/benchmarks/python_scripts/setup_settings.py
+index d9fd438..3e975cf 100644
+--- a/benchmarks/python_scripts/setup_settings.py
++++ b/benchmarks/python_scripts/setup_settings.py
+@@ -47,9 +47,7 @@ for needed_directory in directories:
+         os.makedirs(needed_directory)
+ 
+ # Datasets to set up and use
+-DATASETS = [
+-    'agnews-mxbai-1024-euclidean',
+-]
++DATASETS = ['openai-1536-angular']
+ 
+ DIMENSIONALITIES = {
+     'random-xs-20-angular': 20,

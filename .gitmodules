@@ -1,0 +1,9 @@
+[submodule "extern/PDX"]
+	path = extern/PDX
+	url = https://github.com/cwida/PDX.git
+[submodule "PDX-sigmod"]
+	path = extern/PDX-sigmod
+	url = https://github.com/cwida/PDX
+[submodule "extern/CoRECT"]
+	path = extern/CoRECT
+	url = https://github.com/padas-lab-de/CoRECT

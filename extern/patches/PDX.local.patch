@@ -1,0 +1,30 @@
+diff --git a/benchmarks/kernels_playground/kernels.py b/benchmarks/kernels_playground/kernels.py
+index d1d7909..0a7461d 100644
+--- a/benchmarks/kernels_playground/kernels.py
++++ b/benchmarks/kernels_playground/kernels.py
+@@ -25,7 +25,9 @@ from faiss import (
+ )
+ from faiss.contrib.exhaustive_search import knn as faiss_knn
+ 
+-cppyy.load_library('./kernels.dylib')
++import sys
++_lib_ext = '.dylib' if sys.platform == 'darwin' else '.so'
++cppyy.load_library('./kernels' + _lib_ext)
+ 
+ cppyy.cppdef("""
+ 
+diff --git a/benchmarks/python_scripts/setup_data.py b/benchmarks/python_scripts/setup_data.py
+index 12aa5e6..6bffed7 100644
+--- a/benchmarks/python_scripts/setup_data.py
++++ b/benchmarks/python_scripts/setup_data.py
+@@ -9,9 +9,9 @@ GENERATE_GT = False  # Creates ground truth with sklearn
+ KNN = [100]
+ SEED = 42
+ DATASETS_TO_USE = [
+-    'mxbai',
+     'arxiv',
+     'openai',
++    'wiki',
+     # 'cohere'
+ ]
+ 
