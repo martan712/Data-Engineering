@@ -1,6 +1,39 @@
+# Build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.so
+*.o
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Large / regenerable data files
 *.npy
 *.pt
 *.pkl
+
+# Downloaded datasets (regenerable; not research evidence)
 *.csv
-*.png 
+*.png
+
+# Top-level planning notes (gitignored by design; use docs/ for tracked notes)
 Notes/
+
+# results/ is TRACKED — all outputs under results/ are research evidence
+# and must stay on-branch (see docs/project_structure.md .gitignore Policy).
+!results/
+!results/**
+!results/json/
+!results/json/**
+!results/figures/
+!results/figures/**
+!results/external_baselines/
+!results/external_baselines/**
