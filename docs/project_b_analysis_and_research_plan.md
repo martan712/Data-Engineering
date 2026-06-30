@@ -72,7 +72,7 @@ check:
 - **Cells-scanned instrumentation:** useful for separating algorithmic work from
   wall-clock behavior.
 - **Existing bound formulas:** useful as Stage 1 starting points. In particular,
-  `research/Notes/bond_maxsim_methodology.md` defines a Cauchy-Schwarz residual
+  `docs/sources/bond_maxsim_methodology.md` defines a Cauchy-Schwarz residual
   bound for MaxSim, document-level pruning, token-level inner-max pruning, a
   shrink ramp for approximate pruning, and three dimension-ordering signals.
 
@@ -206,6 +206,10 @@ Output:
 - a baseline list that separates exact scoring, dimension pruning, candidate
   generation, and reranking.
 
+Stage 0 artifact:
+
+- `docs/stage0_references_and_baselines.md`
+
 Existing work that may be reused:
 
 - PDX smoke tests and README API notes;
@@ -234,11 +238,19 @@ Output:
 - exact-safe and approximate variants, clearly separated;
 - expected costs for score updates, bound updates, and live-set maintenance.
 
+Stage 1 artifact:
+
+- `docs/stage1_bond_maxsim_formalization.md` — formalization, a proof that the
+  preliminary `shrink = 1` kernel is exact-safe (including the token-pruning
+  survival invariant), the approximate `shrink < 1` separation, exactness
+  preconditions (chiefly unit normalization), the PDX-like-vs-PDX layout
+  boundary, a cost model, and the Stage 2 audit checklist.
+
 Existing work that may be reused:
 
 - Martan's MaxSim-aware BOND derivation and instrumentation, if it matches the
   formal definition.
-- The formulas in `research/Notes/bond_maxsim_methodology.md`, especially M5
+- The formulas in `docs/sources/bond_maxsim_methodology.md`, especially M5
   and M6, as candidate definitions to verify rather than rediscover.
 
 Candidate formulas already present in the existing work:
@@ -376,7 +388,8 @@ Existing work that may be reused:
 - PDX-IVF prototype;
 - exact reranking utilities;
 - the existing threshold modes from
-  `experiments/pipeline/05_maxsim_bond_instrumentation.py`: self-bound,
+  `archive/reference/05_maxsim_bond_instrumentation.py` (brought on-branch from
+  `Mikel`; threshold logic to be reimplemented in `src/bondmaxsim/threshold/`): self-bound,
   oracle-threshold, and seeded-threshold variants. These should become explicit
   method arms if they survive Stage 1 formalization.
 
@@ -429,14 +442,23 @@ These experiments should be run before making final claims:
   method, metric, machine, and result file.
 - **Exact oracle validation:** verify exact MaxSim implementation, top-k
   semantics, and normalized-vector assumptions.
-- **PDX API validation:** confirm metric support, layout choices, and BOND,
-  ADSampling, BSA, IVF availability in the checked-out PDX version.
-- **BOND reference validation:** compare the intended SIGMOD-2002 algorithm with
-  PDX's `bond.hpp` behavior and with the proposed MaxSim adaptation.
+- **PDX API validation:** confirm metric support, layout choices, and
+  BOND/ADSampling/BSA/IVF availability per checkout. `PDX-sigmod` (commit
+  `fdc62f2` (public sigmod tip; see Stage 0)) ships BOND, BSA, and ADSampling as PDXearch variants
+  (`include/pdx/{bond,bsa,adsampling}.hpp`, `IndexPDXBONDFlat`, `bench_bond`); the
+  evolved `PDX` (commit `93531b9`) kept only `pruners/adsampling.hpp` in a hybrid
+  25/75 layout, flagship `IndexPDXIVFTreeSQ8`.
+- **BOND reference validation:** PDX's existing `bond.hpp` is a *single-vector
+  L2* PDXearch variant ("adds no relevant functionality to PDXearch"). Compare
+  the SIGMOD-2002 algorithm with this reference, then with the proposed
+  multi-vector MaxSim adaptation (inner-product pair bounds, two-level
+  token->document pruning). The MaxSim extension is the contribution; BOND itself
+  is already implemented for single-vector kNN.
 - **Formula inventory:** extract the existing MaxSim bound, token-pruning rule,
   document-pruning rule, shrink ramp, and ordering signals from
-  `research/Notes/bond_maxsim_methodology.md` and
-  `experiments/pipeline/05_maxsim_bond_instrumentation.py`; mark each one as
+  `docs/sources/bond_maxsim_methodology.md` and
+  `archive/reference/05_maxsim_bond_instrumentation.py` (brought on-branch from
+  `Mikel`; threshold logic to be reimplemented in `src/bondmaxsim/threshold/`); mark each one as
   exact-safe, approximate, diagnostic, or oracle-only.
 - **Single-vector sanity check:** run PDX BOND/ADSampling/BSA on a standard
   single-vector dataset to confirm the local setup behaves like the PDX paper
