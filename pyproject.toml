@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "bondmaxsim"
+version = "0.1.0.dev0"
+description = "BOND-style dimension pruning for ColBERT MaxSim on a PDX-compatible layout"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.0",
+    "pylate>=0.1",
+    "ranx>=0.3",
+]
+
+[project.optional-dependencies]
+faiss = [
+    "faiss-cpu>=1.7",
+]
+dev = [
+    "pytest>=7",
+    "pytest-cov",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
