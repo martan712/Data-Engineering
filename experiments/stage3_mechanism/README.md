@@ -1,0 +1,52 @@
+# Stage 3: Mechanism Experiments
+
+Planned experiments for Stage 3 (see `docs/project_b_analysis_and_research_plan.md`,
+Stage 3 section, and `docs/stage1_bond_maxsim_formalization.md` §7 empirical context).
+
+Datasets: SciFact, NFCorpus, ArguAna, SCIDOCS (debugging scale); at least one
+100k–1M corpus for scale. All drivers import from `bondmaxsim`.
+
+## Planned Experiments
+
+### `e01_bound_slack.py`
+Plot UB_d(k) / score(q,d) over dimension prefixes k.  Measures how tight the
+Cauchy-Schwarz bound is and how quickly it falls toward the threshold.  This is
+the primary "feasibility diagnostic" from the research plan (bound-slack vs score
+dispersion). Per-dataset, per dimension-order arm.
+
+### `e02_pruning_rate.py`
+Plot fraction of documents still live vs dimensions scanned (the "live curve")
+for each threshold policy (self_bound / oracle / seed) and dimension order.
+Measures dims-to-prune-50%, 90%, 99%.  Identifies whether score compression
+prevents early document pruning.
+
+### `e03_order_ablation.py`
+Compare natural / bond_dtm / bond_q2 / bond_q2_var / ada_rotation on
+cells_scanned_pct and ms_per_query.  Confirms that order affects efficiency
+but not correctness (shrink=1 exact-agreement regression, Stage 1 §8 item 5).
+
+### `e04_exact_safe_pruning.py`
+Full cells/latency sweep for shrink=1 across datasets and candidate-set sizes.
+Tests whether more candidates (larger candidate_budget) improve document pruning
+(exp-11 probe: downward cells% slope means small samples understated pruning).
+
+### `e05_approximate_recall_sweep.py`
+Sweep shrink in [0.5, 0.7, 0.8, 0.9, 0.95, 1.0]; report cells_scanned_pct vs
+recall_vs_exact@10 frontier per dataset and per dimension order. The approximate
+arm is kept strictly separate from the exact arm (Stage 1 §3).
+
+### `e06_threshold_policy_ablation.py`
+Compare self_bound / oracle / seed threshold policies on cells_scanned_pct and
+pruning rate. Oracle policy isolates maximum pruning potential; seed policy is
+the realistic first-class option for wide-block scan (Stage 1 §4.4 / §8 item 6).
+
+### `e07_cache_layout_sensitivity.py`
+Measure gather / SIMD penalty from per-query dimension reordering vs natural
+order. Quantifies the reorder cost that the research plan flags must be measured,
+not assumed (M3 in methodology and Stage 1 §4.5).
+
+## Output
+All results to `results/json/stage3_mechanism_<experiment>_<dataset>.json`.
+Decision gate: if no exact-safe arm produces repeatable wall-clock win over brute
+force, report negative result with mechanism evidence (research plan Stage 3
+stopping condition).
