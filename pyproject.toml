@@ -28,6 +28,7 @@ faiss = [
 dev = [
     "pytest>=7",
     "pytest-cov",
+    "matplotlib>=3.7",
 ]
 
 [tool.setuptools.packages.find]

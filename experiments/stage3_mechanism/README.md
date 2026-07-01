@@ -15,10 +15,31 @@ the primary "feasibility diagnostic" from the research plan (bound-slack vs scor
 dispersion). Per-dataset, per dimension-order arm.
 
 ### `e02_pruning_rate.py`
-Plot fraction of documents still live vs dimensions scanned (the "live curve")
-for each threshold policy (self_bound / oracle / seed) and dimension order.
-Measures dims-to-prune-50%, 90%, 99%.  Identifies whether score compression
-prevents early document pruning.
+Plot the **two-level survival curves** — fraction still live vs dimensions
+scanned — at both granularities the Section 2.3 bound operates on, for each
+threshold policy (self_bound / oracle / seed) and dimension order:
+
+- **Document survival**: fraction of documents still live (the original "live
+  curve"). Measures dims-to-prune-50/90/99%. Identifies whether score compression
+  prevents early *document* pruning — the Option-B weakness (Stage 1 §5.2), and
+  the thing that makes the per-document oracle look weak on its own.
+- **Token survival**: fraction of document tokens still live in the per-document
+  live set. This is the lever the **wide kernel** actually relies on — token
+  pruning fires from the first block even while the document bound is still loose
+  (Stage 1 §5.3). Document survival alone understates the mechanism; measuring
+  token survival is what makes the per-document accounting predictive of the wide
+  kernel rather than a verdict on Option B.
+
+Also report the **early-token-pruning rate**: fraction of tokens pruned before
+`D/4` dimensions (exp-10 skips bound evaluation before `D/4`, so tokens surviving
+past there set the warmup cost, Stage 1 §6).
+
+Instrumentation note: both curves need per-dimension-block live counts, not just
+final totals. The accounting kernel already maintains the per-document live token
+set (`n_live`) and emits a final `tokens_pruned` (stats[2], currently unused by
+the Runner). This experiment adds a per-block accounting hook that logs the summed
+token-live count and the document-live count at each block boundary, and surfaces
+`tokens_pruned` through `ResultRecord`.
 
 ### `e03_order_ablation.py`
 Compare natural / bond_dtm / bond_q2 / bond_q2_var / ada_rotation on
