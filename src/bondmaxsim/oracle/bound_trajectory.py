@@ -58,11 +58,19 @@ def _compute_all(
     order: np.ndarray,
     prefix_grid: np.ndarray,
     doc_batch_size: int = 512,
+    need_lb: bool = True,
+    need_liveness: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Core engine: compute UB, LB, token-live count, and exact scores.
 
     Processes documents in batches of ``doc_batch_size`` to cap peak memory at
     roughly ``n_batch_toks * D * 5 * 4`` bytes (typically 50–100 MB).
+
+    The step loop is memory-bandwidth-bound ([m, n_b] passes at every prefix
+    step), so callers that only need the UB trajectory (e01) must pass
+    ``need_lb=False, need_liveness=False`` — the L/liveness passes are the
+    majority of the per-step work.  When disabled, ``lb_traj`` and
+    ``token_live_count`` are returned as zeros.
 
     For each prefix k in prefix_grid, computes over the first k dims of order:
       P_ij(k) = dot(q_i[:k_ord], d_j[:k_ord])              (partial dot product)
@@ -95,6 +103,13 @@ def _compute_all(
     num_docs = len(doc_starts)
     S = len(prefix_grid)
 
+    # Liveness needs the per-token best lower bound, so the L pass runs for
+    # either flag.
+    compute_l = need_lb or need_liveness
+
+    # Identity order lets us skip the [n_b, D] gather copy per batch.
+    identity_order = bool(np.array_equal(order, np.arange(D)))
+
     # Reindex query to scan order (small: [m, D]).
     Q_ord = np.ascontiguousarray(query[:, order], dtype=np.float32)  # [m, D]
 
@@ -125,9 +140,14 @@ def _compute_all(
         n_b = tok_end - tok_start  # number of tokens in batch
 
         # Reindex batch tokens to scan order (contiguous float32 for BLAS).
-        F_b = np.ascontiguousarray(
-            flat_tokens[tok_start:tok_end][:, order], dtype=np.float32
-        )  # [n_b, D]
+        if identity_order:
+            F_b = np.ascontiguousarray(
+                flat_tokens[tok_start:tok_end], dtype=np.float32
+            )  # [n_b, D] — zero-copy when already contiguous float32
+        else:
+            F_b = np.ascontiguousarray(
+                flat_tokens[tok_start:tok_end][:, order], dtype=np.float32
+            )  # [n_b, D]
 
         # Cumulative squared norms for batch tokens; pre-cache resd per step.
         Fcum2_b = np.zeros((n_b, D + 1), dtype=np.float32)
@@ -142,16 +162,26 @@ def _compute_all(
         batch_doc_starts = doc_starts[batch_start:batch_end]
         batch_seg = (batch_doc_starts - tok_start).astype(np.intp)
 
-        # Batch tok→doc mapping (local doc indices 0..n_batch_docs-1).
-        batch_tok2doc = np.empty(n_b, dtype=np.int64)
-        for bi in range(n_batch_docs):
-            d = batch_start + bi
-            s_d = int(doc_starts[d]) - tok_start
-            e_d = (int(doc_starts[d + 1]) if d + 1 < num_docs else T) - tok_start
-            batch_tok2doc[s_d:e_d] = bi
+        # Batch tok→doc mapping (local doc indices 0..n_batch_docs-1); only
+        # needed to broadcast per-doc lower bounds back to tokens for liveness.
+        batch_tok2doc = None
+        if need_liveness:
+            batch_tok2doc = np.empty(n_b, dtype=np.int64)
+            for bi in range(n_batch_docs):
+                d = batch_start + bi
+                s_d = int(doc_starts[d]) - tok_start
+                e_d = (int(doc_starts[d + 1]) if d + 1 < num_docs else T) - tok_start
+                batch_tok2doc[s_d:e_d] = bi
 
-        # Incremental partial dot products [m, n_b].
+        # Incremental partial dot products [m, n_b], plus reusable step
+        # buffers: allocating fresh [m, n_b] temporaries at every prefix step
+        # dominated the original runtime.
         P_b = np.zeros((m, n_b), dtype=np.float32)
+        mm_buf = np.empty((m, n_b), dtype=np.float32)   # gemm output
+        resid = np.empty((m, n_b), dtype=np.float32)    # resq ⊗ resd
+        work = np.empty((m, n_b), dtype=np.float32)     # holds L, then U
+        lbest = np.empty((m, n_b), dtype=np.float32) if need_liveness else None
+        live_buf = np.empty((m, n_b), dtype=bool) if need_liveness else None
 
         prev_k = 0
         for s, k in enumerate(prefix_grid):
@@ -159,7 +189,8 @@ def _compute_all(
 
             # Extend P_b by the dims from prev_k to k.
             if k > prev_k:
-                P_b += Q_ord[:, prev_k:k] @ F_b[:, prev_k:k].T
+                np.matmul(Q_ord[:, prev_k:k], F_b[:, prev_k:k].T, out=mm_buf)
+                P_b += mm_buf
 
             prev_k = k
 
@@ -167,31 +198,29 @@ def _compute_all(
             resd = resd_by_step_b[s]           # [n_b]
 
             # Outer product of residuals.
-            resid = resq[:, np.newaxis] * resd[np.newaxis, :]  # [m, n_b]
+            np.multiply(resq[:, np.newaxis], resd[np.newaxis, :], out=resid)
 
             # ---- Lower bounds ----
-            L_b = P_b - resid                                              # [m, n_b]
-            LB_qi_b = np.maximum.reduceat(L_b, batch_seg, axis=1)         # [m, n_batch_docs]
-            lb_traj[batch_start:batch_end, s] = LB_qi_b.sum(axis=0)
-
-            # Lbest per token: for token j, the best lower bound across all i.
-            Lbest_per_tok = LB_qi_b[:, batch_tok2doc]                     # [m, n_b]
-            del L_b, LB_qi_b
+            if compute_l:
+                np.subtract(P_b, resid, out=work)                          # L
+                LB_qi_b = np.maximum.reduceat(work, batch_seg, axis=1)     # [m, n_batch_docs]
+                if need_lb:
+                    lb_traj[batch_start:batch_end, s] = LB_qi_b.sum(axis=0)
+                if need_liveness:
+                    # Lbest per token: best lower bound across all i.
+                    np.take(LB_qi_b, batch_tok2doc, axis=1, out=lbest)
 
             # ---- Upper bounds ----
-            U_b = P_b + resid                                              # [m, n_b]
-            del resid
-            UB_qi_b = np.maximum.reduceat(U_b, batch_seg, axis=1)         # [m, n_batch_docs]
+            np.add(P_b, resid, out=work)                                   # U
+            UB_qi_b = np.maximum.reduceat(work, batch_seg, axis=1)         # [m, n_batch_docs]
             ub_traj[batch_start:batch_end, s] = UB_qi_b.sum(axis=0)
-            del UB_qi_b
 
             # ---- Token liveness ----
-            live_b = (U_b >= Lbest_per_tok).any(axis=0)                   # [n_b]
-            token_live_count[s] += int(live_b.sum())
+            if need_liveness:
+                np.greater_equal(work, lbest, out=live_buf)
+                token_live_count[s] += int(live_buf.any(axis=0).sum())
 
-            del U_b, Lbest_per_tok, live_b
-
-        del F_b, P_b, resd_by_step_b, batch_tok2doc
+        del F_b, P_b, mm_buf, resid, work, resd_by_step_b, batch_tok2doc
 
     # Exact scores: UB at k=D (residuals vanish for unit-norm tokens).
     d_idx = int(np.searchsorted(prefix_grid, D))
@@ -227,7 +256,8 @@ def doc_ub_trajectory(
     exact_scores : float32 [num_docs]
     """
     ub, _lb, _tlc, scores = _compute_all(
-        query, flat_tokens, doc_starts, order, prefix_grid
+        query, flat_tokens, doc_starts, order, prefix_grid,
+        need_lb=False, need_liveness=False,
     )
     return ub, scores
 
@@ -259,7 +289,7 @@ def survival_trajectories(
     token_live_frac : float32 [S] — fraction of tokens live in >= 1 query token
     """
     ub, _lb, tlc, _scores = _compute_all(
-        query, flat_tokens, doc_starts, order, prefix_grid
+        query, flat_tokens, doc_starts, order, prefix_grid, need_lb=False
     )
     T = flat_tokens.shape[0]
     num_docs = len(doc_starts)
