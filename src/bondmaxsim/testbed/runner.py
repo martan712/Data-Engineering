@@ -177,8 +177,8 @@ class Runner:
         Returns
         -------
         ResultRecord with cells_scanned_pct, pruned_docs_pct,
-        bound_checks_per_query, recall_vs_exact_at_10 populated;
-        ms_per_query / qps = None.
+        tokens_pruned_pct, bound_checks_per_query, recall_vs_exact_at_10
+        populated; ms_per_query / qps = None.
         """
         lib    = self._get_lib()
         K      = config.k
@@ -188,6 +188,7 @@ class Runner:
 
         cells_list: list[float]   = []
         dp_list:    list[float]   = []
+        tp_list:    list[float]   = []
         recall_list: list[float]  = []
 
         for query in self._queries:
@@ -212,9 +213,11 @@ class Runner:
             total_cells = int(T) * D * m   # brute-force denominator
             cells_list.append(float(stats[0]) / total_cells if total_cells > 0 else 0.0)
             dp_list.append(float(stats[1]) / n_docs if n_docs > 0 else 0.0)
+            tp_list.append(float(stats[2]) / T if T > 0 else 0.0)
 
         cells_scanned_pct   = float(np.mean(cells_list))      * 100.0
         pruned_docs_pct     = float(np.mean(dp_list))         * 100.0
+        tokens_pruned_pct   = float(np.mean(tp_list))         * 100.0
         recall_vs_exact     = float(np.mean(recall_list))
 
         return ResultRecord(
@@ -238,6 +241,8 @@ class Runner:
             machine               = config.machine,
             os                    = config.os,
             thread_count          = config.thread_count,
+            shrink                = config.shrink,
+            tokens_pruned_pct     = tokens_pruned_pct,
             notes                 = config.notes,
         )
 
@@ -331,5 +336,7 @@ class Runner:
             machine               = config.machine,
             os                    = config.os,
             thread_count          = config.thread_count,
+            shrink                = config.shrink,
+            tokens_pruned_pct     = None,   # accounting-only metric
             notes                 = config.notes,
         )

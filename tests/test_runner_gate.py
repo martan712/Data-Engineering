@@ -127,3 +127,20 @@ def test_throughput_reports_time_but_not_cost(runner):
     assert rec.ms_per_query is not None
     assert rec.qps is not None
     assert rec.cells_scanned_pct is None
+
+
+def test_accounting_reports_tokens_pruned_pct(runner):
+    """Accounting mode surfaces stats[2] (tokens_pruned) as tokens_pruned_pct
+    (Stage 1 §5.3); throughput mode leaves it None (accounting-only metric)."""
+    cfg = RunConfig(
+        dataset="synthetic", method="m", dimension_order="natural",
+        threshold_policy="exact_safe_topk", k=10, shrink=1.0,
+    )
+    rec = runner.accounting_mode(cfg)
+    assert rec.tokens_pruned_pct is not None
+    assert 0.0 <= rec.tokens_pruned_pct <= 100.0
+    assert rec.shrink == 1.0
+
+    rec_t = runner.throughput_mode(cfg, n_repeats=2)
+    assert rec_t.tokens_pruned_pct is None
+    assert rec_t.shrink == 1.0

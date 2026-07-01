@@ -119,6 +119,23 @@ class ResultRecord:
     """Number of threads used."""
 
     # ------------------------------------------------------------------
+    # Fields below carry a default so they must come last for dataclass
+    # positional-argument ordering; conceptually they belong to the groups
+    # named in their docstrings, not to a "trailing" group of their own.
+    # ------------------------------------------------------------------
+
+    shrink: Optional[float] = field(default=None)
+    """Residual shrink factor (Method description group): 1.0 = exact-safe
+    arm, < 1.0 = approximate arm.  Machine-separable companion to `method`/
+    `threshold_policy` for the exact/approximate split (Stage 1 §3)."""
+
+    tokens_pruned_pct: Optional[float] = field(default=None)
+    """Percentage of document tokens removed from per-document live sets
+    before full scoring (Algorithmic work / accounting group, conceptually
+    next to `pruned_docs_pct`).  Produced by accounting-mode kernel
+    (`stats[2]`, Stage 1 §5.3)."""
+
+    # ------------------------------------------------------------------
     # Free-text notes
     # ------------------------------------------------------------------
     notes: Optional[str] = field(default=None)
