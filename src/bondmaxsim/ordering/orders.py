@@ -62,7 +62,11 @@ def bond_order(
     -------
     order : int64 [D]
     """
-    raise NotImplementedError
+    D = query.shape[1]
+    imp = ((query - mu) ** 2).sum(axis=0)           # [D]
+    idx = np.argsort(imp)[::-1]                      # descending importance
+    tp = int(np.floor(D * top_frac))
+    return np.concatenate([np.sort(idx[:tp]), np.sort(idx[tp:])]).astype(np.int64)
 
 
 def ada_order(
@@ -87,7 +91,10 @@ def ada_order(
     rotated_query : float32 [m, D] — query in rotated space
     order         : int64 [D]      — natural order (identity permutation)
     """
-    raise NotImplementedError
+    D = query.shape[1]
+    rotated_query = (query @ rotation).astype(np.float32)
+    order = np.arange(D, dtype=np.int64)
+    return rotated_query, order
 
 
 def bond_q2_var_order(
@@ -113,4 +120,8 @@ def bond_q2_var_order(
     -------
     order : int64 [D]
     """
-    raise NotImplementedError
+    D = query.shape[1]
+    imp = (query ** 2).sum(axis=0) * (mu ** 2 + var)   # [D]
+    idx = np.argsort(imp)[::-1]                          # descending importance
+    tp = int(np.floor(D * top_frac))
+    return np.concatenate([np.sort(idx[:tp]), np.sort(idx[tp:])]).astype(np.int64)

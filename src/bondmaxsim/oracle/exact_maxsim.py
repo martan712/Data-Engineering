@@ -34,7 +34,19 @@ def exact_maxsim_scores(
     -------
     scores : float32 [num_docs] — score(q, d) = sum_i max_j <q_i, d_j>
     """
-    raise NotImplementedError
+    num_docs = len(doc_starts)
+    T = flat_tokens.shape[0]
+    scores = np.zeros(num_docs, dtype=np.float32)
+    for d in range(num_docs):
+        start = int(doc_starts[d])
+        end = int(doc_starts[d + 1]) if d + 1 < num_docs else T
+        if start >= end:
+            # empty document: score stays 0
+            continue
+        doc = flat_tokens[start:end]        # [n_d, D]
+        sim = query @ doc.T                 # [m, n_d]
+        scores[d] = float(sim.max(axis=1).sum())
+    return scores
 
 
 def exact_maxsim_topk(
@@ -55,4 +67,18 @@ def exact_maxsim_topk(
     ids    : int64  [k] — document indices in descending score order
     scores : float32 [k]
     """
-    raise NotImplementedError
+    scores = exact_maxsim_scores(query, flat_tokens, doc_starts)
+    num_docs = len(scores)
+    actual_k = min(k, num_docs)
+
+    if actual_k == num_docs:
+        # return all docs sorted descending
+        ids = np.argsort(scores)[::-1].astype(np.int64)
+        return ids, scores[ids].astype(np.float32)
+
+    # np.argpartition gives the actual top-k (set semantics, Stage 1 §4.3)
+    top_idx = np.argpartition(scores, -actual_k)[-actual_k:]
+    top_scores = scores[top_idx]
+    sort_order = np.argsort(top_scores)[::-1]
+    ids = top_idx[sort_order].astype(np.int64)
+    return ids, scores[ids].astype(np.float32)

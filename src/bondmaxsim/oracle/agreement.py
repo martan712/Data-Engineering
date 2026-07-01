@@ -37,7 +37,14 @@ def recall_at_k(
     -------
     Fraction of relevant ids present in retrieved (in [0, 1]).
     """
-    raise NotImplementedError
+    if k is not None:
+        retrieved = retrieved[:k]
+        relevant = relevant[:k]
+    rel_set = set(int(x) for x in relevant)
+    if len(rel_set) == 0:
+        return 1.0
+    ret_set = set(int(x) for x in retrieved)
+    return len(ret_set & rel_set) / len(rel_set)
 
 
 def exact_agreement(
@@ -49,7 +56,7 @@ def exact_agreement(
     This is recall_at_k with k inferred from len(exact_ids).
     For shrink=1, the return value must be 1.0 (Stage 1 §2.5).
     """
-    raise NotImplementedError
+    return recall_at_k(pruned_ids, exact_ids, k=len(exact_ids))
 
 
 def assert_exact_agreement(
@@ -61,4 +68,11 @@ def assert_exact_agreement(
 
     Use tol=0.0 for a hard gate (blocking check for shrink=1 mode).
     """
-    raise NotImplementedError
+    agreement = exact_agreement(pruned_ids, exact_ids)
+    threshold = 1.0 - tol
+    if agreement < threshold:
+        raise AssertionError(
+            f"Exact-agreement check failed: agreement={agreement:.6f} < "
+            f"threshold={threshold:.6f} (tol={tol}).  "
+            f"pruned={list(pruned_ids)}, exact={list(exact_ids)}"
+        )

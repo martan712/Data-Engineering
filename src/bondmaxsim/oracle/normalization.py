@@ -29,7 +29,15 @@ def assert_unit_norm(tokens: np.ndarray, tol: float = 1e-4) -> None:
     ------
     AssertionError if any token deviates from unit norm by more than tol.
     """
-    raise NotImplementedError
+    norms = np.linalg.norm(tokens, axis=1)
+    violating = np.where((norms < 1.0 - tol) | (norms > 1.0 + tol))[0]
+    if len(violating) > 0:
+        raise AssertionError(
+            f"Unit-norm check failed: {len(violating)} token(s) outside "
+            f"[{1.0 - tol:.6f}, {1.0 + tol:.6f}].  "
+            f"min_norm={norms.min():.6f}, max_norm={norms.max():.6f}, "
+            f"n_violating={len(violating)}"
+        )
 
 
 def check_unit_norm(tokens: np.ndarray, tol: float = 1e-4) -> dict[str, float]:
@@ -37,4 +45,11 @@ def check_unit_norm(tokens: np.ndarray, tol: float = 1e-4) -> dict[str, float]:
 
     Returns keys: min_norm, max_norm, mean_norm, n_violating (count outside tol).
     """
-    raise NotImplementedError
+    norms = np.linalg.norm(tokens, axis=1)
+    n_violating = int(np.sum((norms < 1.0 - tol) | (norms > 1.0 + tol)))
+    return {
+        "min_norm": float(norms.min()),
+        "max_norm": float(norms.max()),
+        "mean_norm": float(norms.mean()),
+        "n_violating": n_violating,
+    }
