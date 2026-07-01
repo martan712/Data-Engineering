@@ -40,7 +40,11 @@ def self_bound_threshold(lower_bounds: np.ndarray, k: int) -> float:
     -------
     tau : float — k-th largest lower bound, or -inf if fewer than k docs are live
     """
-    raise NotImplementedError
+    n = lower_bounds.shape[0]
+    if n < k:
+        return float("-inf")
+    # k-th largest via partition (avoids a full sort for large live sets).
+    return float(np.partition(lower_bounds, -k)[-k])
 
 
 def oracle_threshold(exact_scores: np.ndarray, k: int) -> float:
@@ -58,7 +62,10 @@ def oracle_threshold(exact_scores: np.ndarray, k: int) -> float:
     -------
     tau : float — exact k-th best score
     """
-    raise NotImplementedError
+    n = exact_scores.shape[0]
+    if k >= n:
+        return float(np.min(exact_scores))
+    return float(np.partition(exact_scores, -k)[-k])
 
 
 def seed_threshold(
@@ -85,4 +92,15 @@ def seed_threshold(
     -------
     tau : float — seeded threshold, or -inf if fewer than k docs are in the seed
     """
-    raise NotImplementedError
+    n_docs = partial_scores.shape[0]
+    n_seed = int(np.floor(n_docs * seed_fraction))
+    if n_seed < k:
+        return float("-inf")
+
+    # Rank documents by cheap partial score; take the top n_seed indices.
+    seed_idx = np.argpartition(partial_scores, -n_seed)[-n_seed:]
+    seed_exact = exact_scores[seed_idx]
+
+    # k-th best exact score within the seed set (never larger than the true
+    # k-th best over all docs, since the seed is a subset of the full corpus).
+    return float(np.partition(seed_exact, -k)[-k])
