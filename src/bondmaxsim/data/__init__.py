@@ -11,3 +11,7 @@ Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §1.3 (scanned set S
   doc_offsets partition), §4.1 (unit-normalization precondition — all loaders must
   check or enforce it).
 """
+
+from bondmaxsim.data.loader import load_dataset
+
+__all__ = ["load_dataset"]

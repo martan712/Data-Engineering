@@ -24,6 +24,9 @@ uv.lock
 *.pt
 *.pkl
 
+# Ported embedding blobs (regenerable via `python -m bondmaxsim.data.port_embeddings`)
+data/embeddings/*.npz
+
 # Downloaded datasets (regenerable; not research evidence)
 *.csv
 *.png
