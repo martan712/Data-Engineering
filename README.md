@@ -30,10 +30,26 @@ status table in `docs/project_structure.md`.
 
 ## Getting Started
 
+The project uses [uv](https://docs.astral.sh/uv/) as its standard Python
+toolchain (venv + dependency management). `./setup.sh` wraps the full bootstrap:
+
 ```bash
-./setup.sh        # init pinned submodules, build C++ kernels, install bondmaxsim (editable)
-pytest            # Stage 2 blocking checks: unit-norm guard + shrink=1 exact-agreement
+./setup.sh        # init submodules, create .venv (uv), install bondmaxsim, build C++ kernels
+uv run pytest     # Stage 2 blocking checks: unit-norm guard + shrink=1 exact-agreement
 ```
+
+Or run the steps manually:
+
+```bash
+uv venv --python 3.12          # create .venv
+uv pip install -e ".[dev]"     # editable install (NumPy-only core + pytest)
+make -C cpp/per_document_oracle # build the per-document-oracle kernel
+uv run pytest                  # run the gate
+```
+
+The core install is NumPy-only (the mechanism testbed). The heavy retrieval
+stack (torch/pylate/ranx, Stages 3–5) is an optional extra:
+`uv pip install -e ".[dev,retrieval,faiss]"`.
 
 ## Key Results (Stage 1)
 

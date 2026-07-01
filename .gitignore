@@ -15,6 +15,10 @@ venv/
 env/
 .env/
 
+# uv (pip-interface workflow; reproducibility is anchored by pinned submodules,
+# not a locked env, so the auto-generated lock is not tracked)
+uv.lock
+
 # Large / regenerable data files
 *.npy
 *.pt

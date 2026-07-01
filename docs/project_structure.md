@@ -129,11 +129,20 @@ below (on-branch), not a branch-local or gitignored path.
 
 ## Reproduction
 
+Standard toolchain: [uv](https://docs.astral.sh/uv/) manages the venv (`.venv`)
+and dependencies. `./setup.sh` runs the full bootstrap; commands then run under
+`uv run` (no manual `source .venv/bin/activate` or `PYTHONPATH=src` needed —
+`src/` is on the path via `pyproject.toml`'s `pytest.pythonpath` and the editable
+install).
+
 ```text
-./setup.sh                 # init pinned submodules, build C++ kernels, install package
-pytest                     # exact-agreement + normalization guards (Stage 2 blocking checks)
-python -m experiments.stageN_*.<driver>   # reproduce a stage's results into results/json/
+./setup.sh                 # uv venv + editable install + build C++ kernels + init submodules
+uv run pytest              # exact-agreement + normalization guards (Stage 2 blocking checks)
+uv run python -m experiments.stageN_*.<driver>   # reproduce a stage's results into results/json/
 ```
+
+Dependency extras: core install is NumPy-only (mechanism testbed); the retrieval
+stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 
 ## Stage Status
 
