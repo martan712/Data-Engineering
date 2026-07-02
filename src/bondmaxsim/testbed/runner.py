@@ -18,6 +18,7 @@ Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §6 (accounting mode
 
 from __future__ import annotations
 
+import time
 from typing import Optional
 
 import numpy as np
@@ -28,7 +29,7 @@ from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
 from bondmaxsim.testbed.oracle_modes import run_accounting_mode, run_throughput_mode
 from bondmaxsim.testbed.packing_cache import PackingCache
-from bondmaxsim.testbed.wide_modes import run_wide_accounting_mode, run_wide_throughput_mode
+from bondmaxsim.testbed.wide_modes import run_wide_accounting_mode, run_wide_brute_mode, run_wide_throughput_mode
 
 __all__ = ["Runner", "RunConfig"]
 
@@ -118,6 +119,87 @@ class Runner:
 
     def _get_exact_scores(self, k: int) -> list[np.ndarray]:
         return [scores for _, scores in self._get_exact_oracle(k)]
+
+    # ------------------------------------------------------------------
+    # brute_force_mode
+    # ------------------------------------------------------------------
+
+    def brute_force_mode(
+        self,
+        config: RunConfig,
+        kind: str = "pdx",
+        n_repeats: int = 5,
+    ) -> ResultRecord:
+        """Run a brute-force baseline (no pruning) for comparison with BOND arms.
+
+        Parameters
+        ----------
+        kind : "pdx"   — wide_block_maxsim_brute: same columnar group layout as
+                         the BOND kernels, natural dimension order, zero bound
+                         checks.  Isolates PDX-layout cache benefit.
+               "numpy" — exact_maxsim_topk timed in a throughput loop: plain
+                         row-major MatMul baseline via NumPy/BLAS.
+        """
+        if kind == "pdx":
+            return run_wide_brute_mode(
+                self._get_wide_lib(), self._packing, self._queries, config,
+                n_repeats=n_repeats,
+            )
+        elif kind == "numpy":
+            return self._numpy_brute_force(config, n_repeats)
+        else:
+            raise ValueError(f"Unknown brute_force kind: {kind!r}. Expected 'pdx' or 'numpy'.")
+
+    def _numpy_brute_force(self, config: RunConfig, n_repeats: int) -> ResultRecord:
+        """Time exact_maxsim_topk (row-major NumPy) in a best-of-N loop."""
+        from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+        from bondmaxsim.oracle.agreement import exact_agreement
+
+        K  = config.k
+        nq = len(self._queries)
+
+        def _run_all():
+            for q in self._queries:
+                exact_maxsim_topk(q, self._packing.flat_tokens,
+                                  self._packing.doc_starts, k=K)
+
+        # Warmup.
+        _run_all()
+
+        best_s = float("inf")
+        for _ in range(n_repeats):
+            t0 = time.perf_counter()
+            _run_all()
+            best_s = min(best_s, time.perf_counter() - t0)
+
+        ms_per_query = best_s / nq * 1e3
+        qps          = nq / best_s if best_s > 0.0 else float("inf")
+
+        return ResultRecord(
+            dataset               = config.dataset,
+            num_docs              = self._packing.num_docs,
+            num_queries           = nq,
+            method                = "numpy_brute",
+            candidate_budget      = None,
+            dimension_order       = "natural",
+            threshold_policy      = "none",
+            recall_vs_exact_at_10 = 1.0,
+            nDCG_at_10            = None,
+            recall_at_100         = None,
+            MRR_at_10             = None,
+            CoRECT_RC_metrics     = None,
+            ms_per_query          = ms_per_query,
+            qps                   = qps,
+            cells_scanned_pct     = None,
+            pruned_docs_pct       = None,
+            bound_checks_per_query= None,
+            machine               = config.machine,
+            os                    = config.os,
+            thread_count          = config.thread_count,
+            shrink                = 1.0,
+            tokens_pruned_pct     = None,
+            notes                 = "NumPy row-major brute force",
+        )
 
     # ------------------------------------------------------------------
     # accounting_mode

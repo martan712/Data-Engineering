@@ -9,7 +9,7 @@ Ported artifact: C++ kernel ABI from
   full layout/algorithm description, Stage 1 §5.3.
 Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §6, §8 item 3.
 
-ABI (both variants share the same signature):
+ABI (accounting/throughput variants share the same signature):
   uint64 wide_block_maxsim_{accounting,throughput}(
       const float* group_data, const uint64_t* group_offsets, size_t n_groups,
       const uint64_t* doc_offsets, size_t n_docs,
@@ -19,12 +19,15 @@ ABI (both variants share the same signature):
       const float* Qcum, float shrink, float tau_seed, size_t K,
       uint32_t* topk_id, float* topk_score, uint64_t* stats,
       uint64_t* block_doc_live, uint64_t* block_token_live)
-  group_data/group_offsets/doc_offsets/group_doc_starts come from
-  bondmaxsim.data.packing.pack_corpus_wide.  tau_seed seeds the document
-  pruning threshold (tau = max(tau_seed, topk.threshold())); -inf recovers
-  the self_bound policy.  block_doc_live/block_token_live (len n_fetch) are
-  NULLABLE per-fetch-boundary live-doc/live-token accumulators (pass None
-  from Python to skip collecting them).
+
+ABI (brute-force baseline — no pruning, no bound parameters):
+  uint64 wide_block_maxsim_brute(
+      const float* group_data, const uint64_t* group_offsets, size_t n_groups,
+      const uint64_t* doc_offsets,
+      const uint64_t* group_doc_starts,
+      const float* query, size_t m, size_t D,
+      size_t K,
+      uint32_t* topk_id, float* topk_score)
 """
 
 from __future__ import annotations
@@ -82,6 +85,17 @@ def load_wide_block_kernel() -> ctypes.CDLL:
         fn = getattr(lib, fname)
         fn.argtypes = _wide_argtypes
         fn.restype  = ctypes.c_uint64
+
+    # Brute-force baseline — narrower signature (no order/fetch/Qcum/shrink/tau/stats).
+    lib.wide_block_maxsim_brute.argtypes = [
+        f32p, u64p, csz,    # group_data, group_offsets, n_groups
+        u64p,               # doc_offsets
+        u64p,               # group_doc_starts
+        f32p, csz, csz,     # query, m, D
+        csz,                # K
+        u32p, f32p,         # topk_id, topk_score
+    ]
+    lib.wide_block_maxsim_brute.restype = ctypes.c_uint64
 
     return lib
 
@@ -218,3 +232,56 @@ def run_wide_block_throughput(
         group_data, group_offsets, doc_offsets, group_doc_starts,
         Q, order, Qcum, shrink, tau_seed, K, collect_block_stats,
     )
+
+
+def run_wide_block_brute(
+    lib: ctypes.CDLL,
+    group_data: np.ndarray,
+    group_offsets: np.ndarray,
+    doc_offsets: np.ndarray,
+    group_doc_starts: np.ndarray,
+    Q: np.ndarray,
+    K: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Call wide_block_maxsim_brute — PDX-layout brute force (no pruning).
+
+    Scans all D dimensions of all tokens in natural order without any bound
+    checks, token pruning, or document pruning.  Same group layout as the
+    BOND kernels; different from NumPy brute force in that it uses the
+    columnar (dim-major) group storage.
+
+    Parameters
+    ----------
+    lib              : CDLL from load_wide_block_kernel()
+    group_data, group_offsets, doc_offsets, group_doc_starts :
+        from bondmaxsim.data.packing.pack_corpus_wide (natural-order packing)
+    Q                : float32 [m, D] — query token matrix
+    K                : int — number of results to return
+
+    Returns
+    -------
+    ids    : uint32 [K]
+    scores : float32 [K]
+    """
+    group_data       = np.ascontiguousarray(group_data,       dtype=np.float32)
+    group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
+    doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
+    group_doc_starts = np.ascontiguousarray(group_doc_starts, dtype=np.uint64)
+    Q = np.ascontiguousarray(Q, dtype=np.float32)
+
+    m = Q.shape[0]
+    D = Q.shape[1]
+    n_groups = len(group_offsets) - 1
+
+    ids    = np.empty(K, dtype=np.uint32)
+    scores = np.empty(K, dtype=np.float32)
+
+    lib.wide_block_maxsim_brute(
+        fp(group_data), lp(group_offsets), csz(n_groups),
+        lp(doc_offsets),
+        lp(group_doc_starts),
+        fp(Q), csz(m), csz(D),
+        csz(K),
+        up(ids), fp(scores),
+    )
+    return ids, scores
