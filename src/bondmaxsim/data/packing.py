@@ -69,6 +69,98 @@ def pack_corpus(docs: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
     return flat, offs
 
 
+def pack_corpus_wide(
+    flat_tokens: np.ndarray,
+    doc_starts: np.ndarray,
+    target_group_tokens: int = 4096,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Pack a token-major corpus into wide dim-major vectorgroups (Stage 1 §5.3).
+
+    Partitions the corpus into groups of consecutive WHOLE documents,
+    targeting ~``target_group_tokens`` tokens per group (a single document
+    larger than the target gets its own group -- it is never split across
+    groups).  Within a group of ``G`` tokens, storage is dim-major ACROSS ALL
+    documents in the group: ``group_data[z*G + t]`` where ``t`` is the
+    token's LOCAL index within the group (0..G-1, documents concatenated in
+    id order) and ``z`` is the physical dimension.  Groups are concatenated
+    into one flat float32 buffer.
+
+    Mirrors the per-document ``pack_corpus`` transpose-and-concatenate
+    pattern, generalized from "one document's tokens" to "one group's
+    tokens" (see cpp/wide_block_maxsim_bond/wide_block_maxsim_bond.cpp
+    header comment for the exact ABI this feeds).
+
+    Parameters
+    ----------
+    flat_tokens : float32 [T, D] — all document tokens, token-major
+    doc_starts  : int64 [n_docs] — start token offset of each document
+                  (bondmaxsim.data.loader convention: length n_docs, the
+                  start of doc d+1 is doc_starts[d+1] or T for the last doc;
+                  NOT n_docs+1)
+    target_group_tokens : int — target token count per wide vectorgroup
+
+    Returns
+    -------
+    group_data       : float32 [T * D] — concatenated dim-major group
+                        buffers; group g's data starts at
+                        ``group_data[group_offsets[g] * D]`` and spans
+                        ``D * (group_offsets[g+1] - group_offsets[g])``
+                        floats, laid out ``[z*G + t]`` within that span.
+    group_offsets    : uint64 [n_groups + 1] — cumulative GLOBAL token
+                        offset of each group's first token
+                        (group_offsets[0] = 0, group_offsets[-1] = T);
+                        mirrors doc_offsets' cumulative-count convention.
+    doc_offsets      : uint64 [n_docs + 1] — cumulative GLOBAL token counts
+                        per document (doc_starts extended with a trailing T,
+                        the per-document oracle's doc_offsets convention).
+    group_doc_starts : uint64 [n_groups + 1] — first GLOBAL document id of
+                        each group; group g owns documents
+                        [group_doc_starts[g], group_doc_starts[g+1]).
+    """
+    flat_tokens = np.ascontiguousarray(flat_tokens, dtype=np.float32)
+    T, D = flat_tokens.shape
+    n_docs = len(doc_starts)
+
+    doc_offsets = np.empty(n_docs + 1, dtype=np.uint64)
+    if n_docs > 0:
+        doc_offsets[:n_docs] = np.asarray(doc_starts, dtype=np.uint64)
+    doc_offsets[n_docs] = T
+
+    group_doc_starts: list[int] = [0]
+    group_token_starts: list[int] = [0]
+    cur_tokens = 0
+    for d in range(n_docs):
+        nd = int(doc_offsets[d + 1] - doc_offsets[d])
+        if cur_tokens > 0 and cur_tokens + nd > target_group_tokens:
+            group_doc_starts.append(d)
+            group_token_starts.append(int(doc_offsets[d]))
+            cur_tokens = 0
+        cur_tokens += nd
+    group_doc_starts.append(n_docs)
+    group_token_starts.append(T)
+
+    n_groups = len(group_doc_starts) - 1
+    group_offsets = np.array(group_token_starts, dtype=np.uint64)
+
+    chunks: list[np.ndarray] = []
+    for g in range(n_groups):
+        start = int(group_offsets[g])
+        end = int(group_offsets[g + 1])
+        chunk = flat_tokens[start:end]                          # [G, D]
+        chunks.append(np.ascontiguousarray(chunk.T).ravel())    # dim-major (D, G)
+    group_data = np.ascontiguousarray(
+        np.concatenate(chunks) if chunks else np.empty(0, dtype=np.float32),
+        dtype=np.float32,
+    )
+
+    return (
+        group_data,
+        group_offsets,
+        doc_offsets,
+        np.array(group_doc_starts, dtype=np.uint64),
+    )
+
+
 def build_qcum(query: np.ndarray, order: np.ndarray) -> np.ndarray:
     """Build the cumulative squared-norm prefix table for a query.
 

@@ -38,6 +38,10 @@ echo "==> Building the C++ per-document-oracle kernel..."
 make -C cpp/per_document_oracle
 
 echo ""
+echo "==> Building the C++ wide-block MaxSim BOND kernel..."
+make -C cpp/wide_block_maxsim_bond
+
+echo ""
 echo "Setup complete."
 echo "  Activate the venv:  source .venv/bin/activate"
 echo "  Run the test gate:  uv run pytest"

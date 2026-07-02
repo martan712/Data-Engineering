@@ -54,10 +54,16 @@ bound state (`L_i` and the live set) is maintained via `doc_offsets` even though
 the block interleaves tokens from many documents (§2.4 note). The synchronized
 wide scan means `tau_k` must be provided via staged finalization or a seed (§4.4).
 
-**Substrate:** Extends `extern/PDX-sigmod/include/pdx/bond.hpp`
-(`IndexPDXBONDFlat`, `PDXBondSearcher`) — the single-vector L2 PDXearch variant
-at commit `fdc62f2`. The extension changes L2 single-vector distance to
-inner-product MaxSim with the two-level (token → document) bound from §2.
+**Substrate:** Self-contained (no PDX include needed at compile time). The
+scan structure (Start → Warmup → Prune, `DIMENSIONS_FETCHING_SIZES` cadence,
+positions-array survivor compaction) mirrors the pattern in
+`extern/PDX-sigmod/include/pdx/{bond,pdxearch}.hpp` (`IndexPDXBONDFlat`,
+`PDXBondSearcher`) at commit `fdc62f2` — the single-vector L2 PDXearch variant
+— cited in a header comment, not copied. The extension changes L2
+single-vector distance to inner-product MaxSim with the two-level
+(token → document) bound from §2, over a wide dim-major vectorgroup that
+interleaves whole documents (`pack_corpus_wide` in
+`src/bondmaxsim/data/packing.py`).
 
 **Stage 1 sections:** §5.1 (PDX-sigmod BOND reference implementation), §5.3
 (faithful wide-block design), §4.4 (threshold dynamics in synchronized scan —
@@ -82,8 +88,9 @@ make -C cpp/per_document_oracle/
 make -C cpp/wide_block_maxsim_bond/
 ```
 
-Dependencies: C++17 compiler, `extern/PDX-sigmod/` submodule initialized
-(for `wide_block_maxsim_bond`; `per_document_oracle` is self-contained).
+Dependencies: C++20 compiler (clang++ or g++). Both kernels are
+self-contained (no PDX include needed at compile time); `extern/PDX-sigmod/`
+is a design reference only (cited in comments), not a build dependency.
 
 Output: `per_document_oracle.so` and `wide_block_maxsim_bond.so` loaded at
 runtime by `src/bondmaxsim/kernels/bindings.py`.
