@@ -22,8 +22,8 @@ from bondmaxsim.data.packing import pack_corpus_wide
 from bondmaxsim.testbed.runner import Runner, RunConfig
 
 # Skip the whole module if the wide-block kernel library has not been built.
-pytest.importorskip("bondmaxsim.kernels.bindings")
-from bondmaxsim.kernels.bindings import load_wide_block_kernel  # noqa: E402
+pytest.importorskip("bondmaxsim.kernels.wide_block")
+from bondmaxsim.kernels.wide_block import load_wide_block_kernel  # noqa: E402
 
 try:
     load_wide_block_kernel()

@@ -19,8 +19,8 @@ import pytest
 from bondmaxsim.testbed.runner import Runner, RunConfig
 
 # Skip the whole module if the kernel library has not been built.
-pytest.importorskip("bondmaxsim.kernels.bindings")
-from bondmaxsim.kernels.bindings import load_per_document_oracle  # noqa: E402
+pytest.importorskip("bondmaxsim.kernels.per_document")
+from bondmaxsim.kernels.per_document import load_per_document_oracle  # noqa: E402
 
 try:
     load_per_document_oracle()
