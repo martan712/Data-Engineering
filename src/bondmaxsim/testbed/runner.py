@@ -17,8 +17,9 @@ Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §6 (accounting mode
 
 from __future__ import annotations
 
+import platform
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -49,7 +50,8 @@ class RunConfig:
     """Recall knob: 1.0 = exact-safe (shrink=1), <1.0 = approximate."""
     candidate_budget: Optional[int] = None
     thread_count: int = 1
-    machine: str = "unknown"
+    machine: str = field(default_factory=platform.node)
+    """Hostname for fair-comparison tracking (override for cross-machine runs)."""
     os: str = "linux"
     notes: Optional[str] = None
 

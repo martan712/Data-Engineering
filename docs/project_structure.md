@@ -151,7 +151,11 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 | 0 References & baselines | `docs/stage0_references_and_baselines.md` | Done |
 | 1 BOND-MaxSim formalization | `docs/stage1_bond_maxsim_formalization.md` | Done |
 | Structure & self-containment | this file + scaffold + submodules | In progress |
-| 2 Mechanism testbed | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | In progress |
-| 3 Mechanism experiments | `experiments/stage3_mechanism/` | Not started |
+| 2 Mechanism testbed | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | In progress (testbed smoke drivers s01–s03 + threshold policies done; wide-block MaxSim BOND kernel still pending) |
+| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress (e01 bound-slack run on scifact + nfcorpus with committed results; e02–e07 specced in the stage README) |
 | 4 Candidate-kernel integration | `experiments/stage4_integration/` | Not started |
 | 5 CoRECT IR evaluation | `experiments/stage5_corect/` | Not started |
+
+The detailed done/next/todo checklist lives in
+`docs/project_b_analysis_and_research_plan.md` ("Status And Checklist").
+Update both when a stage advances.

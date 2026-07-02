@@ -18,13 +18,15 @@ Datasets with a missing `.npz` are skipped, not failed. Exits non-zero if any
 dataset fails.
 
 ### `s02_exact_agreement.py`
-**Blocking check (Stage 1 §8 item 2 / §2.5).**
+**Blocking check (Stage 1 §8 items 2 and 5 / §2.5).**
 Runs the per-document-oracle kernel in accounting mode via
-`bondmaxsim.testbed.runner.Runner` with `shrink=1.0` on scifact (natural
-order) and asserts `recall_vs_exact_at_10 == 1.0` against the NumPy exact-MaxSim
-oracle (the Runner computes this internally via
-`bondmaxsim.oracle.exact_maxsim.exact_maxsim_topk`). Writes a `ResultRecord`
-to `results/json/stage2_testbed_exact_agreement_scifact.json`. See also
+`bondmaxsim.testbed.runner.Runner` with `shrink=1.0` on scifact for every
+dimension order (natural, bond, ada) and asserts
+`recall_vs_exact_at_10 == 1.0` for each against the NumPy exact-MaxSim oracle
+(the Runner computes this internally via
+`bondmaxsim.oracle.exact_maxsim.exact_maxsim_topk`; order affects efficiency,
+never correctness). Writes one `ResultRecord` per order to
+`results/json/stage2_testbed_exact_agreement_scifact_<order>.json`. See also
 `tests/test_runner_gate.py` for the always-run pytest version of this gate on
 synthetic data, across all three dimension orders and both modes.
 

@@ -1,13 +1,27 @@
 # Project B Analysis And Research Plan
 
-Prepared 2026-06-29.
+Prepared 2026-06-29. Updated 2026-07-02 (added Status And Checklist section,
+pinned sources from the project description, synced with Stage 1 conclusions
+and the implemented repository structure).
 
 Project goal: speed up multi-vector search as used in ColBERT. The intended
 research direction is to use the recent PDX library from the CWI database group
-and re-implement the BOND/SIGMOD-2002 branch-and-bound idea in a way that can
-accelerate ColBERT-style MaxSim retrieval. The information-retrieval evaluation
-should use BEIR-style datasets and, where possible, the CoRECT evaluation
-framework introduced by the University of Passau OWS.EU partners.
+(Kuffo, Krippner, Boncz, SIGMOD 2025) and re-implement the BOND branch-and-bound
+idea — de Vries, Mamoulis, Nes, Kersten, "Efficient k-NN Search on Vertically
+Decomposed Data", SIGMOD 2002 — in a way that can accelerate ColBERT-style
+MaxSim retrieval. The information-retrieval evaluation should use BEIR-style
+datasets and, where possible, the CoRECT evaluation framework introduced at
+ECIR 2026 by the University of Passau OWS.EU partners.
+
+Scope: single-node CPU retrieval, matching PDX's SIMD/cache-oriented design.
+GPU acceleration is out of scope. Two items from the project description are
+tracked as context, not core work: Leonardo Kuffo's PDX blog posts are a
+pinned introductory source (Stage 0), and the preliminary PDX-in-DuckDB
+integration is a possible later-stage extension only — it becomes relevant
+if and only if the BOND-MaxSim mechanism wins on the speed-quality frontier.
+The CWI group's recent PDX-based fast k-means paper builds primarily on
+ADSampling; it is related work that sharpens the BOND-vs-ADSampling contrast
+(Stage 0 terminology), not a method arm of this project.
 
 This document has two parts:
 
@@ -193,11 +207,15 @@ stage has a stopping condition.
 
 Define and pin the sources:
 
-- the BOND/SIGMOD-2002 algorithm and its original assumptions;
-- the PDX paper, implementation, and available search variants;
-- ADSampling and how it differs from BOND;
+- the BOND/SIGMOD-2002 algorithm and its original assumptions (de Vries,
+  Mamoulis, Nes, Kersten, SIGMOD 2002 — cite the paper itself, not only the
+  PDX re-implementation);
+- the PDX paper, implementation, and available search variants, plus Leonardo
+  Kuffo's blog posts as the practical entry point to the codebase;
+- ADSampling and how it differs from BOND, including the CWI PDX-based
+  k-means paper as the group's own ADSampling-based follow-up;
 - ColBERT MaxSim and PLAID;
-- CoRECT metrics and evaluation protocol.
+- CoRECT metrics and evaluation protocol (ECIR 2026, University of Passau).
 
 Output:
 
@@ -285,6 +303,27 @@ oracle-only.
 Implement a small, reproducible mechanism testbed before integrating with a full
 retrieval pipeline.
 
+Stage 1 conclusions that shape this stage (see
+`docs/stage1_bond_maxsim_formalization.md` §5):
+
+- The preliminary per-document kernel prunes at the wrong granularity
+  ("Option B"). It is retained only as the **exact-safe accounting oracle**
+  (`cpp/per_document_oracle/`); its wall-clock results are not evidence
+  against BOND-in-PDX.
+- The Stage 2 deliverable is the **wide-token-block MaxSim BOND**
+  (`cpp/wide_block_maxsim_bond/`): document tokens laid out dim-major across
+  many documents, scanned dimension-incrementally, with the Section 2 pair
+  intervals aggregated to per-document upper bounds and per-document live-token
+  sets maintained inside the wide block.
+- **Threshold seeding is first-class**, not an ablation: a synchronized
+  wide-block scan finalizes no document until the end of the pass, so the
+  self-threshold stays at `-inf` mid-pass. Seeded thresholds (IVF, PLAID, or a
+  prior-pass lower bound) are the realistic operating mode.
+
+Blocking checks before any Stage 3 result is trusted: the unit-norm guard
+(residual bounds use `1 - sumsq` and silently break when `||x|| > 1`) and the
+`shrink = 1` exact-agreement gate (`recall_vs_exact@10 == 1.0`).
+
 Required inputs:
 
 - packed document token embeddings;
@@ -325,14 +364,29 @@ Existing work that may be reused:
 - Martan's custom C/C++ kernels and cells-scanned instrumentation, after adding
   the standardized inputs and outputs above.
 
+Stage 2 artifacts:
+
+- `src/bondmaxsim/` — research package (config, schema, data, oracle, ordering,
+  threshold, kernels, testbed, baselines, eval), one responsibility per module;
+- `cpp/per_document_oracle/` — exact-safe accounting/throughput oracle kernels;
+- `cpp/wide_block_maxsim_bond/` — the wide-block MaxSim BOND kernel (the
+  mechanism under test);
+- `experiments/stage2_testbed/` — normalization guard, exact-agreement gate,
+  two-mode smoke drivers;
+- `tests/` — blocking checks run via `uv run pytest`.
+
 #### Stage 3: Run Mechanism Experiments
 
 Run controlled experiments that explain whether BOND is viable for MaxSim.
 
 Datasets:
 
-- SciFact, NFCorpus, ArguAna, SCIDOCS for BEIR-scale debugging;
-- at least one 100k to 1M document setting for scale;
+- SciFact, NFCorpus, ArguAna, SCIDOCS for BEIR-scale debugging (already
+  exported to `data/embeddings/*.npz`, D=128, unit-normalized, 200 queries
+  each);
+- at least one 100k to 1M document setting for scale — preferred source: the
+  CoRECT controlled corpus pools, which supply the scale axis and keep Stage 3
+  consistent with the Stage 5 evaluation (fallback: a larger BEIR corpus);
 - optional synthetic data to isolate dimension, length, and score-distribution
   effects.
 
@@ -359,9 +413,18 @@ Existing work that may be reused:
 - current MaxSim-BOND instrumentation as one experiment arm;
 - existing PCA/rotation experiments as preliminary points to rerun under the
   shared schema;
-- the Stage 1 feasibility figures already present in
-  `research/bond_maxsim/stage1_feasibility/figures/` as templates for the final
-  plots, not as final evidence unless regenerated under the agreed protocol.
+- earlier feasibility figures (untracked `research/bond_maxsim/` working
+  directory; not on this branch) as plot templates only — every figure used as
+  evidence must be regenerated by a driver in `experiments/stage3_mechanism/`
+  into `results/figures/stage3_mechanism/`.
+
+Stage 3 artifacts:
+
+- `experiments/stage3_mechanism/e01..e07` — one driver per experiment (see the
+  README in that directory for the experiment specifications);
+- `results/json/stage3_mechanism_*.json` and
+  `results/figures/stage3_mechanism/` — regenerated evidence under the shared
+  schema.
 
 #### Stage 4: Integrate Candidate Kernel Path
 
@@ -391,7 +454,13 @@ Existing work that may be reused:
   `archive/reference/05_maxsim_bond_instrumentation.py` (brought on-branch from
   `Mikel`; threshold logic to be reimplemented in `src/bondmaxsim/threshold/`): self-bound,
   oracle-threshold, and seeded-threshold variants. These should become explicit
-  method arms if they survive Stage 1 formalization.
+  method arms if they survive Stage 1 formalization. (Stage 1 outcome: they
+  survive; seeded threshold is first-class — see Stage 2 notes above.)
+
+Stage 4 artifacts:
+
+- `src/bondmaxsim/baselines/` — faiss_ivf / pdx_ivf / plaid wrappers;
+- `experiments/stage4_integration/` — method arms at fixed candidate sets.
 
 #### Stage 5: CoRECT-Style IR Evaluation
 
@@ -421,7 +490,13 @@ Existing work that may be reused:
 
 - BEIR preparation scripts;
 - qrels metric utilities;
-- CoRECT repository code, after adding or specifying a ColBERT/MaxSim wrapper.
+- CoRECT repository code (pinned at `extern/CoRECT/`), after adding or
+  specifying a ColBERT/MaxSim wrapper.
+
+Stage 5 artifacts:
+
+- `src/bondmaxsim/eval/` — qrels metrics and the CoRECT adapter;
+- `experiments/stage5_corect/` — IR evaluation drivers.
 
 ### How The Stages Answer The Questions
 
@@ -477,7 +552,14 @@ These experiments should be run before making final claims:
 
 ### Shared Result Schema
 
-All experiments should write one shared result format:
+All experiments write one shared result format. The **canonical definition is
+`src/bondmaxsim/schema.py` (`ResultRecord`)**; the JSON below is an
+illustrative example, and its keys are spelled Python-style in code
+(`recall_vs_exact_at_10`, `nDCG_at_10`, ...). Two extensions are planned and
+tracked in the checklist: an explicit `shrink` field (so exact vs approximate
+arms are machine-separable, not only encoded in `method`/`notes`) and
+token-level pruning counters (`tokens_pruned_pct`, per-block live counts)
+required by experiment e02.
 
 ```json
 {
@@ -549,3 +631,99 @@ organized as a research argument.
   question or supply a reusable implementation component.
 - CoRECT, PDX, BOND, ADSampling, ColBERT MaxSim, PLAID, FAISS-IVF, and custom
   kernels all appear in the final methodology.
+
+## Status And Checklist
+
+Last updated 2026-07-02. This section is the working to-do list for future
+sessions/agents. Keep it and the status table in `docs/project_structure.md`
+in sync when a stage advances. Conventions (uv toolchain, thin drivers, shared
+schema, exact/approx separation) are in `docs/project_structure.md` — read it
+before adding files.
+
+### Done
+
+- [x] Repository restructured as a self-contained research branch
+      (`final-research-implementation`): `docs/`, `src/bondmaxsim/`, `cpp/`,
+      `experiments/`, `results/`, `archive/`, pinned submodules in `extern/`
+      (PDX @ `93531b9`, PDX-sigmod @ `fdc62f2`, CoRECT @ `fedf8bb2`).
+- [x] Toolchain standardized on uv (`./setup.sh`, `uv run pytest`); packaging
+      via `pyproject.toml`, NumPy-only core with `[retrieval]`/`[faiss]`/`[dev]`
+      extras.
+- [x] Stage 0: `docs/stage0_references_and_baselines.md` — terminology table,
+      source pins, baseline matrix; external ZEN5 BOND/BSA/ADSampling results
+      preserved under `results/external_baselines/`.
+- [x] Stage 1: `docs/stage1_bond_maxsim_formalization.md` — `shrink = 1`
+      exact-safety proof (unit-norm precondition, token-pruning survival
+      invariant, set-equality top-k), `shrink < 1` separation, per-document
+      "Option B" demoted to exact-safe oracle, wide-token-block PDX-BOND named
+      as the Stage 2 deliverable, seeded threshold promoted to first-class.
+- [x] Stage 2 (partial): package scaffold with implemented `config`, `schema`
+      (`ResultRecord`), `data` (loader/packing/porting), `oracle` (exact
+      MaxSim, normalization guard, exact-agreement, bound trajectory),
+      `ordering` (natural/bond/ada), `kernels` bindings for the per-document
+      oracle, `testbed` runner (accounting + throughput modes).
+- [x] Per-document oracle kernel ported and building
+      (`cpp/per_document_oracle/`, exp-09 accounting + exp-10 throughput).
+- [x] Debug-scale data exported: `data/embeddings/{scifact,nfcorpus,arguana,scidocs}.npz`
+      (GTE-ModernColBERT-v1, D=128, unit-norm verified, 200 queries each).
+- [x] Test suite green: 68 tests including the two Stage 2 blocking checks
+      (unit-norm guard; `shrink = 1` exact-agreement gate on the oracle kernel).
+- [x] Stage 3 e01 (bound slack): `bondmaxsim.oracle.bound_trajectory` +
+      `experiments/stage3_mechanism/e01_bound_slack.py` + tests committed;
+      run on scifact and nfcorpus (50 queries, natural/bond/ada) with JSON +
+      figures committed under `results/`; e02 spec extended to two-level
+      (document and token) survival curves in
+      `experiments/stage3_mechanism/README.md`.
+- [x] Schema extensions: `shrink` and `tokens_pruned_pct` added to
+      `ResultRecord`; the testbed runner surfaces the accounting kernel's
+      `tokens_pruned` stat (stats[2]) as `tokens_pruned_pct`.
+- [x] Threshold policies implemented (`src/bondmaxsim/threshold/policies.py`:
+      self_bound / oracle / seed) with safety tests
+      (`tests/test_threshold_policies.py`).
+- [x] Stage 2 smoke drivers (`experiments/stage2_testbed/`): s01 normalization
+      guard, s02 exact-agreement gate on scifact, s03 two-mode smoke; run with
+      `ResultRecord` JSON committed under `results/json/`.
+
+### In Progress / Next
+
+- [ ] **Stage 2 core deliverable:** implement the wide-block MaxSim BOND kernel
+      in `cpp/wide_block_maxsim_bond/` (currently an empty directory), extending
+      the PDX-sigmod BOND/PDXearch pattern to multi-vector MaxSim; add ctypes
+      bindings (the placeholder in `src/bondmaxsim/kernels/bindings.py` raises
+      NotImplementedError) and wire it through the same exact-agreement gate.
+
+### To Do (Stages 3–5)
+
+- [ ] Schema extension for e02: per-block live counts (document-live and
+      token-live counts at each dimension-block boundary; needs a per-block
+      accounting hook in the kernel — `shrink`/`tokens_pruned_pct` totals are
+      already in `ResultRecord`).
+- [ ] Stage 3 experiments e02–e07 per
+      `experiments/stage3_mechanism/README.md`: two-level pruning-rate curves
+      (needs a per-block accounting hook in the kernel), dimension-order
+      ablation, exact-safe sweep, shrink/recall frontier, threshold-policy
+      ablation, cache/layout sensitivity.
+- [ ] Scale dataset: obtain one 100k–1M document corpus (prefer CoRECT pools;
+      requires the `[retrieval]` extra to embed) and export it to the packed
+      token format.
+- [ ] Qrels: export qrels for the four debug datasets and the scale corpus so
+      nDCG@10 / recall@100 / MRR@10 can be computed (Stage 3 onward);
+      implement `src/bondmaxsim/eval/qrels.py` (currently stubs).
+- [ ] Stage 3 decision gate: record explicitly whether any exact-safe or
+      matched-quality arm yields a repeatable wall-clock win; if not, pivot to
+      the documented negative-result path.
+- [ ] Stage 4: implement `src/bondmaxsim/baselines/` (faiss_ivf, pdx_ivf,
+      plaid — all currently stubs) and the fixed-candidate-set comparison
+      drivers in `experiments/stage4_integration/`.
+- [ ] Stage 4: retune and rerun PLAID at appropriate scale (small CPU runs are
+      off-design and non-decisive).
+- [ ] Stage 5: implement the CoRECT adapter (`src/bondmaxsim/eval/corect.py`,
+      currently a stub) with a ColBERT/MaxSim wrapper; run RC metrics and the
+      matched-quality frontier under the fairness controls (one machine, one
+      OS, fixed threads, repeated runs with confidence intervals).
+- [ ] Stage 0 loose end: verify the BOND SIGMOD-2002 bibliographic details
+      against the paper before final writing (flagged in the Stage 0 doc).
+- [ ] Paper: write up following the Final Paper Structure section; every claim
+      passes the Validation Checklist above.
+- [ ] Optional, only after a positive Stage 3/4 result: assess the PDX-in-DuckDB
+      integration path as future work (from the project description).
