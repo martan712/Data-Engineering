@@ -151,8 +151,9 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 | 0 References & baselines | `docs/stage0_references_and_baselines.md` | Done |
 | 1 BOND-MaxSim formalization | `docs/stage1_bond_maxsim_formalization.md` | Done |
 | Structure & self-containment | this file + scaffold + submodules | In progress |
-| 2 Mechanism testbed | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | In progress (testbed smoke drivers s01–s03 + threshold policies done; wide-block MaxSim BOND kernel still pending) |
-| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress (e01 bound-slack run on scifact + nfcorpus with committed results; e02–e07 specced in the stage README) |
+| 2 Mechanism testbed | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | Done (wide-block MaxSim BOND kernel + smoke drivers s01–s03 + threshold policies; exact-agreement gate green on all four datasets) |
+| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress (e01 + e02 run with committed results; e03 first run exposed the wall-clock baseline problem → Stage 3b; e03–e07 to run on the new instruments) |
+| 3b Fused panel kernel | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | In progress (design doc done; K1–K5 pending) |
 | 4 Candidate-kernel integration | `experiments/stage4_integration/` | Not started |
 | 5 CoRECT IR evaluation | `experiments/stage5_corect/` | Not started |
 

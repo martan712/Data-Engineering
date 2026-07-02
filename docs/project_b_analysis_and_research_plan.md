@@ -689,15 +689,45 @@ before adding files.
       survival curves from the wide-block kernel across all threshold policies
       (self_bound / oracle / seed) and dimension orders (natural / bond / pca);
       run on scifact and nfcorpus; JSON + figures committed under `results/`.
+- [x] Stage 3 e03 first run (scifact) + wall-clock baseline forensics: the
+      8.2x `brute_pdx` vs `brute_numpy` gap decomposed into 4.06x OpenBLAS
+      threading + 2.0x runtime-`m` inner-loop codegen; BOND throughput slower
+      than its own dense baseline (bound bookkeeping > 16.3% cells saved).
+      Full analysis, theory, and kernel redesign in
+      `docs/stage3b_fused_panel_maxsim_kernel.md`.
 
 ### In Progress / Next
 
+- [ ] **Stage 3b — fused panel MaxSim kernel** (unplanned interlude; design
+      and rationale in `docs/stage3b_fused_panel_maxsim_kernel.md`). The
+      wall-clock instruments are rebuilt before e03–e07 are run, because the
+      current dense baseline comparison is not thread- or codegen-fair and
+      the decision gate would be evaluated against the wrong baseline.
+      Prototype evidence: fused register-tiled kernel on panel-major PDX
+      layout = 50.4 ms/q single-threaded vs 147.7 ms single-thread OpenBLAS
+      (2.9x) on scifact. Work items (doc §6):
+      - [ ] K1: `pack_corpus_panels` (16-token panel-major, duplicate-last-token
+            doc padding) + layout/padding-invariance tests.
+      - [ ] K2: `cpp/fused_panel_maxsim/` brute kernel (register-tiled M∈{8,16,24}
+            query tiles, fused per-doc max epilogue) + ctypes bindings +
+            exact-agreement gate on all four datasets.
+      - [ ] K3: OpenMP over groups; verify 1T invariance; measure scaling to
+            the DRAM wall.
+      - [ ] K4: `fused_panel_maxsim_bond` with panel-granularity bounds at
+            fetch-boundary checkpoints; shrink=1 exact-agreement gate re-run.
+      - [ ] K5: Runner modes `brute_fused`/`bond_fused` (+ pinned-1T numpy
+            arm); refresh e03 on all four datasets.
+      The accounting kernel and e01/e02 results are unaffected and stay.
 - [ ] **Stage 3 experiments e03–e07** per
-      `experiments/stage3_mechanism/README.md`: dimension-order ablation (e03),
+      `experiments/stage3_mechanism/README.md`, run against the Stage 3b
+      wall-clock instruments: dimension-order ablation (e03 refresh),
       exact-safe cells/latency sweep (e04), approximate recall frontier (e05),
       threshold-policy ablation (e06), cache/layout penalty (e07).
 - [ ] **Stage 3 decision gate**: record explicitly in this document whether any
-      exact-safe arm yields a repeatable wall-clock win over brute force; if not,
+      exact-safe arm yields a repeatable wall-clock win over brute force — the
+      gate baseline is the **multithreaded fused dense kernel** (strongest
+      defensible baseline), not NumPy; record the regime finding
+      (m≈21 MaxSim is GEMM-shaped; doc §2) alongside the outcome. If no win,
       pivot to the documented negative-result path.
 
 ### To Do (Stages 3–5)
