@@ -42,6 +42,10 @@ echo "==> Building the C++ wide-block MaxSim BOND kernel..."
 make -C cpp/wide_block_maxsim_bond
 
 echo ""
+echo "==> Building the C++ fused panel MaxSim kernel (Stage 3b)..."
+make -C cpp/fused_panel_maxsim
+
+echo ""
 echo "Setup complete."
 echo "  Activate the venv:  source .venv/bin/activate"
 echo "  Run the test gate:  uv run pytest"
