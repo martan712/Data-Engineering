@@ -23,10 +23,12 @@ from typing import Optional
 
 import numpy as np
 
+from bondmaxsim.kernels.fused_panel import load_fused_panel_kernel
 from bondmaxsim.kernels.per_document import load_per_document_oracle
 from bondmaxsim.kernels.wide_block import load_wide_block_kernel
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
+from bondmaxsim.testbed.fused_modes import run_fused_brute_mode
 from bondmaxsim.testbed.oracle_modes import run_accounting_mode, run_throughput_mode
 from bondmaxsim.testbed.packing_cache import PackingCache
 from bondmaxsim.testbed.wide_modes import run_wide_accounting_mode, run_wide_brute_mode, run_wide_throughput_mode
@@ -78,6 +80,7 @@ class Runner:
         # Kernel libraries — loaded lazily.
         self._lib = None
         self._wide_lib = None
+        self._fused_lib = None
 
         # Exact top-k cache: keyed by k, stores (ids, scores) tuples computed
         # once and shared across all dimension-order calls on the same query
@@ -102,6 +105,11 @@ class Runner:
         if self._wide_lib is None:
             self._wide_lib = load_wide_block_kernel()
         return self._wide_lib
+
+    def _get_fused_lib(self):
+        if self._fused_lib is None:
+            self._fused_lib = load_fused_panel_kernel()
+        return self._fused_lib
 
     def _get_exact_oracle(self, k: int) -> list[tuple[np.ndarray, np.ndarray]]:
         """Return (ids, scores) pairs for every query's exact top-k, cached by k."""
@@ -129,6 +137,7 @@ class Runner:
         config: RunConfig,
         kind: str = "pdx",
         n_repeats: int = 5,
+        n_threads: int = 1,
     ) -> ResultRecord:
         """Run a brute-force baseline (no pruning) for comparison with BOND arms.
 
@@ -138,7 +147,14 @@ class Runner:
                          the BOND kernels, natural dimension order, zero bound
                          checks.  Isolates PDX-layout cache benefit.
                "numpy" — exact_maxsim_topk timed in a throughput loop: plain
-                         row-major MatMul baseline via NumPy/BLAS.
+                         row-major MatMul baseline via NumPy/BLAS.  BLAS thread
+                         count pinned to ``n_threads`` via threadpoolctl
+                         (<= 0 = leave OpenBLAS default, i.e. all cores).
+               "fused" — fused_panel_maxsim_brute (Stage 3b): register-tiled
+                         panel-major dense scan with fused per-doc max;
+                         ``n_threads`` OpenMP threads over groups.
+        n_threads : thread count for the "numpy" and "fused" kinds
+                    (ignored for "pdx", which is single-threaded).
         """
         if kind == "pdx":
             return run_wide_brute_mode(
@@ -146,14 +162,30 @@ class Runner:
                 n_repeats=n_repeats,
             )
         elif kind == "numpy":
-            return self._numpy_brute_force(config, n_repeats)
+            return self._numpy_brute_force(config, n_repeats, n_threads)
+        elif kind == "fused":
+            return run_fused_brute_mode(
+                self._get_fused_lib(), self._packing, self._queries, config,
+                n_threads=n_threads, n_repeats=n_repeats,
+            )
         else:
-            raise ValueError(f"Unknown brute_force kind: {kind!r}. Expected 'pdx' or 'numpy'.")
+            raise ValueError(
+                f"Unknown brute_force kind: {kind!r}. Expected 'pdx', 'numpy' or 'fused'."
+            )
 
-    def _numpy_brute_force(self, config: RunConfig, n_repeats: int) -> ResultRecord:
-        """Time exact_maxsim_topk (row-major NumPy) in a best-of-N loop."""
+    def _numpy_brute_force(self, config: RunConfig, n_repeats: int,
+                           n_threads: int = 0) -> ResultRecord:
+        """Time exact_maxsim_topk (row-major NumPy) in a best-of-N loop.
+
+        n_threads > 0 pins the BLAS pool via threadpoolctl for the duration of
+        the timed loops (Stage 3b: the threading factor must be an explicit
+        arm, not an accident of the OpenBLAS default).
+        """
+        import contextlib
+
+        from threadpoolctl import threadpool_limits
+
         from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
-        from bondmaxsim.oracle.agreement import exact_agreement
 
         K  = config.k
         nq = len(self._queries)
@@ -163,14 +195,19 @@ class Runner:
                 exact_maxsim_topk(q, self._packing.flat_tokens,
                                   self._packing.doc_starts, k=K)
 
-        # Warmup.
-        _run_all()
-
-        best_s = float("inf")
-        for _ in range(n_repeats):
-            t0 = time.perf_counter()
+        blas_limit = (
+            threadpool_limits(limits=n_threads, user_api="blas")
+            if n_threads > 0 else contextlib.nullcontext()
+        )
+        with blas_limit:
+            # Warmup.
             _run_all()
-            best_s = min(best_s, time.perf_counter() - t0)
+
+            best_s = float("inf")
+            for _ in range(n_repeats):
+                t0 = time.perf_counter()
+                _run_all()
+                best_s = min(best_s, time.perf_counter() - t0)
 
         ms_per_query = best_s / nq * 1e3
         qps          = nq / best_s if best_s > 0.0 else float("inf")
@@ -195,10 +232,13 @@ class Runner:
             bound_checks_per_query= None,
             machine               = config.machine,
             os                    = config.os,
-            thread_count          = config.thread_count,
+            thread_count          = n_threads if n_threads > 0 else config.thread_count,
             shrink                = 1.0,
             tokens_pruned_pct     = None,
-            notes                 = "NumPy row-major brute force",
+            notes                 = (
+                "NumPy row-major brute force"
+                + (f", BLAS threads={n_threads}" if n_threads > 0 else ", BLAS default threads")
+            ),
         )
 
     # ------------------------------------------------------------------

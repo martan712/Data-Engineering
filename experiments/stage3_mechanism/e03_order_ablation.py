@@ -5,10 +5,15 @@ cells_scanned_pct (accounting mode, algorithmic work) and ms_per_query
 (throughput mode, wall-clock), and confirm that shrink=1 recall is 1.0 for
 all orders (correctness regression, Stage 1 §8 item 5).
 
-Two brute-force baselines are included so the wall-clock decision gate can be
-evaluated:
-  brute_pdx   — wide_block_maxsim_brute: same columnar layout, no pruning
-  brute_numpy — exact_maxsim_topk: row-major NumPy/BLAS baseline
+Brute-force baselines are included so the wall-clock decision gate can be
+evaluated (Stage 3b: the gate baseline is the strongest dense kernel, and the
+threading factor must be an explicit arm — see
+docs/stage3b_fused_panel_maxsim_kernel.md §6):
+  brute_pdx       — wide_block_maxsim_brute: same columnar layout, no pruning
+  brute_numpy     — exact_maxsim_topk, OpenBLAS default threads (all cores)
+  brute_numpy_1t  — same, BLAS pinned to 1 thread (thread-fair vs kernels)
+  brute_fused_1t  — fused_panel_maxsim_brute, 1 thread (Stage 3b kernel)
+  brute_fused_mt  — same, OpenMP default threads (decision-gate baseline)
 
 One arm = dataset × order × policy.  Policy is fixed to 'oracle' so that
 threshold variance does not confound the order comparison; a separate
@@ -61,12 +66,24 @@ RESULTS_JSON = REPO_ROOT / "results" / "json"
 RESULTS_FIG  = REPO_ROOT / "results" / "figures" / "stage3_mechanism"
 
 ORDER_COLORS = {
-    "natural":     "#2a78d6",
-    "bond":        "#eb6834",
-    "pca":         "#1baf7a",
-    "brute_pdx":   "#888888",
-    "brute_numpy": "#bbbbbb",
+    "natural":        "#2a78d6",
+    "bond":           "#eb6834",
+    "pca":            "#1baf7a",
+    "brute_pdx":      "#888888",
+    "brute_numpy":    "#bbbbbb",
+    "brute_numpy_1t": "#999999",
+    "brute_fused_1t": "#5c4a9e",
+    "brute_fused_mt": "#8a76d0",
 }
+
+# (kind, n_threads, label) triples for Runner.brute_force_mode.
+BRUTE_ARMS = [
+    ("pdx",   1, "brute_pdx"),
+    ("numpy", 0, "brute_numpy"),      # OpenBLAS default = all cores
+    ("numpy", 1, "brute_numpy_1t"),   # thread-fair vs single-threaded kernels
+    ("fused", 1, "brute_fused_1t"),   # Stage 3b fused panel kernel
+    ("fused", 0, "brute_fused_mt"),   # decision-gate baseline (all cores)
+]
 
 
 # ---------------------------------------------------------------------------
@@ -150,9 +167,10 @@ def run_dataset(dataset: str) -> None:
         k=K_TOP,
         shrink=1.0,
     )
-    for kind, label in [("pdx", "brute_pdx"), ("numpy", "brute_numpy")]:
+    for kind, n_threads, label in BRUTE_ARMS:
         t1 = time.perf_counter()
-        rec = runner.brute_force_mode(cfg_brute, kind=kind, n_repeats=N_REPEATS)
+        rec = runner.brute_force_mode(cfg_brute, kind=kind, n_repeats=N_REPEATS,
+                                      n_threads=n_threads)
         elapsed = time.perf_counter() - t1
         arm = {
             "arm_type": "brute",
@@ -185,7 +203,7 @@ def run_dataset(dataset: str) -> None:
         "shrink": 1.0,
         "policy": POLICY,
         "orders": ORDER_NAMES,
-        "baselines": ["brute_pdx", "brute_numpy"],
+        "baselines": [label for _, _, label in BRUTE_ARMS],
         "n_repeats_throughput": N_REPEATS,
         "arms": arms,
     }

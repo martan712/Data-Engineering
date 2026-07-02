@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 
-from bondmaxsim.data.packing import pack_corpus, pack_corpus_wide
+from bondmaxsim.data.packing import pack_corpus, pack_corpus_panels, pack_corpus_wide
 from bondmaxsim.ordering.orders import pca_order, bond_order, natural_order
 
 
@@ -59,6 +59,11 @@ class PackingCache:
         self._wide: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
         self._wide_rot: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
 
+        # Fused-panel kernel packing (Stage 3b) — built lazily.
+        self._panel: Optional[
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        ] = None
+
     # ------------------------------------------------------------------
     # Lazy accessors
     # ------------------------------------------------------------------
@@ -103,6 +108,17 @@ class PackingCache:
             flat_rot = self.get_flat_tokens_rot()
             self._wide_rot = pack_corpus_wide(flat_rot, self.doc_starts)
         return self._wide_rot
+
+    def _get_panel_packing(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Panel-major packing of the ORIGINAL corpus for the Stage 3b fused
+        kernel (pack_corpus_panels: 16-token panels, duplicate-last-token doc
+        padding).  Natural dimension order only — the fused brute kernel
+        scans all dimensions, so order is irrelevant."""
+        if self._panel is None:
+            self._panel = pack_corpus_panels(self.flat_tokens, self.doc_starts)
+        return self._panel
 
     # ------------------------------------------------------------------
     # Order dispatch
