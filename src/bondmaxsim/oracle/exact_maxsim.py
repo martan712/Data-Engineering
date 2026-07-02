@@ -37,16 +37,24 @@ def exact_maxsim_scores(
     num_docs = len(doc_starts)
     T = flat_tokens.shape[0]
     scores = np.zeros(num_docs, dtype=np.float32)
-    for d in range(num_docs):
-        start = int(doc_starts[d])
-        end = int(doc_starts[d + 1]) if d + 1 < num_docs else T
-        if start >= end:
-            # empty document: score stays 0
-            continue
-        doc = flat_tokens[start:end]        # [n_d, D]
-        sim = query @ doc.T                 # [m, n_d]
-        scores[d] = float(sim.max(axis=1).sum())
-    return scores
+    if T == 0 or num_docs == 0:
+        return scores
+    S = query @ flat_tokens.T                          # [m, T] — one BLAS call
+    ends = np.empty(num_docs, dtype=np.int64)
+    ends[:-1] = doc_starts[1:]
+    ends[-1]  = T
+    all_nonempty = bool((ends > doc_starts).all())
+    if all_nonempty:
+        # reduceat: zero Python loop — fast path used by all real datasets.
+        idx = np.asarray(doc_starts, dtype=np.intp)
+        doc_maxes = np.maximum.reduceat(S, idx, axis=1)   # [m, num_docs]
+        scores[:] = doc_maxes.sum(axis=0)
+    else:
+        # Fallback for edge cases with empty documents (test-only in practice).
+        for d in range(num_docs):
+            if doc_starts[d] < ends[d]:
+                scores[d] = float(S[:, doc_starts[d]:ends[d]].max(axis=1).sum())
+    return scores.astype(np.float32)
 
 
 def exact_maxsim_topk(
