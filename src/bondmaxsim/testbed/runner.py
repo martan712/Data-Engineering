@@ -78,6 +78,11 @@ class Runner:
         self._lib = None
         self._wide_lib = None
 
+        # Exact top-k cache: keyed by k, computed once and shared across all
+        # dimension-order calls on the same query set (order doesn't affect the
+        # exact result, so recomputing per order wastes 2/3 of oracle time).
+        self._exact_ids_cache: dict[int, list[np.ndarray]] = {}
+
         # Side channel populated by accounting_mode() for the wide-block path
         # (Stage 2 e02 hooks); see class docstring.
         self.last_block_doc_live: Optional[np.ndarray] = None
@@ -97,6 +102,17 @@ class Runner:
             self._wide_lib = load_wide_block_kernel()
         return self._wide_lib
 
+    def _get_exact_ids(self, k: int) -> list[np.ndarray]:
+        """Return exact top-k ids for every query, computing once and caching."""
+        from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+        if k not in self._exact_ids_cache:
+            self._exact_ids_cache[k] = [
+                exact_maxsim_topk(q, self._packing.flat_tokens,
+                                  self._packing.doc_starts, k=k)[0]
+                for q in self._queries
+            ]
+        return self._exact_ids_cache[k]
+
     # ------------------------------------------------------------------
     # accounting_mode
     # ------------------------------------------------------------------
@@ -114,7 +130,8 @@ class Runner:
         """
         if config.method == "wide_block_maxsim_bond":
             record, bdl, btl = run_wide_accounting_mode(
-                self._get_wide_lib(), self._packing, self._queries, config
+                self._get_wide_lib(), self._packing, self._queries, config,
+                exact_ids_list=self._get_exact_ids(config.k),
             )
             self.last_block_doc_live = bdl
             self.last_block_token_live = btl

@@ -14,7 +14,9 @@ Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §5.3, §6.
 from __future__ import annotations
 
 import ctypes
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import numpy as np
@@ -34,6 +36,7 @@ def run_wide_accounting_mode(
     packing: PackingCache,
     queries: list[np.ndarray],
     config: RunConfig,
+    exact_ids_list: Optional[list[np.ndarray]] = None,
 ) -> tuple[ResultRecord, Optional[np.ndarray], Optional[np.ndarray]]:
     """accounting_mode() dispatch target for method="wide_block_maxsim_bond".
 
@@ -50,38 +53,65 @@ def run_wide_accounting_mode(
     T      = packing.T
     n_docs = packing.num_docs
 
-    cells_list: list[float]  = []
-    dp_list:    list[float]  = []
-    tp_list:    list[float]  = []
+    # Exact top-k is order-independent: use pre-computed list if provided
+    # (Runner caches it across dimension-order calls), else compute here.
+    if exact_ids_list is None:
+        exact_ids_list = [
+            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+            for q in queries
+        ]
+
+    # Pre-prepare all query inputs sequentially (triggers lazy cache builds,
+    # resolve_tau_seed, and Qcum computation before parallelism starts).
+    PreparedQuery = tuple  # (group_data, group_offsets, doc_offsets, group_doc_starts,
+    #                         Q_eff, order, Qcum, tau_seed, exact_ids, m)
+    prepared: list[PreparedQuery] = []
+    for query, exact_ids in zip(queries, exact_ids_list):
+        gd, go, do_, gds, Q_eff, order = packing.dispatch_order_wide(
+            query, config.dimension_order
+        )
+        m    = Q_eff.shape[0]
+        Qcum = build_qcum(Q_eff, order)
+        tau  = resolve_tau_seed(config, query, order, config.dimension_order, packing)
+        prepared.append((gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, m))
+
+    # Parallel kernel calls — accounting mode only.  Wall-clock time is not
+    # reported here (ms_per_query = None), so running queries concurrently does
+    # not affect any reported metric; cells/prune-rate/recall are per-query
+    # algorithmic invariants.  Throughput mode keeps its sequential timing loop
+    # so that ms_per_query reflects true single-query latency.
+    # ctypes releases the GIL, so threads genuinely run the C++ kernel in
+    # parallel; each call allocates its own scratch buffers (no shared state).
+    def _run_one(args: PreparedQuery):
+        gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, m = args
+        ids, _s, stats, bdl, btl = run_wide_block_accounting(
+            lib, gd, go, do_, gds, Q_eff, order, Qcum,
+            shrink=config.shrink, tau_seed=tau, K=K,
+            collect_block_stats=True,
+        )
+        recall = exact_agreement(ids.astype(np.int64), exact_ids)
+        total_cells = int(T) * D * m
+        cells_pct = float(stats[0]) / total_cells if total_cells > 0 else 0.0
+        dp_pct    = float(stats[1]) / n_docs      if n_docs > 0     else 0.0
+        tp_pct    = float(stats[2]) / T           if T > 0          else 0.0
+        return recall, cells_pct, dp_pct, tp_pct, bdl, btl
+
+    n_workers = min(os.cpu_count() or 1, len(prepared))
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        per_query = list(executor.map(_run_one, prepared))
+
+    cells_list:  list[float] = []
+    dp_list:     list[float] = []
+    tp_list:     list[float] = []
     recall_list: list[float] = []
     block_doc_live_sum:   Optional[np.ndarray] = None
     block_token_live_sum: Optional[np.ndarray] = None
 
-    for query in queries:
-        group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order = (
-            packing.dispatch_order_wide(query, config.dimension_order)
-        )
-        m    = Q_eff.shape[0]
-        Qcum = build_qcum(Q_eff, order)
-        tau_seed = resolve_tau_seed(config, query, order, config.dimension_order, packing)
-
-        ids, _scores, stats, bdl, btl = run_wide_block_accounting(
-            lib, group_data, group_offsets, doc_offsets, group_doc_starts,
-            Q_eff, order, Qcum, shrink=config.shrink, tau_seed=tau_seed, K=K,
-            collect_block_stats=True,
-        )
-
-        # Exact oracle uses original (un-rotated) query + token-major flat.
-        exact_ids, _ = exact_maxsim_topk(
-            query, packing.flat_tokens, packing.doc_starts, k=K
-        )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
-
-        total_cells = int(T) * D * m   # brute-force denominator
-        cells_list.append(float(stats[0]) / total_cells if total_cells > 0 else 0.0)
-        dp_list.append(float(stats[1]) / n_docs if n_docs > 0 else 0.0)
-        tp_list.append(float(stats[2]) / T if T > 0 else 0.0)
-
+    for recall, cells_pct, dp_pct, tp_pct, bdl, btl in per_query:
+        recall_list.append(recall)
+        cells_list.append(cells_pct)
+        dp_list.append(dp_pct)
+        tp_list.append(tp_pct)
         if bdl is not None:
             if block_doc_live_sum is None:
                 block_doc_live_sum   = bdl.astype(np.float64)
@@ -176,15 +206,17 @@ def run_wide_throughput_mode(
     qps          = nq / best_s if best_s > 0.0 else float("inf")
 
     # Recall check (informational; uses a fresh pass to get ids).
+    # Exact top-k is order-independent — compute once, share across all queries.
+    exact_ids_list = [
+        exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+        for q in queries
+    ]
     recall_list: list[float] = []
-    for query, prep in zip(queries, prepared):
+    for query, prep, exact_ids in zip(queries, prepared, exact_ids_list):
         group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau_seed = prep
         ids, _scores, _stats, _bdl, _btl = run_wide_block_throughput(
             lib, group_data, group_offsets, doc_offsets, group_doc_starts,
             Q_eff, order, Qcum, shrink=config.shrink, tau_seed=tau_seed, K=K,
-        )
-        exact_ids, _ = exact_maxsim_topk(
-            query, packing.flat_tokens, packing.doc_starts, k=K
         )
         recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
 
