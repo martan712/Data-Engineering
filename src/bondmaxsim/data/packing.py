@@ -161,6 +161,136 @@ def pack_corpus_wide(
     )
 
 
+PANEL_TOKENS = 16  # panel width of the fused kernel: one AVX-512 register of fp32
+
+
+def pack_corpus_panels(
+    flat_tokens: np.ndarray,
+    doc_starts: np.ndarray,
+    target_group_tokens: int = 4096,
+    panel_tokens: int = PANEL_TOKENS,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Pack a token-major corpus into panel-major vectorgroups (Stage 3b §5.2).
+
+    Layout for the fused panel MaxSim kernel
+    (docs/stage3b_fused_panel_maxsim_kernel.md).  Every document's token count
+    is first padded up to a multiple of ``panel_tokens`` by DUPLICATING ITS
+    LAST TOKEN (§5.3): ``max_j`` over a multiset is invariant under
+    duplicating an element, so all MaxSim scores are bit-identical to the
+    unpadded corpus.  Zero-padding would be wrong — ``<q_i, 0> = 0`` clamps
+    ``max_j`` at >= 0 and corrupts scores whose true max similarity is
+    negative.
+
+    The padded corpus is partitioned into groups of consecutive WHOLE
+    documents (~``target_group_tokens`` padded tokens per group; an oversized
+    document gets its own group — same rule as ``pack_corpus_wide``).  Within
+    a group, tokens are stored in consecutive panels of ``panel_tokens``
+    tokens; within a panel, storage is dim-major::
+
+        panel_data[(group_offsets[g] + p*panel_tokens)*D + z*panel_tokens + j]
+
+    for panel index ``p`` within group ``g``, dimension ``z`` in [0, D) and
+    lane ``j`` in [0, panel_tokens).  Each dimension slice of a panel is one
+    contiguous ``panel_tokens``-float run (64 bytes at panel_tokens=16) — the
+    BLAS packed-B micro-panel format, packed once at index-build time
+    (Stage 3b §3.1).  Documents never straddle panels or groups.
+
+    A zero-length document contributes no panels; the kernel never offers it
+    to the top-k (mirrors the exact oracle's empty-doc fallback semantics).
+
+    Parameters
+    ----------
+    flat_tokens : float32 [T, D] — all document tokens, token-major
+    doc_starts  : int64 [n_docs] — start token offset of each document
+                  (loader convention, length n_docs; see pack_corpus_wide)
+    target_group_tokens : int — target PADDED token count per group
+    panel_tokens : int — tokens per panel (16 = one AVX-512 fp32 register)
+
+    Returns
+    -------
+    panel_data       : float32 [T_pad * D] — concatenated panel-major group
+                       buffers (T_pad = padded token count, multiple of
+                       panel_tokens)
+    group_offsets    : uint64 [n_groups + 1] — cumulative PADDED token offset
+                       of each group's first token (multiples of panel_tokens)
+    doc_offsets      : uint64 [n_docs + 1] — cumulative PADDED token counts
+                       per document (multiples of panel_tokens); this is what
+                       the fused kernel scans
+    group_doc_starts : uint64 [n_groups + 1] — first GLOBAL document id of
+                       each group; group g owns documents
+                       [group_doc_starts[g], group_doc_starts[g+1])
+    doc_offsets_unpadded : uint64 [n_docs + 1] — original (unpadded)
+                       cumulative token counts, kept for id mapping and stats
+    """
+    flat_tokens = np.ascontiguousarray(flat_tokens, dtype=np.float32)
+    T, D = flat_tokens.shape
+    n_docs = len(doc_starts)
+    PT = int(panel_tokens)
+
+    doc_offsets_unpadded = np.empty(n_docs + 1, dtype=np.uint64)
+    if n_docs > 0:
+        doc_offsets_unpadded[:n_docs] = np.asarray(doc_starts, dtype=np.uint64)
+    doc_offsets_unpadded[n_docs] = T
+
+    lens = np.diff(doc_offsets_unpadded.astype(np.int64))
+    padded_lens = ((lens + PT - 1) // PT) * PT          # empty docs stay 0
+
+    doc_offsets = np.zeros(n_docs + 1, dtype=np.uint64)
+    doc_offsets[1:] = np.cumsum(padded_lens).astype(np.uint64)
+
+    # Gather index: for each doc, its real tokens followed by copies of its
+    # last token up to the padded length.
+    gather = np.empty(int(doc_offsets[-1]), dtype=np.int64)
+    for d in range(n_docs):
+        s, e = int(doc_offsets_unpadded[d]), int(doc_offsets_unpadded[d + 1])
+        ps, pe = int(doc_offsets[d]), int(doc_offsets[d + 1])
+        if e > s:
+            gather[ps:ps + (e - s)] = np.arange(s, e)
+            gather[ps + (e - s):pe] = e - 1
+
+    # Group split on PADDED lengths, whole documents (pack_corpus_wide rule).
+    group_doc_starts_l: list[int] = [0]
+    group_token_starts: list[int] = [0]
+    cur_tokens = 0
+    for d in range(n_docs):
+        nd = int(padded_lens[d])
+        if cur_tokens > 0 and cur_tokens + nd > target_group_tokens:
+            group_doc_starts_l.append(d)
+            group_token_starts.append(int(doc_offsets[d]))
+            cur_tokens = 0
+        cur_tokens += nd
+    group_doc_starts_l.append(n_docs)
+    group_token_starts.append(int(doc_offsets[-1]))
+
+    n_groups = len(group_doc_starts_l) - 1
+    group_offsets = np.array(group_token_starts, dtype=np.uint64)
+
+    chunks: list[np.ndarray] = []
+    for g in range(n_groups):
+        start = int(group_offsets[g])
+        end = int(group_offsets[g + 1])
+        chunk = flat_tokens[gather[start:end]]              # [Gp, D], Gp % PT == 0
+        Gp = chunk.shape[0]
+        # [Gp/PT, PT, D] -> [Gp/PT, D, PT]: dim-major within each panel.
+        chunks.append(
+            np.ascontiguousarray(
+                chunk.reshape(Gp // PT, PT, D).transpose(0, 2, 1)
+            ).ravel()
+        )
+    panel_data = np.ascontiguousarray(
+        np.concatenate(chunks) if chunks else np.empty(0, dtype=np.float32),
+        dtype=np.float32,
+    )
+
+    return (
+        panel_data,
+        group_offsets,
+        doc_offsets,
+        np.array(group_doc_starts_l, dtype=np.uint64),
+        doc_offsets_unpadded,
+    )
+
+
 def build_qcum(query: np.ndarray, order: np.ndarray) -> np.ndarray:
     """Build the cumulative squared-norm prefix table for a query.
 
