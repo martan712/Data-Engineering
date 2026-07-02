@@ -657,23 +657,19 @@ before adding files.
       invariant, set-equality top-k), `shrink < 1` separation, per-document
       "Option B" demoted to exact-safe oracle, wide-token-block PDX-BOND named
       as the Stage 2 deliverable, seeded threshold promoted to first-class.
-- [x] Stage 2 (partial): package scaffold with implemented `config`, `schema`
-      (`ResultRecord`), `data` (loader/packing/porting), `oracle` (exact
-      MaxSim, normalization guard, exact-agreement, bound trajectory),
-      `ordering` (natural/bond/pca), `kernels` bindings for the per-document
-      oracle, `testbed` runner (accounting + throughput modes).
+- [x] Stage 2 complete: wide-block MaxSim BOND kernel implemented in
+      `cpp/wide_block_maxsim_bond/` (C++, Makefile, `.so`); ctypes bindings in
+      `src/bondmaxsim/kernels/wide_block.py` (accounting + throughput entry
+      points); exact-agreement gate passing on all four datasets (scifact,
+      nfcorpus, arguana, scidocs); package scaffold with `config`, `schema`
+      (`ResultRecord`), `data`, `oracle`, `ordering`, `kernels`, `testbed`,
+      `threshold` all implemented.
 - [x] Per-document oracle kernel ported and building
       (`cpp/per_document_oracle/`, exp-09 accounting + exp-10 throughput).
 - [x] Debug-scale data exported: `data/embeddings/{scifact,nfcorpus,arguana,scidocs}.npz`
       (GTE-ModernColBERT-v1, D=128, unit-norm verified, 200 queries each).
 - [x] Test suite green: 68 tests including the two Stage 2 blocking checks
       (unit-norm guard; `shrink = 1` exact-agreement gate on the oracle kernel).
-- [x] Stage 3 e01 (bound slack): `bondmaxsim.oracle.bound_trajectory` +
-      `experiments/stage3_mechanism/e01_bound_slack.py` + tests committed;
-      run on scifact and nfcorpus (50 queries, natural/bond/pca) with JSON +
-      figures committed under `results/`; e02 spec extended to two-level
-      (document and token) survival curves in
-      `experiments/stage3_mechanism/README.md`.
 - [x] Schema extensions: `shrink` and `tokens_pruned_pct` added to
       `ResultRecord`; the testbed runner surfaces the accounting kernel's
       `tokens_pruned` stat (stats[2]) as `tokens_pruned_pct`.
@@ -681,37 +677,36 @@ before adding files.
       self_bound / oracle / seed) with safety tests
       (`tests/test_threshold_policies.py`).
 - [x] Stage 2 smoke drivers (`experiments/stage2_testbed/`): s01 normalization
-      guard, s02 exact-agreement gate on scifact, s03 two-mode smoke; run with
-      `ResultRecord` JSON committed under `results/json/`.
+      guard, s02 exact-agreement gate (all four datasets), s03 two-mode smoke;
+      run with `ResultRecord` JSON committed under `results/json/`.
+- [x] Stage 3 e01 (bound slack): `bondmaxsim.oracle.bound_trajectory` +
+      `experiments/stage3_mechanism/e01_bound_slack.py` + tests committed;
+      run on scifact and nfcorpus (50 queries, natural/bond/pca) with JSON +
+      figures committed under `results/`; e02 spec extended to two-level
+      (document and token) survival curves in
+      `experiments/stage3_mechanism/README.md`.
+- [x] Stage 3 e02 (pruning-rate survival curves): two-level document and token
+      survival curves from the wide-block kernel across all threshold policies
+      (self_bound / oracle / seed) and dimension orders (natural / bond / pca);
+      run on scifact and nfcorpus; JSON + figures committed under `results/`.
 
 ### In Progress / Next
 
-- [ ] **Stage 2 core deliverable:** implement the wide-block MaxSim BOND kernel
-      in `cpp/wide_block_maxsim_bond/` (currently an empty directory), extending
-      the PDX-sigmod BOND/PDXearch pattern to multi-vector MaxSim; add ctypes
-      bindings (the placeholder in `src/bondmaxsim/kernels/bindings.py` raises
-      NotImplementedError) and wire it through the same exact-agreement gate.
+- [ ] **Stage 3 experiments e03–e07** per
+      `experiments/stage3_mechanism/README.md`: dimension-order ablation (e03),
+      exact-safe cells/latency sweep (e04), approximate recall frontier (e05),
+      threshold-policy ablation (e06), cache/layout penalty (e07).
+- [ ] **Stage 3 decision gate**: record explicitly in this document whether any
+      exact-safe arm yields a repeatable wall-clock win over brute force; if not,
+      pivot to the documented negative-result path.
 
 ### To Do (Stages 3–5)
-
-- [ ] Schema extension for e02: per-block live counts (document-live and
-      token-live counts at each dimension-block boundary; needs a per-block
-      accounting hook in the kernel — `shrink`/`tokens_pruned_pct` totals are
-      already in `ResultRecord`).
-- [ ] Stage 3 experiments e02–e07 per
-      `experiments/stage3_mechanism/README.md`: two-level pruning-rate curves
-      (needs a per-block accounting hook in the kernel), dimension-order
-      ablation, exact-safe sweep, shrink/recall frontier, threshold-policy
-      ablation, cache/layout sensitivity.
 - [ ] Scale dataset: obtain one 100k–1M document corpus (prefer CoRECT pools;
       requires the `[retrieval]` extra to embed) and export it to the packed
       token format.
 - [ ] Qrels: export qrels for the four debug datasets and the scale corpus so
       nDCG@10 / recall@100 / MRR@10 can be computed (Stage 3 onward);
       implement `src/bondmaxsim/eval/qrels.py` (currently stubs).
-- [ ] Stage 3 decision gate: record explicitly whether any exact-safe or
-      matched-quality arm yields a repeatable wall-clock win; if not, pivot to
-      the documented negative-result path.
 - [ ] Stage 4: implement `src/bondmaxsim/baselines/` (faiss_ivf, pdx_ivf,
       plaid — all currently stubs) and the fixed-candidate-set comparison
       drivers in `experiments/stage4_integration/`.
