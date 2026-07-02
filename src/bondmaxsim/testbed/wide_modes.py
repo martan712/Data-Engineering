@@ -37,6 +37,7 @@ def run_wide_accounting_mode(
     queries: list[np.ndarray],
     config: RunConfig,
     exact_ids_list: Optional[list[np.ndarray]] = None,
+    exact_scores_list: Optional[list[np.ndarray]] = None,
 ) -> tuple[ResultRecord, Optional[np.ndarray], Optional[np.ndarray]]:
     """accounting_mode() dispatch target for method="wide_block_maxsim_bond".
 
@@ -61,19 +62,22 @@ def run_wide_accounting_mode(
             for q in queries
         ]
 
+    if exact_scores_list is None:
+        exact_scores_list = [None] * len(queries)
+
     # Pre-prepare all query inputs sequentially (triggers lazy cache builds,
     # resolve_tau_seed, and Qcum computation before parallelism starts).
     PreparedQuery = tuple  # (group_data, group_offsets, doc_offsets, group_doc_starts,
-    #                         Q_eff, order, Qcum, tau_seed, exact_ids, m)
+    #                         Q_eff, order, Qcum, tau_seed, exact_ids, exact_scores, m)
     prepared: list[PreparedQuery] = []
-    for query, exact_ids in zip(queries, exact_ids_list):
+    for query, exact_ids, exact_scores in zip(queries, exact_ids_list, exact_scores_list):
         gd, go, do_, gds, Q_eff, order = packing.dispatch_order_wide(
             query, config.dimension_order
         )
         m    = Q_eff.shape[0]
         Qcum = build_qcum(Q_eff, order)
         tau  = resolve_tau_seed(config, query, order, config.dimension_order, packing)
-        prepared.append((gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, m))
+        prepared.append((gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m))
 
     # Parallel kernel calls — accounting mode only.  Wall-clock time is not
     # reported here (ms_per_query = None), so running queries concurrently does
@@ -83,13 +87,13 @@ def run_wide_accounting_mode(
     # ctypes releases the GIL, so threads genuinely run the C++ kernel in
     # parallel; each call allocates its own scratch buffers (no shared state).
     def _run_one(args: PreparedQuery):
-        gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, m = args
+        gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m = args
         ids, _s, stats, bdl, btl = run_wide_block_accounting(
             lib, gd, go, do_, gds, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K,
             collect_block_stats=True,
         )
-        recall = exact_agreement(ids.astype(np.int64), exact_ids)
+        recall = exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
         total_cells = int(T) * D * m
         cells_pct = float(stats[0]) / total_cells if total_cells > 0 else 0.0
         dp_pct    = float(stats[1]) / n_docs      if n_docs > 0     else 0.0

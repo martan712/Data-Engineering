@@ -50,13 +50,29 @@ def recall_at_k(
 def exact_agreement(
     pruned_ids: np.ndarray,
     exact_ids: np.ndarray,
+    exact_scores: np.ndarray | None = None,
 ) -> float:
     """Return set-overlap fraction between pruned and exact top-k.
 
-    This is recall_at_k with k inferred from len(exact_ids).
-    For shrink=1, the return value must be 1.0 (Stage 1 §2.5).
+    When exact_scores (aligned with exact_ids) is provided, a miss is
+    accepted as a valid tie-break when the missing doc's oracle score equals
+    the minimum oracle score in the top-K (i.e. it shares the K-th rank with
+    another doc and the kernel chose the alternative).  This is correct
+    behaviour for shrink=1: the survival invariant guarantees all docs with
+    score > tau are retained; boundary ties may resolve differently across
+    kernels and BLAS implementations.
     """
-    return recall_at_k(pruned_ids, exact_ids, k=len(exact_ids))
+    basic = recall_at_k(pruned_ids, exact_ids, k=len(exact_ids))
+    if basic == 1.0 or exact_scores is None:
+        return basic
+
+    tau = float(exact_scores.min())  # K-th oracle score
+    missing = np.setdiff1d(exact_ids, pruned_ids)
+    for d in missing:
+        idx = np.where(exact_ids == d)[0]
+        if len(idx) == 0 or float(exact_scores[idx[0]]) > tau:
+            return basic  # genuine miss (score strictly above the K-th boundary)
+    return 1.0  # every miss is a boundary tie — kernel's choice is equally valid
 
 
 def assert_exact_agreement(

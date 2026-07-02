@@ -78,10 +78,10 @@ class Runner:
         self._lib = None
         self._wide_lib = None
 
-        # Exact top-k cache: keyed by k, computed once and shared across all
-        # dimension-order calls on the same query set (order doesn't affect the
-        # exact result, so recomputing per order wastes 2/3 of oracle time).
-        self._exact_ids_cache: dict[int, list[np.ndarray]] = {}
+        # Exact top-k cache: keyed by k, stores (ids, scores) tuples computed
+        # once and shared across all dimension-order calls on the same query
+        # set (order doesn't affect the exact result).
+        self._exact_oracle_cache: dict[int, list[tuple[np.ndarray, np.ndarray]]] = {}
 
         # Side channel populated by accounting_mode() for the wide-block path
         # (Stage 2 e02 hooks); see class docstring.
@@ -102,16 +102,22 @@ class Runner:
             self._wide_lib = load_wide_block_kernel()
         return self._wide_lib
 
-    def _get_exact_ids(self, k: int) -> list[np.ndarray]:
-        """Return exact top-k ids for every query, computing once and caching."""
+    def _get_exact_oracle(self, k: int) -> list[tuple[np.ndarray, np.ndarray]]:
+        """Return (ids, scores) pairs for every query's exact top-k, cached by k."""
         from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
-        if k not in self._exact_ids_cache:
-            self._exact_ids_cache[k] = [
+        if k not in self._exact_oracle_cache:
+            self._exact_oracle_cache[k] = [
                 exact_maxsim_topk(q, self._packing.flat_tokens,
-                                  self._packing.doc_starts, k=k)[0]
+                                  self._packing.doc_starts, k=k)
                 for q in self._queries
             ]
-        return self._exact_ids_cache[k]
+        return self._exact_oracle_cache[k]
+
+    def _get_exact_ids(self, k: int) -> list[np.ndarray]:
+        return [ids for ids, _ in self._get_exact_oracle(k)]
+
+    def _get_exact_scores(self, k: int) -> list[np.ndarray]:
+        return [scores for _, scores in self._get_exact_oracle(k)]
 
     # ------------------------------------------------------------------
     # accounting_mode
@@ -132,6 +138,7 @@ class Runner:
             record, bdl, btl = run_wide_accounting_mode(
                 self._get_wide_lib(), self._packing, self._queries, config,
                 exact_ids_list=self._get_exact_ids(config.k),
+                exact_scores_list=self._get_exact_scores(config.k),
             )
             self.last_block_doc_live = bdl
             self.last_block_token_live = btl
