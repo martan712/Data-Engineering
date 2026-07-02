@@ -108,10 +108,9 @@
 #include <cmath>
 #include <algorithm>
 
-// float32 guard on the UB < tau pruning test.  P_ij accumulates in float32
-// (error ≈ D * eps_machine per term); tau can be inflated by earlier
-// same-group finalizations.  Combined worst-case: m * D * eps_mach ≈ 5e-4
-// (D=128, m=32).  1e-4 covers typical cases with a 5× margin.
+// float32 guard on the per-document UB < tau pruning test.  P_ij accumulates
+// in float32 (error ≈ D * eps_machine per term).  1e-4 covers the worst-case
+// accumulated error (m * D * eps_mach ≈ 1.5e-5 per query token) with margin.
 static constexpr float UB_EPSILON = 1e-4f;
 
 extern "C" {
