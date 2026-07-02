@@ -5,7 +5,7 @@ UB_d(k)/score(q,d) slack ratios over a subsample of queries and report
 how quickly the Cauchy-Schwarz bound tightens.
 
 Datasets  : scifact, nfcorpus
-Orders    : natural, bond, ada
+Orders    : natural, bond, pca
 k (top-k) : 10
 Subsample : 50 queries (deterministic seed=42; see N_QUERIES below)
 
@@ -32,14 +32,14 @@ import numpy as np
 from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.loader import load_dataset
 from bondmaxsim.oracle.bound_trajectory import doc_ub_trajectory, make_prefix_grid
-from bondmaxsim.ordering.orders import ada_order, bond_order, natural_order
+from bondmaxsim.ordering.orders import pca_order, bond_order, natural_order
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 DATASETS = ["scifact", "nfcorpus"]
-ORDER_NAMES = ["natural", "bond", "ada"]
+ORDER_NAMES = ["natural", "bond", "pca"]
 K_TOP = 10
 N_QUERIES = 50   # subsample for tractability
 QUERY_SEED = 42
@@ -60,14 +60,14 @@ def _get_order(name: str, query: np.ndarray, mu: np.ndarray, R: np.ndarray):
         return query, None, natural_order(query)
     elif name == "bond":
         return query, None, bond_order(query, mu)
-    elif name == "ada":
-        q_rot, order = ada_order(query, R)
+    elif name == "pca":
+        q_rot, order = pca_order(query, R)
         return q_rot, "rotated", order
     else:
         raise ValueError(f"Unknown order: {name!r}")
 
 
-def _make_ada_rotation(D: int) -> np.ndarray:
+def _make_pca_rotation(D: int) -> np.ndarray:
     """Deterministic orthogonal rotation (matches Runner)."""
     g = np.random.default_rng(123).standard_normal((D, D))
     Q_r, _ = np.linalg.qr(g)
@@ -105,7 +105,7 @@ def compute_slack_trajectories(
 
     for query in queries:
         # Resolve effective query and corpus for this order.
-        if order_name == "ada":
+        if order_name == "pca":
             q_eff = (query @ R).astype(np.float32)
             ft_eff = flat_tokens_rot
             order = natural_order(query)
@@ -164,7 +164,7 @@ def save_figure(
     out_path: Path,
 ) -> None:
     fig, ax = plt.subplots(figsize=(7, 4))
-    colors = {"natural": "steelblue", "bond": "darkorange", "ada": "forestgreen"}
+    colors = {"natural": "steelblue", "bond": "darkorange", "pca": "forestgreen"}
 
     for order_name, res in results_by_order.items():
         c = colors.get(order_name, "gray")
@@ -207,7 +207,7 @@ def run_dataset(dataset: str) -> None:
           f"{len(queries)} queries")
 
     mu = flat_tokens.mean(axis=0).astype(np.float32)
-    R  = _make_ada_rotation(D)
+    R  = _make_pca_rotation(D)
     flat_tokens_rot = (flat_tokens @ R).astype(np.float32)
 
     prefix_grid = make_prefix_grid(D, N_GRID_POINTS)

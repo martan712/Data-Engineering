@@ -42,7 +42,7 @@ def resolve_tau_seed(
     "seed" -> bondmaxsim.threshold.policies.seed_threshold using a cheap
     partial-score proxy: exact MaxSim restricted to the first
     _SEED_CHECKPOINT_DIMS dimensions of THIS query's scan order (in the
-    same effective space -- rotated for order="ada" -- the kernel itself
+    same effective space -- rotated for order="pca" -- the kernel itself
     will see first), consistent with the policy's "first checkpoint" intent.
 
     Both "oracle" and "seed" derive tau from a NumPy exact-score
@@ -66,9 +66,9 @@ def resolve_tau_seed(
         return oracle_threshold(exact_scores, config.k) - _TAU_SEED_EPS
 
     if policy == "seed":
-        if dimension_order == "ada":
+        if dimension_order == "pca":
             flat_eff_tm = packing.get_flat_tokens_rot()
-            R = packing.get_ada_rotation()
+            R = packing.get_pca_rotation()
             q_eff = (query @ R).astype(np.float32)
         else:
             flat_eff_tm = packing.flat_tokens

@@ -306,9 +306,9 @@ two execution regimes:
 
 Exactness does **not** depend on `order` or `fetch_schedule`. The residual
 formula depends only on the *set* `S`, and the survival proof is order-agnostic.
-`order` (natural, `bond` aggregate importance `sum_i (q_i - mu)^2`, or `ada`
+`order` (natural, `bond` aggregate importance `sum_i (q_i - mu)^2`, or `pca`
 rotation) and the fetch cadence affect *how early bounds tighten* — i.e.
-efficiency — not correctness. The `ada` arm rotates all tokens by a fixed
+efficiency — not correctness. The `pca` arm rotates all tokens by a fixed
 orthogonal `R`; orthogonality preserves both `<q_i, d_j>` (A2) and unit norm
 (A1), so it remains exact-safe at `shrink = 1`. This must stay true: any
 non-orthogonal "rotation" would void A1/A2.
@@ -390,7 +390,7 @@ The preliminary kernels store each document **dim-major within the document**
 *per-document* analogue of a PDX vectorgroup, but the "block of vectors" is one
 document's tokens — narrow (tens), variable, and not the wide block PDX's SIMD
 scan is built for. It is also not PDX's 25/75 hybrid layout, uses none of PDX's
-SIMD kernels, ADSampling, IVF, or quantization, and its `ada` arm is a *local*
+SIMD kernels, ADSampling, IVF, or quantization, and its `pca` arm is a *local*
 random-rotation analogue, not PDX ADSampling.
 
 Call this **Option B**: BOND with the MaxSim document bound at per-document

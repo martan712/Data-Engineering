@@ -10,11 +10,11 @@ every document, as in PDX-sigmod's GetDimensionsAccessOrder.
 
 Ported artifact: dimension_order() function from
   archive/reference/05_maxsim_bond_instrumentation.py (query_energy, natural,
-  doc_var modes) and bond_order/ada_order patterns from
+  doc_var modes) and bond_order/pca_order patterns from
   research/preliminaries/09_maxsim_pruning/maxsim_pruning_bench.py.
 Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §4.5 (order is
   query-dependent, recomputed per query; MaxSim aggregates token importance over
-  m query tokens; ada rotation is orthogonal -> exact-safe at shrink=1),
+  m query tokens; pca rotation is orthogonal -> exact-safe at shrink=1),
   docs/sources/bond_maxsim_methodology.md M6 (three signals: q², |q-mu|,
   q²·(mu²+var); DISTANCE_TO_MEANS_IMPROVED top-25% partition).
 """
@@ -69,13 +69,13 @@ def bond_order(
     return np.concatenate([np.sort(idx[:tp]), np.sort(idx[tp:])]).astype(np.int64)
 
 
-def ada_order(
+def pca_order(
     query: np.ndarray,
     rotation: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Ada (orthogonal rotation) order: identity order on rotated token space.
+    """PCA (orthogonal rotation) order: identity order on rotated token space.
 
-    Applies a fixed orthogonal rotation R (precomputed over corpus tokens, e.g.
+    Applies a fixed orthogonal rotation R (precomputed over corpus tokens via
     PCA eigenvectors) to Q and doc tokens, then uses natural order.  The
     rotation is orthogonal so it preserves inner products (A2) and unit norm
     (A1) -> exact-safe at shrink=1 (Stage 1 §4.5).  This is NOT ADSampling:

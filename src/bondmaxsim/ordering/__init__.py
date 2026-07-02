@@ -1,10 +1,10 @@
-"""bondmaxsim.ordering — dimension-order signals: natural / bond / ada.
+"""bondmaxsim.ordering — dimension-order signals: natural / bond / pca.
 
 Single responsibility: compute the per-query dimension permutation that controls
 how fast the BOND upper-bound tightens.  Order is query-dependent and recomputed
 once per query; it does not affect correctness (Stage 1 §4.5).
 
-Ported artifact: bond_order and ada_order logic from
+Ported artifact: bond_order and pca_order logic from
   research/preliminaries/09_maxsim_pruning/maxsim_pruning_bench.py (query_energy /
   bond_order), research/preliminaries/11_pruning_scale_probe/probe.py, and
   archive/reference/05_maxsim_bond_instrumentation.py (dimension_order function).

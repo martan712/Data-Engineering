@@ -22,7 +22,7 @@ dataset fails.
 Runs the per-document-oracle kernel (scifact only) and the wide-block kernel
 (`threshold_policy="self_bound"`; any dataset passed on the command line,
 default scifact) in accounting mode via `bondmaxsim.testbed.runner.Runner`
-with `shrink=1.0` for every dimension order (natural, bond, ada) and asserts
+with `shrink=1.0` for every dimension order (natural, bond, pca) and asserts
 `recall_vs_exact_at_10 == 1.0` for each against the NumPy exact-MaxSim oracle
 (the Runner computes this internally via
 `bondmaxsim.oracle.exact_maxsim.exact_maxsim_topk`; order affects efficiency,

@@ -42,7 +42,7 @@ token-live count and the document-live count at each block boundary, and surface
 `tokens_pruned` through `ResultRecord`.
 
 ### `e03_order_ablation.py`
-Compare natural / bond_dtm / bond_q2 / bond_q2_var / ada_rotation on
+Compare natural / bond_dtm / bond_q2 / bond_q2_var / pca_rotation on
 cells_scanned_pct and ms_per_query.  Confirms that order affects efficiency
 but not correctness (shrink=1 exact-agreement regression, Stage 1 §8 item 5).
 

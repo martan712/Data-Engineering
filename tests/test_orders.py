@@ -6,7 +6,7 @@ import pytest
 from bondmaxsim.ordering.orders import (
     natural_order,
     bond_order,
-    ada_order,
+    pca_order,
     bond_q2_var_order,
 )
 
@@ -95,48 +95,48 @@ def test_bond_order_top_fraction_sweep():
 
 
 # ---------------------------------------------------------------------------
-# ada_order
+# pca_order
 # ---------------------------------------------------------------------------
 
-def test_ada_order_returns_valid_permutation():
+def test_pca_order_returns_valid_permutation():
     q = make_query()
     R = orthogonal_rotation()
-    rotated_q, order = ada_order(q, R)
+    rotated_q, order = pca_order(q, R)
     assert order.dtype == np.int64
     assert is_valid_permutation(order, D)
     np.testing.assert_array_equal(order, np.arange(D))
 
 
-def test_ada_order_rotated_query_dtype():
+def test_pca_order_rotated_query_dtype():
     q = make_query()
     R = orthogonal_rotation()
-    rotated_q, order = ada_order(q, R)
+    rotated_q, order = pca_order(q, R)
     assert rotated_q.dtype == np.float32
     assert rotated_q.shape == q.shape
 
 
-def test_ada_order_preserves_inner_products():
+def test_pca_order_preserves_inner_products():
     """For an orthogonal R: (q @ R) @ (d @ R).T ≈ q @ d.T."""
     rng = np.random.default_rng(5)
     q = make_query(m=4)
     d = rng.standard_normal((6, D)).astype(np.float32)
     R = orthogonal_rotation()
 
-    rotated_q, _ = ada_order(q, R)
+    rotated_q, _ = pca_order(q, R)
     rotated_d = (d @ R).astype(np.float32)
 
     orig_sims = q @ d.T           # [4, 6]
     rot_sims = rotated_q @ rotated_d.T  # [4, 6]
     np.testing.assert_allclose(rot_sims, orig_sims, rtol=1e-4, atol=1e-5,
-                               err_msg="ada_order does not preserve inner products")
+                               err_msg="pca_order does not preserve inner products")
 
 
-def test_ada_order_preserves_unit_norms():
+def test_pca_order_preserves_unit_norms():
     """An orthogonal rotation preserves L2 norms."""
     q = make_query()
     q /= np.linalg.norm(q, axis=1, keepdims=True)  # ensure unit norm
     R = orthogonal_rotation()
-    rotated_q, _ = ada_order(q, R)
+    rotated_q, _ = pca_order(q, R)
     orig_norms = np.linalg.norm(q, axis=1)
     rot_norms = np.linalg.norm(rotated_q, axis=1)
     np.testing.assert_allclose(rot_norms, orig_norms, rtol=1e-4, atol=1e-5)

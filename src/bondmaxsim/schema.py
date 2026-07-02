@@ -56,7 +56,7 @@ class ResultRecord:
 
     dimension_order: str
     """Dimension-order signal: 'natural', 'bond_q2', 'bond_dtm', 'bond_q2_var',
-    'ada_rotation', or another named signal (Stage 1 §4.5, M6 in methodology)."""
+    'pca_rotation', or another named signal (Stage 1 §4.5, M6 in methodology)."""
 
     threshold_policy: str
     """Pruning threshold policy: 'self_bound', 'oracle', 'seed', or

@@ -40,7 +40,7 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 │   ├── schema.py                   # ResultRecord dataclass + JSON IO (shared result schema)
 │   ├── data/                       # embedding export, token packing, doc offsets, dataset loaders
 │   ├── oracle/                     # exact MaxSim, normalization guard, exact-agreement test
-│   ├── ordering/                   # dimension-order signals: natural / bond / ada (rotation)
+│   ├── ordering/                   # dimension-order signals: natural / bond / pca (rotation)
 │   ├── threshold/                  # threshold policies: self_bound / oracle / seed
 │   ├── kernels/                    # ctypes bindings to the C++ kernels + build helpers
 │   ├── testbed/                    # mechanism testbed runner: accounting + throughput modes

@@ -660,7 +660,7 @@ before adding files.
 - [x] Stage 2 (partial): package scaffold with implemented `config`, `schema`
       (`ResultRecord`), `data` (loader/packing/porting), `oracle` (exact
       MaxSim, normalization guard, exact-agreement, bound trajectory),
-      `ordering` (natural/bond/ada), `kernels` bindings for the per-document
+      `ordering` (natural/bond/pca), `kernels` bindings for the per-document
       oracle, `testbed` runner (accounting + throughput modes).
 - [x] Per-document oracle kernel ported and building
       (`cpp/per_document_oracle/`, exp-09 accounting + exp-10 throughput).
@@ -670,7 +670,7 @@ before adding files.
       (unit-norm guard; `shrink = 1` exact-agreement gate on the oracle kernel).
 - [x] Stage 3 e01 (bound slack): `bondmaxsim.oracle.bound_trajectory` +
       `experiments/stage3_mechanism/e01_bound_slack.py` + tests committed;
-      run on scifact and nfcorpus (50 queries, natural/bond/ada) with JSON +
+      run on scifact and nfcorpus (50 queries, natural/bond/pca) with JSON +
       figures committed under `results/`; e02 spec extended to two-level
       (document and token) survival curves in
       `experiments/stage3_mechanism/README.md`.

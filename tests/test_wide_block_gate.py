@@ -5,7 +5,7 @@ Mirrors tests/test_runner_gate.py for the wide-block MaxSim BOND kernel
 docs/stage1_bond_maxsim_formalization.md §2.5, §5.3, §8 items 2-3, 6-8.  At
 shrink=1 the wide-block kernel must be exact-safe: its top-k document set
 must agree perfectly with the NumPy exact-MaxSim oracle, for every dimension
-order (natural, bond, ada), in both accounting and throughput modes, and
+order (natural, bond, pca), in both accounting and throughput modes, and
 under both the self_bound and oracle threshold policies (Stage 1 §4.4).
 
 Requires the compiled kernel (cpp/wide_block_maxsim_bond/wide_block_maxsim_bond.so).
@@ -33,7 +33,7 @@ except FileNotFoundError:
         allow_module_level=True,
     )
 
-ORDERS = ["natural", "bond", "ada"]
+ORDERS = ["natural", "bond", "pca"]
 POLICIES = ["self_bound", "oracle"]
 
 

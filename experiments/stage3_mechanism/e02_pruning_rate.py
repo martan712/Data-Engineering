@@ -1,7 +1,7 @@
 """Stage 3 e02: two-level pruning-rate (survival) curves from the wide kernel.
 
 Single responsibility: for each dataset x threshold policy (self_bound /
-oracle / seed) x dimension order (natural / bond / ada), run the wide-block
+oracle / seed) x dimension order (natural / bond / pca), run the wide-block
 kernel in accounting mode at shrink=1 over a query subsample and collect the
 per-fetch-boundary document-survival and token-survival curves from the
 Runner's e02 side channel (Runner.last_block_doc_live /
@@ -63,7 +63,7 @@ from bondmaxsim.testbed.runner import Runner, RunConfig
 
 DATASETS = ["scifact", "nfcorpus"]
 POLICIES = ["self_bound", "oracle", "seed"]
-ORDER_NAMES = ["natural", "bond", "ada"]
+ORDER_NAMES = ["natural", "bond", "pca"]
 K_TOP = 10
 N_QUERIES = 50   # subsample for tractability
 QUERY_SEED = 42
@@ -76,7 +76,7 @@ RESULTS_FIG  = REPO_ROOT / "results" / "figures" / "stage3_mechanism"
 # Fixed categorical hues (policy) + linestyle (order) so all 9 lines per panel
 # stay distinguishable without 9 hues.
 POLICY_COLORS = {"self_bound": "#2a78d6", "oracle": "#1baf7a", "seed": "#eb6834"}
-ORDER_STYLES  = {"natural": "-", "bond": "--", "ada": ":"}
+ORDER_STYLES  = {"natural": "-", "bond": "--", "pca": ":"}
 
 
 # ---------------------------------------------------------------------------

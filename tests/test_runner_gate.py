@@ -3,7 +3,7 @@
 Stage 1 reference: docs/stage1_bond_maxsim_formalization.md §2.5, §8 items 2-3.
 At shrink=1 the pruning kernel must be exact-safe: its top-k document set must
 agree perfectly with the NumPy exact-MaxSim oracle, for every dimension order
-(natural, bond, ada) and in both accounting and throughput modes.  If this test
+(natural, bond, pca) and in both accounting and throughput modes.  If this test
 fails, no downstream mechanism/integration result is trustworthy.
 
 Requires the compiled kernel (cpp/per_document_oracle/per_document_oracle.so).
@@ -30,7 +30,7 @@ except FileNotFoundError:
         allow_module_level=True,
     )
 
-ORDERS = ["natural", "bond", "ada"]
+ORDERS = ["natural", "bond", "pca"]
 
 
 # ---------------------------------------------------------------------------

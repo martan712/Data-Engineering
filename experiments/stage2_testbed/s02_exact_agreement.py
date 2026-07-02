@@ -3,7 +3,7 @@
 Single responsibility: run the per-document-oracle kernel (unchanged) and the
 wide-block kernel (self_bound threshold policy) in accounting mode via
 bondmaxsim.testbed.runner.Runner with shrink=1.0, for every dimension order
-(natural, bond, ada), assert recall_vs_exact@10 == 1.0 for each (Stage 1 §2.5
+(natural, bond, pca), assert recall_vs_exact@10 == 1.0 for each (Stage 1 §2.5
 / §8 items 2 and 5: order affects efficiency, never correctness), and write
 one ResultRecord per order/kernel to results/json/.
 
@@ -33,7 +33,7 @@ from bondmaxsim.data.loader import load_dataset
 from bondmaxsim.testbed.runner import Runner, RunConfig
 
 DATASETS = ["scifact"]
-ORDERS = ["natural", "bond", "ada"]
+ORDERS = ["natural", "bond", "pca"]
 RESULTS_JSON = REPO_ROOT / "results" / "json"
 
 
