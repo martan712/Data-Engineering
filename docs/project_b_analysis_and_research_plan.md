@@ -706,17 +706,23 @@ before adding files.
       Prototype evidence: fused register-tiled kernel on panel-major PDX
       layout = 50.4 ms/q single-threaded vs 147.7 ms single-thread OpenBLAS
       (2.9x) on scifact. Work items (doc §6):
-      - [ ] K1: `pack_corpus_panels` (16-token panel-major, duplicate-last-token
-            doc padding) + layout/padding-invariance tests.
-      - [ ] K2: `cpp/fused_panel_maxsim/` brute kernel (register-tiled M∈{8,16,24}
+      - [x] K1: `pack_corpus_panels` (16-token panel-major, duplicate-last-token
+            doc padding) + layout/padding-invariance tests (2026-07-02).
+      - [x] K2: `cpp/fused_panel_maxsim/` brute kernel (register-tiled M∈{8,16,24}
             query tiles, fused per-doc max epilogue) + ctypes bindings +
-            exact-agreement gate on all four datasets.
-      - [ ] K3: OpenMP over groups; verify 1T invariance; measure scaling to
-            the DRAM wall.
+            exact-agreement gate tests (synthetic incl. multi-tile m>24 and
+            negative-max padding trap; recall 1.0 on scifact in e03).
+      - [x] K3: OpenMP over groups; 1T/8T result invariance test green.
+            Measured on scifact: 54.5 ms/q 1T → 15.8 ms/q all-cores
+            (vs numpy 43.5 ms/q 12T, 121.8 ms/q pinned 1T) — 2.8x over
+            12-thread OpenBLAS, at the predicted DRAM-floor scale.
       - [ ] K4: `fused_panel_maxsim_bond` with panel-granularity bounds at
             fetch-boundary checkpoints; shrink=1 exact-agreement gate re-run.
-      - [ ] K5: Runner modes `brute_fused`/`bond_fused` (+ pinned-1T numpy
-            arm); refresh e03 on all four datasets.
+      - [x] K5 (partial): Runner `brute_force_mode` kinds pdx/numpy/fused with
+            `n_threads` (threadpoolctl BLAS pinning for numpy); e03 refreshed
+            on scifact with all five baselines (results committed).
+            Remaining: `bond_fused` arm (needs K4) + e03 on nfcorpus /
+            arguana / scidocs.
       The accounting kernel and e01/e02 results are unaffected and stay.
 - [ ] **Stage 3 experiments e03–e07** per
       `experiments/stage3_mechanism/README.md`, run against the Stage 3b
