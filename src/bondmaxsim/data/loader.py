@@ -156,10 +156,12 @@ def load_dataset(
         )
 
     data = np.load(npz_path)
-    flat_tokens: np.ndarray = data["doc_values"].astype(np.float32)
-    doc_starts: np.ndarray = data["doc_starts"].astype(np.int64)
-    query_values: np.ndarray = data["query_values"].astype(np.float32)
-    query_starts: np.ndarray = data["query_starts"].astype(np.int64)
+    # copy=False: avoid doubling peak memory when the stored dtype already
+    # matches (scidocs doc_values alone is ~2.3 GB).
+    flat_tokens: np.ndarray = data["doc_values"].astype(np.float32, copy=False)
+    doc_starts: np.ndarray = data["doc_starts"].astype(np.int64, copy=False)
+    query_values: np.ndarray = data["query_values"].astype(np.float32, copy=False)
+    query_starts: np.ndarray = data["query_starts"].astype(np.int64, copy=False)
 
     # Reconstruct queries list from flat query array + starts.
     Tq = len(query_values)
