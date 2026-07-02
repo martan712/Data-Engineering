@@ -1,0 +1,369 @@
+{
+  "experiment": "e02_pruning_rate",
+  "dataset": "nfcorpus",
+  "method": "wide_block_maxsim_bond",
+  "n_docs": 3633,
+  "total_tokens": 838305,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "shrink": 1.0,
+  "D": 128,
+  "fetch_boundary_dims": [
+    4,
+    12,
+    20,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "policies": [
+    "self_bound",
+    "oracle",
+    "seed"
+  ],
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "arms": [
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 92.42693470753483,
+      "pruned_docs_pct": 97.78915496834573,
+      "tokens_pruned_pct": 67.36210329176136,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.6988659510046793,
+        0.0221084503165428
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.6970773883013939,
+        0.000819296079589171
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 85.82185511239943,
+      "pruned_docs_pct": 97.78915496834573,
+      "tokens_pruned_pct": 42.59030543775833,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999779796311589,
+        0.9917478667767685,
+        0.44410129369666945,
+        0.0221084503165428
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999776453677361,
+        0.99159628059,
+        0.4412891012221089,
+        0.000819296079589171
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 93.75336422900975,
+      "pruned_docs_pct": 97.78915496834573,
+      "tokens_pruned_pct": 72.49262022772139,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.7519130195430773,
+        0.0221084503165428
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.7501345691603892,
+        0.0008192483642588318
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 86.89700824878773,
+      "pruned_docs_pct": 99.72034131571704,
+      "tokens_pruned_pct": 45.976784106023466,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.4776493256262042,
+        0.0027965868428296175
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.4758803299515093,
+        0.00011726042430857504
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 78.91661626734899,
+      "pruned_docs_pct": 99.72034131571704,
+      "tokens_pruned_pct": 17.612744764733602,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999504541701074,
+        0.9744398568676025,
+        0.18494907789705475,
+        0.0027965868428296175
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999472268446449,
+        0.9739540143503856,
+        0.1827370229212518,
+        0.00011726042430857504
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 88.40622088619297,
+      "pruned_docs_pct": 99.72034131571704,
+      "tokens_pruned_pct": 51.79408926345423,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.5379851362510322,
+        0.0027965868428296175
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.536248835447719,
+        0.00011726042430857504
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 91.61656437692724,
+      "pruned_docs_pct": 99.04982108450315,
+      "tokens_pruned_pct": 64.2188582914333,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.666633636113405,
+        0.009501789154968347
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.66466257507709,
+        0.00038286781064171153
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 82.38615301113556,
+      "pruned_docs_pct": 99.36416184971097,
+      "tokens_pruned_pct": 30.353639785042436,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999614643545279,
+        0.9810624827965868,
+        0.31739058629232036,
+        0.006358381502890174
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999582013706229,
+        0.9808526490954963,
+        0.3146143706646149,
+        0.00025885566709014024
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 92.94227757200541,
+      "pruned_docs_pct": 99.10927608037434,
+      "tokens_pruned_pct": 69.3415737708829,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.7194494907789706,
+        0.008907239196256538
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.7176911028802166,
+        0.0003648552734386649
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    }
+  ],
+  "numpy_crosscheck": {
+    "arm": "oracle/natural",
+    "n_queries": 10,
+    "dims_grid": [
+      4,
+      12,
+      20,
+      32,
+      48,
+      64,
+      96,
+      128
+    ],
+    "kernel_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.506523534269199,
+      0.0027800715661987336
+    ],
+    "numpy_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.5028075914829969,
+      0.0026974952779710293
+    ],
+    "kernel_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.5060964684691133,
+      0.00011523252276915919
+    ],
+    "numpy_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.032883974723517895
+    ],
+    "doc_max_abs_diff": 0.003715942786202131,
+    "token_max_abs_diff": 0.49390353153088673
+  }
+}
