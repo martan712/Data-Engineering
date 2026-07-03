@@ -1,10 +1,26 @@
 """Stage 3 e07: cache/layout penalty of dim reordering vs natural order.
 
-Single responsibility: quantify the wall-clock overhead introduced by
-non-natural dimension orders (bond, pca) relative to natural order by
-measuring both the per-query pre-processing cost (building Q_eff, order
-permutation, and Qcum) and the total throughput (ms/query), then
-computing the reorder fraction = pre-processing time / total time.
+Single responsibility: quantify the wall-clock cost of non-natural dimension
+orders (bond, pca) relative to natural order, split into the three places it
+can live:
+
+  1. IN-KERNEL access-pattern penalty (the headline metric): kernel ms/query
+     per order, and kernel_penalty_vs_natural_pct = (kernel - kernel_nat) /
+     kernel_nat.  A permuted order reads each dimension as one scattered
+     64 B line instead of a sequential stream — this is where the "cache/
+     layout sensitivity" actually shows up (2026-07-03 finding: the per-query
+     pre-processing is ~0.1% of total, so the old prep/total "reorder
+     fraction" carried no signal).
+  2. PER-QUERY pre-processing (µs/query): order permutation (bond argsort /
+     pca rotation of Q) + Qcum.  Timed by running the packing dispatch in
+     isolation; the Runner's fused throughput mode pre-builds per-query
+     inputs OUTSIDE its timing loop, so its ms/query is pure kernel time and
+     total = kernel + prep.
+  3. ONE-TIME per-corpus (index-build) costs, measured once on a fresh
+     PackingCache and reported in seconds: corpus stats + natural panel
+     packing (natural/bond arms) and PCA fit + a full ROTATED corpus packing
+     (pca arm — 2x panel memory).  Correctly amortized out of per-query
+     latency, but reported so the pca arm's extra index cost stays visible.
 
 tau_seed resolution is deliberately EXCLUDED from the timed pre-processing:
 the oracle policy computes a full exact MaxSim scan per query (an ablation
@@ -13,21 +29,13 @@ and a real system uses self_bound (tau = -inf, zero cost) or an in-kernel
 seed at the first checkpoint.  Including it would charge every order the
 cost of a dense scan and swamp the reorder cost being measured.
 
-A large reorder fraction means the SIMD kernel spends most of its time on
-bookkeeping rather than arithmetic; a small fraction means dimension ordering
-is essentially free and the cells% reduction translates to a proportional
-latency reduction.
-
 The wall-clock instrument is the Stage 3b fused panel BOND kernel
 (docs/stage3b_fused_panel_maxsim_kernel.md); dense baselines:
   dense_fused — fused panel brute (decision-gate baseline)
   dense_numpy — row-major NumPy/BLAS
 
-For each order, the pre-processing cost is timed by running the packing
-dispatch in isolation (without the kernel call).  The Runner's fused
-throughput mode pre-builds per-query inputs OUTSIDE its timing loop, so its
-ms/query is pure kernel time; total = kernel + pre-processing, and
-reorder_fraction = prep / total.
+Cross-run caution: dense wall-clock drifts a few percent between runs
+(machine conditions); only within-run deltas are comparable.
 
 Datasets  : scifact, nfcorpus, arguana, scidocs
 Orders    : natural, bond, pca  (+ two brute-force baselines)
@@ -108,6 +116,37 @@ def time_preprocessing(
     return best_s
 
 
+def time_corpus_prep(flat_tokens: np.ndarray, doc_starts: np.ndarray) -> dict:
+    """One-time per-corpus (index-build) costs in seconds, measured once on a
+    FRESH PackingCache (the experiment's own cache is already warm): corpus
+    stats (mean, in the constructor), the natural panel packing shared by the
+    natural/bond arms, and the pca arm's PCA fit + rotated corpus packing.
+    """
+    t0 = time.perf_counter()
+    pc = PackingCache(flat_tokens, doc_starts)
+    t_init = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    pc._get_panel_packing()
+    t_pack = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    pc.get_pca_rotation()
+    t_pca_fit = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    pc._get_panel_packing_rot()
+    t_pack_rot = time.perf_counter() - t0
+
+    del pc
+    return {
+        "corpus_stats_s": t_init,
+        "panel_packing_s": t_pack,
+        "pca_fit_s": t_pca_fit,
+        "panel_packing_rot_s": t_pack_rot,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -162,12 +201,26 @@ def run_dataset(dataset: str) -> None:
             "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
         }
         arms.append(arm)
-        print(f"  order={order:<7}  "
-              f"total={ms_per_query_total:.4f}ms  "
-              f"prep={ms_per_query_prep:.4f}ms  "
-              f"kernel={ms_per_query_kernel:.4f}ms  "
-              f"reorder_frac={reorder_fraction:.3f}  "
-              f"recall={rec.recall_vs_exact_at_10:.3f}")
+
+    # Headline metric: in-kernel penalty of each order vs natural.
+    kernel_natural = arms[0]["ms_per_query_kernel"]
+    for arm in arms:
+        arm["kernel_penalty_vs_natural_pct"] = (
+            100.0 * (arm["ms_per_query_kernel"] - kernel_natural) / kernel_natural
+        )
+        print(f"  order={arm['dimension_order']:<7}  "
+              f"total={arm['ms_per_query_total']:.4f}ms  "
+              f"prep={arm['ms_per_query_preprocess']*1e3:.1f}us  "
+              f"kernel={arm['ms_per_query_kernel']:.4f}ms  "
+              f"penalty_vs_natural={arm['kernel_penalty_vs_natural_pct']:+.1f}%  "
+              f"recall={arm['recall_vs_exact_at_10']:.3f}")
+
+    # One-time per-corpus (index-build) costs, measured once.
+    corpus_prep = time_corpus_prep(flat_tokens, doc_starts)
+    print(f"  one-time: stats={corpus_prep['corpus_stats_s']:.2f}s  "
+          f"pack={corpus_prep['panel_packing_s']:.2f}s  "
+          f"pca_fit={corpus_prep['pca_fit_s']:.2f}s  "
+          f"pack_rot={corpus_prep['panel_packing_rot_s']:.2f}s")
 
     # Brute-force baselines (no pre-processing timing needed — brute has no reorder step).
     cfg_brute = RunConfig(
@@ -212,56 +265,81 @@ def run_dataset(dataset: str) -> None:
         "baselines": ["dense_fused", "dense_numpy"],
         "arms": arms,
         "brute_arms": brute_arms,
+        "corpus_prep_s": corpus_prep,
     }
     json_path.write_text(json.dumps(payload, indent=2))
     print(f"  JSON: {json_path}")
 
-    # Figure: stacked bar of prep vs kernel latency per order.
+    # Figure: kernel latency / per-query prep (us) / kernel penalty vs natural.
     RESULTS_FIG.mkdir(parents=True, exist_ok=True)
     fig_path = RESULTS_FIG / f"e07_cache_layout_sensitivity_{dataset}.png"
-    _save_figure(arms, brute_arms, dataset, fig_path)
+    _save_figure(arms, brute_arms, corpus_prep, dataset, fig_path)
 
     print(f"  Done in {time.perf_counter() - t0:.1f}s")
 
 
-def _save_figure(arms: list[dict], brute_arms: list[dict], dataset: str, out_path: Path) -> None:
-    orders    = [a["dimension_order"]          for a in arms]
-    prep_ms   = [a["ms_per_query_preprocess"]  for a in arms]
-    kernel_ms = [a["ms_per_query_kernel"]      for a in arms]
-    total_ms  = [a["ms_per_query_total"]       for a in arms]
-    frac      = [a["reorder_fraction"]         for a in arms]
-    colors    = [ORDER_COLORS.get(o, "gray")   for o in orders]
+def _save_figure(arms: list[dict], brute_arms: list[dict], corpus_prep: dict,
+                 dataset: str, out_path: Path) -> None:
+    orders    = [a["dimension_order"]               for a in arms]
+    prep_us   = [a["ms_per_query_preprocess"] * 1e3 for a in arms]
+    kernel_ms = [a["ms_per_query_kernel"]           for a in arms]
+    penalty   = [a["kernel_penalty_vs_natural_pct"] for a in arms]
+    colors    = [ORDER_COLORS.get(o, "gray")        for o in orders]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 4))
     x = np.arange(len(orders))
-    ax1.bar(x, kernel_ms, label="kernel", color=colors, width=0.5, alpha=0.85)
-    ax1.bar(x, prep_ms,   label="preprocess", color=colors, width=0.5,
-            bottom=kernel_ms, alpha=0.4, hatch="//")
-    # Horizontal reference lines for brute baselines.
+
+    # Panel 1: kernel latency vs dense baselines (per-query prep is ~0.1% of
+    # total — panel 2 shows it at its own scale instead of an invisible stack).
+    ax1.bar(x, kernel_ms, color=colors, width=0.5)
     brute_colors = {"dense_fused": "#5c4a9e", "dense_numpy": "#888888"}
     for ba in brute_arms:
         c = brute_colors.get(ba["dimension_order"], "gray")
         ax1.axhline(ba["ms_per_query_total"], color=c, linestyle="--", linewidth=1.2,
                     label=ba["dimension_order"])
     ax1.set_xticks(x); ax1.set_xticklabels(orders)
-    ax1.set_ylabel("ms / query (best-of-10)")
-    ax1.set_title("Latency: kernel + preprocess vs brute baselines")
+    ax1.set_ylabel("kernel ms / query (best-of-10)")
+    ax1.set_title("Kernel latency vs dense baselines")
     ax1.legend(fontsize=7)
     ax1.grid(axis="y", color="#e9e8e2", linewidth=0.6)
     ax1.spines[["top", "right"]].set_visible(False)
-    for xi, v in zip(x, total_ms):
+    for xi, v in zip(x, kernel_ms):
         ax1.text(xi, v * 1.01, f"{v:.3f}", ha="center", fontsize=8)
 
-    ax2.bar(x, [f * 100 for f in frac], color=colors, width=0.5)
+    # Panel 2: per-query pre-processing at its own (us) scale, with the
+    # one-time per-corpus index-build costs annotated.
+    ax2.bar(x, prep_us, color=colors, width=0.5)
     ax2.set_xticks(x); ax2.set_xticklabels(orders)
-    ax2.set_ylabel("reorder fraction %\n(preprocess / total)")
-    ax2.set_title("Pre-processing share of total latency")
-    ax2.set_ylim(0, 105)
+    ax2.set_ylabel("preprocess us / query\n(order permutation + Qcum)")
+    ax2.set_title("Per-query pre-processing (note: microseconds)")
     ax2.grid(axis="y", color="#e9e8e2", linewidth=0.6)
     ax2.spines[["top", "right"]].set_visible(False)
-    for xi, v in zip(x, frac):
-        ax2.text(xi, v * 100 + 1, f"{v*100:.1f}%", ha="center", fontsize=8)
+    for xi, v in zip(x, prep_us):
+        ax2.text(xi, v * 1.01, f"{v:.1f}", ha="center", fontsize=8)
+    ax2.text(0.02, 0.98,
+             "one-time per corpus:\n"
+             f"  panel packing  {corpus_prep['panel_packing_s']:.2f}s\n"
+             f"  pca fit        {corpus_prep['pca_fit_s']:.2f}s\n"
+             f"  rotated pack   {corpus_prep['panel_packing_rot_s']:.2f}s",
+             transform=ax2.transAxes, va="top", ha="left", fontsize=7,
+             family="monospace",
+             bbox=dict(boxstyle="round", facecolor="#f6f5f0", edgecolor="#ccc"))
+
+    # Panel 3: the headline metric — in-kernel access-pattern penalty of each
+    # order relative to natural (same arithmetic, different memory pattern).
+    ax3.bar(x, penalty, color=colors, width=0.5)
+    ax3.axhline(0.0, color="#666666", linewidth=0.8)
+    ax3.set_xticks(x); ax3.set_xticklabels(orders)
+    ax3.set_ylabel("kernel-time penalty vs natural %")
+    ax3.set_title("In-kernel layout penalty (the reorder cost)")
+    ax3.grid(axis="y", color="#e9e8e2", linewidth=0.6)
+    ax3.spines[["top", "right"]].set_visible(False)
+    ax3.margins(y=0.18)  # keep labels of negative bars inside the axes
+    span = max(max(penalty) - min(penalty), 1.0)
+    for xi, v in zip(x, penalty):
+        off = 0.03 * span
+        ax3.text(xi, v + (off if v >= 0 else -off), f"{v:+.1f}%",
+                 ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
 
     fig.suptitle(
         f"e07 cache/layout sensitivity — {dataset}  "
