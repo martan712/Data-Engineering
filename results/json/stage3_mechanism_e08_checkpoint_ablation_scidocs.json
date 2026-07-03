@@ -1,0 +1,272 @@
+{
+  "experiment": "e08_checkpoint_ablation",
+  "dataset": "scidocs",
+  "method": "fused_panel_maxsim_bond",
+  "n_docs": 25657,
+  "total_tokens": 4531496,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "shrink": 1.0,
+  "policy": "oracle",
+  "orders": [
+    "natural",
+    "bond"
+  ],
+  "checkpoint_sets": [
+    [
+      32
+    ],
+    [
+      48
+    ],
+    [
+      64
+    ],
+    [
+      96
+    ],
+    [
+      112
+    ],
+    [
+      32,
+      64
+    ],
+    [
+      64,
+      112
+    ],
+    [
+      32,
+      64,
+      96,
+      112
+    ]
+  ],
+  "n_repeats_throughput": 5,
+  "dense_fused_baseline": {
+    "ms_per_query_1t": 174.55357266000647,
+    "ms_per_query_mt": 61.88129351998214
+  },
+  "arms": [
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        32
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 205.9053493400279,
+      "ms_per_query_mt": 60.87799141998403,
+      "pruned_docs_pct_fused": 0.0,
+      "sim_cells_scanned_pct_padded": 100.0,
+      "sim_pruned_docs_pct": 0.0
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        48
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 203.1468073999713,
+      "ms_per_query_mt": 60.32590586000879,
+      "pruned_docs_pct_fused": 0.0,
+      "sim_cells_scanned_pct_padded": 100.0,
+      "sim_pruned_docs_pct": 0.0
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        64
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 193.2944648600096,
+      "ms_per_query_mt": 60.99579691996041,
+      "pruned_docs_pct_fused": 0.007561289316755661,
+      "sim_cells_scanned_pct_padded": 99.99565960760414,
+      "sim_pruned_docs_pct": 0.007561289316755661
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        96
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 167.22882403999392,
+      "ms_per_query_mt": 59.20811226002115,
+      "pruned_docs_pct_fused": 64.58003663717504,
+      "sim_cells_scanned_pct_padded": 83.87776310666463,
+      "sim_pruned_docs_pct": 64.58011458861131
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 167.5690410000243,
+      "ms_per_query_mt": 58.949491219973424,
+      "pruned_docs_pct_fused": 98.1698561796001,
+      "sim_cells_scanned_pct_padded": 87.73630254092393,
+      "sim_pruned_docs_pct": 98.1698561796001
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        32,
+        64
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 202.55335020003258,
+      "ms_per_query_mt": 61.518291699976544,
+      "pruned_docs_pct_fused": 0.007561289316755661,
+      "sim_cells_scanned_pct_padded": 99.99565960760414,
+      "sim_pruned_docs_pct": 0.007561289316755661
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        64,
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 197.11806481995154,
+      "ms_per_query_mt": 58.451388140019844,
+      "pruned_docs_pct_fused": 98.1698561796001,
+      "sim_cells_scanned_pct_padded": 87.73304724662705,
+      "sim_pruned_docs_pct": 98.1698561796001
+    },
+    {
+      "dimension_order": "natural",
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 200.10348610005167,
+      "ms_per_query_mt": 56.749051559963846,
+      "pruned_docs_pct_fused": 98.1698561796001,
+      "sim_cells_scanned_pct_padded": 79.67303675113843,
+      "sim_pruned_docs_pct": 98.1698561796001
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        32
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 238.1166728399694,
+      "ms_per_query_mt": 68.43907517999469,
+      "pruned_docs_pct_fused": 0.000311805745020852,
+      "sim_cells_scanned_pct_padded": 99.9997562338124,
+      "sim_pruned_docs_pct": 0.00031180574502085205
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        48
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 224.10670342003868,
+      "ms_per_query_mt": 66.63292186000035,
+      "pruned_docs_pct_fused": 1.3233815333047512,
+      "sim_cells_scanned_pct_padded": 99.15409324056677,
+      "sim_pruned_docs_pct": 1.3233815333047512
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        64
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 207.35360214006505,
+      "ms_per_query_mt": 64.21901580004487,
+      "pruned_docs_pct_fused": 11.745410609190474,
+      "sim_cells_scanned_pct_padded": 94.06495353207049,
+      "sim_pruned_docs_pct": 11.745410609190474
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        96
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 170.24015959999815,
+      "ms_per_query_mt": 57.75038025996764,
+      "pruned_docs_pct_fused": 83.87036676150758,
+      "sim_cells_scanned_pct_padded": 79.05081170754828,
+      "sim_pruned_docs_pct": 83.87036676150757
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 176.15936860005604,
+      "ms_per_query_mt": 59.312931439999375,
+      "pruned_docs_pct_fused": 99.3920567486456,
+      "sim_cells_scanned_pct_padded": 87.57979110591978,
+      "sim_pruned_docs_pct": 99.39205674864559
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        32,
+        64
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 235.84676781996677,
+      "ms_per_query_mt": 67.93734844002756,
+      "pruned_docs_pct_fused": 11.745410609190474,
+      "sim_cells_scanned_pct_padded": 94.06487227667463,
+      "sim_pruned_docs_pct": 11.745410609190474
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        64,
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 194.84797545999754,
+      "ms_per_query_mt": 61.97291603995836,
+      "pruned_docs_pct_fused": 99.3920567486456,
+      "sim_cells_scanned_pct_padded": 83.12850625497265,
+      "sim_pruned_docs_pct": 99.39205674864559
+    },
+    {
+      "dimension_order": "bond",
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "threshold_policy": "oracle",
+      "recall_vs_exact_at_10": 1.0,
+      "ms_per_query_1t": 209.51243690004048,
+      "ms_per_query_mt": 62.81782627993379,
+      "pruned_docs_pct_fused": 99.3920567486456,
+      "sim_cells_scanned_pct_padded": 74.13758654546069,
+      "sim_pruned_docs_pct": 99.39205674864559
+    }
+  ]
+}
