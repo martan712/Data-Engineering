@@ -135,16 +135,19 @@ def test_negative_similarity_docs_not_clamped():
 
 ORDERS = ["natural", "bond", "pca"]
 POLICIES = ["self_bound", "oracle"]
+# (level, bound) arms: doc-level tight, doc-level cheap (query-only bound),
+# token-level tight.  bound="cheap" exists only at level="doc".
+ARMS = [("doc", "tight"), ("doc", "cheap"), ("token", "tight")]
 
 
-@pytest.mark.parametrize("level", ["doc", "token"])
+@pytest.mark.parametrize("level,bound", ARMS)
 @pytest.mark.parametrize("order", ORDERS)
 @pytest.mark.parametrize("policy", POLICIES)
-def test_bond_exact_agreement_shrink1(order, policy, level):
-    """Stage 3b K4 blocking gate: both fused BOND kernels (document-level and
-    token-level pruning) at shrink=1 must be exact-safe for every dimension
-    order and threshold policy (the Stage 2 gate re-run on the new kernels),
-    single- and multi-threaded."""
+def test_bond_exact_agreement_shrink1(order, policy, level, bound):
+    """Stage 3b K4 blocking gate: all fused BOND arms (document-level tight
+    and cheap bounds, token-level pruning) at shrink=1 must be exact-safe for
+    every dimension order and threshold policy (the Stage 2 gate re-run on
+    the new kernels), single- and multi-threaded."""
     from bondmaxsim.data.packing import build_qcum
     from bondmaxsim.testbed.packing_cache import PackingCache
     from bondmaxsim.testbed.config import RunConfig
@@ -167,13 +170,13 @@ def test_bond_exact_agreement_shrink1(order, policy, level):
             ids, scores, stats = run_fused_panel_bond(
                 LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
                 Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=10,
-                n_threads=n_threads, level=level,
+                n_threads=n_threads, level=level, bound=bound,
             )
             for i in range(10):
                 assert abs(scores[i] - ref_scores[ids[i]]) <= SCORE_ATOL
             assert (ref_scores[ids] >= kth - SCORE_ATOL).all(), (
-                f"level={level} order={order} policy={policy} nt={n_threads}: "
-                f"top-k set mismatch (recall < 1 at shrink=1)"
+                f"level={level} bound={bound} order={order} policy={policy} "
+                f"nt={n_threads}: top-k set mismatch (recall < 1 at shrink=1)"
             )
 
 
@@ -215,6 +218,20 @@ def test_bond_prunes_documents():
     )
     assert int(stats[1]) > 0, "oracle-seeded bond kernel pruned zero documents"
 
+    # The cheap (query-only) bound must also prune on this fixture, and —
+    # because UB_cheap >= UB_tight always, with a fixed oracle tau — it can
+    # never prune a document the tight bound keeps: cells_cheap >= cells_tight.
+    _, _, stats_cheap = run_fused_panel_bond(
+        LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+        Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=5, n_threads=1,
+        bound="cheap",
+    )
+    assert int(stats_cheap[1]) > 0, "cheap-bound kernel pruned zero documents"
+    assert int(stats_cheap[0]) >= int(stats[0]), (
+        "cheap bound scanned fewer cells than the tight bound — impossible "
+        "(UB_cheap >= UB_tight with a fixed oracle tau)"
+    )
+
     # The token-level kernel on the same corpus must prune tokens (stats[2])
     # and remain exact (checked by the agreement gate above).
     _, _, stats_tok = run_fused_panel_bond(
@@ -227,6 +244,44 @@ def test_bond_prunes_documents():
         "token-level kernel should scan no more cells than doc-level "
         "(dead panels are skipped)"
     )
+
+
+@pytest.mark.parametrize("level,bound", ARMS)
+@pytest.mark.parametrize("checkpoints", [(16,), (16, 48), (8, 16, 24, 48, 56), (200,)])
+def test_bond_custom_checkpoints_exact(checkpoints, level, bound):
+    """R3 gate: any checkpoint set stays exact-safe at shrink=1 (the Stage 1
+    §10 addendum makes C a free performance parameter — verify empirically,
+    including out-of-range values the kernel must clamp away)."""
+    from bondmaxsim.data.packing import build_qcum
+    from bondmaxsim.testbed.packing_cache import PackingCache
+    from bondmaxsim.testbed.config import RunConfig
+    from bondmaxsim.testbed.thresholds import resolve_tau_seed
+
+    flat, doc_starts, queries = _make_corpus(71, 100, 64, n_queries=3)
+    packing = PackingCache(flat, doc_starts)
+    cfg = RunConfig(dataset="", method="fused_panel_maxsim_bond",
+                    dimension_order="natural", threshold_policy="oracle",
+                    k=10, shrink=1.0)
+    for q in queries:
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, ord_ = (
+            packing.dispatch_order_panel(q, "natural")
+        )
+        Qcum = build_qcum(Q_eff, ord_)
+        tau = resolve_tau_seed(cfg, q, ord_, "natural", packing)
+        ref_scores = exact_maxsim_scores(q, flat, doc_starts)
+        kth = np.sort(ref_scores)[-10]
+        ids, scores, _ = run_fused_panel_bond(
+            LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+            Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=10, n_threads=1,
+            level=level, checkpoints=np.asarray(checkpoints, dtype=np.uint32),
+            bound=bound,
+        )
+        for i in range(10):
+            assert abs(scores[i] - ref_scores[ids[i]]) <= SCORE_ATOL
+        assert (ref_scores[ids] >= kth - SCORE_ATOL).all(), (
+            f"top-k set mismatch with checkpoints={checkpoints} "
+            f"level={level} bound={bound}"
+        )
 
 
 def test_thread_invariance():

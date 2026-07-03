@@ -21,8 +21,15 @@ ABI:
   uint64 fused_panel_maxsim_bond(
       ... same corpus/query arguments ...,
       const uint32_t* order, const float* Qcum,   // [D], [m, D+1]
+      const uint32_t* checkpoints, size_t n_checkpoints,  // NULL/0 = {32, 64}
       float shrink, float tau_seed, size_t K, int n_threads,
       uint32_t* topk_id, float* topk_score, uint64_t* stats)  // stats: u64[2]
+
+  uint64 fused_panel_maxsim_bond_cheap(
+      ... identical signature to fused_panel_maxsim_bond ...)   // stats: u64[2]
+      — same document-level pruning with the QUERY-ONLY cheap bound
+      UB = sum_i max_j P_ij + sum_i resq_i (resd_j <= 1 relaxation; BOND
+      SIGMOD-2002 H_q lesson, docs/bond2002_bound_cost_analysis.md).
 
   uint64 fused_panel_maxsim_bond_token(
       ... identical signature to fused_panel_maxsim_bond ...)   // stats: u64[3]
@@ -74,10 +81,12 @@ def load_fused_panel_kernel() -> ctypes.CDLL:
         u64p,                       # group_doc_starts
         f32p, csz, csz,             # query, m, D
         u32p, f32p,                 # order, Qcum
+        u32p, csz,                  # checkpoints (NULL = default {32,64}), n_checkpoints
         ctypes.c_float, ctypes.c_float, csz, ctypes.c_int,  # shrink, tau_seed, K, n_threads
         u32p, f32p, u64p,           # topk_id, topk_score, stats
     ]
-    for fname in ("fused_panel_maxsim_bond", "fused_panel_maxsim_bond_token"):
+    for fname in ("fused_panel_maxsim_bond", "fused_panel_maxsim_bond_cheap",
+                  "fused_panel_maxsim_bond_token"):
         fn = getattr(lib, fname)
         fn.argtypes = _bond_argtypes
         fn.restype  = ctypes.c_uint64
@@ -152,10 +161,12 @@ def run_fused_panel_bond(
     K: int,
     n_threads: int = 1,
     level: str = "doc",
+    checkpoints: np.ndarray | list[int] | None = None,
+    bound: str = "tight",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Call fused_panel_maxsim_bond (level="doc") or
     fused_panel_maxsim_bond_token (level="token") — fused MaxSim with bound
-    checkpoints at dims {32, 64} (Stage 3b §5.5).
+    checkpoints at the given dims (default {32, 64}; Stage 3b §5.5, R3).
 
     level="doc"   : document-level pruning only.
     level="token" : additionally applies the Stage 1 §2.4 token-level
@@ -163,6 +174,13 @@ def run_fused_panel_bond(
                     whose 16 lanes all die is skipped for the remaining
                     dimension segments).  Same kernel in every other respect —
                     the three-arm comparison isolates the mechanism.
+    bound="tight" : Cauchy-Schwarz envelope UB = sum_i max_j (P_ij +
+                    resq_i*resd_j) — needs doc-side residuals (sumsq + sqrt).
+    bound="cheap" : query-only bound UB = sum_i max_j P_ij + sum_i resq_i
+                    (resd_j <= 1 relaxation; still exact-safe at shrink=1 —
+                    it can only raise UB).  Doc-level only (e09 instrument);
+                    BOND SIGMOD-2002 H_q lesson, see
+                    docs/bond2002_bound_cost_analysis.md.
 
     Parameters
     ----------
@@ -176,6 +194,9 @@ def run_fused_panel_bond(
     shrink    : float — recall knob (1.0 = exact-safe)
     tau_seed  : float — pruning-threshold seed (-inf = self_bound; the kernel
                 additionally shares a rising threshold across threads)
+    checkpoints : optional int sequence — bound-checkpoint dims (R3 e08
+                ablation).  None = kernel default {32, 64}.  The kernel
+                clamps to (0, D), sorts, dedupes, and appends D itself.
 
     Returns
     -------
@@ -186,6 +207,10 @@ def run_fused_panel_bond(
     """
     if level not in ("doc", "token"):
         raise ValueError(f"Unknown bond level: {level!r}. Expected 'doc' or 'token'.")
+    if bound not in ("tight", "cheap"):
+        raise ValueError(f"Unknown bound: {bound!r}. Expected 'tight' or 'cheap'.")
+    if bound == "cheap" and level != "doc":
+        raise ValueError("bound='cheap' is only implemented for level='doc'.")
 
     panel_data       = np.ascontiguousarray(panel_data,       dtype=np.float32)
     group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
@@ -203,8 +228,18 @@ def run_fused_panel_bond(
     scores = np.empty(K, dtype=np.float32)
     stats  = np.zeros(3, dtype=np.uint64)
 
-    fn = (lib.fused_panel_maxsim_bond if level == "doc"
-          else lib.fused_panel_maxsim_bond_token)
+    if checkpoints is not None:
+        cps_u32 = np.ascontiguousarray(checkpoints, dtype=np.uint32)
+        cps_ptr, n_cps = up(cps_u32), len(cps_u32)
+    else:
+        cps_ptr, n_cps = None, 0
+
+    if level == "token":
+        fn = lib.fused_panel_maxsim_bond_token
+    elif bound == "cheap":
+        fn = lib.fused_panel_maxsim_bond_cheap
+    else:
+        fn = lib.fused_panel_maxsim_bond
     fn(
         fp(panel_data),
         lp(group_offsets), csz(n_groups),
@@ -212,6 +247,7 @@ def run_fused_panel_bond(
         lp(group_doc_starts),
         fp(Q), csz(m), csz(D),
         up(order_u32), fp(Qcum),
+        cps_ptr, csz(n_cps),
         ctypes.c_float(shrink), ctypes.c_float(tau_seed), csz(K), ctypes.c_int(n_threads),
         up(ids), fp(scores), lp(stats),
     )

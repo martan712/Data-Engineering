@@ -130,11 +130,14 @@ def run_fused_bond_mode(
     n_repeats: int = 5,
     exact_ids_list: list[np.ndarray] | None = None,
     level: str = "doc",
+    bound: str = "tight",
 ) -> ResultRecord:
     """Fused panel BOND: dimension-incremental scan with bound checkpoints at
     dims {32, 64} on the register-tiled microkernel (Stage 3b §5.5).
     level="doc" prunes documents only; level="token" additionally applies the
     Stage 1 §2.4 token domination test (three-arm isolation instrument).
+    bound="cheap" (doc level only) replaces the Cauchy-Schwarz envelope with
+    the query-only bound (e09 instrument, docs/bond2002_bound_cost_analysis.md).
     The wall-clock BOND instrument — compare against run_fused_brute_mode at
     the SAME n_threads.
 
@@ -164,13 +167,15 @@ def run_fused_bond_mode(
             (panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau)
         )
 
+    cps = np.asarray(config.checkpoints, dtype=np.uint32) if config.checkpoints else None
+
     def _run_all():
         for panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau in prepared:
             run_fused_panel_bond(
                 lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
                 Q_eff, order, Qcum,
                 shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
-                level=level,
+                level=level, checkpoints=cps, bound=bound,
             )
 
     # Warmup.
@@ -201,7 +206,7 @@ def run_fused_bond_mode(
             lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
             Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
-            level=level,
+            level=level, checkpoints=cps, bound=bound,
         )
         recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
         docs_pruned_total += int(stats[1])
@@ -215,7 +220,8 @@ def run_fused_bond_mode(
         dataset               = config.dataset,
         num_docs              = n_docs,
         num_queries           = nq,
-        method                = f"fused_panel_bond_{level}",
+        method                = (f"fused_panel_bond_{level}"
+                                 + ("_cheap" if bound == "cheap" else "")),
         candidate_budget      = config.candidate_budget,
         dimension_order       = config.dimension_order,
         threshold_policy      = config.threshold_policy,
@@ -234,6 +240,7 @@ def run_fused_bond_mode(
         thread_count          = n_threads if n_threads > 0 else None,
         shrink                = config.shrink,
         tokens_pruned_pct     = tokens_pruned_pct,
-        notes                 = (f"fused panel BOND level={level} (checkpoints 32/64), "
+        notes                 = (f"fused panel BOND level={level} bound={bound} "
+                                 f"(checkpoints {list(config.checkpoints) if config.checkpoints else [32, 64]}), "
                                  f"n_threads={n_threads}"),
     )

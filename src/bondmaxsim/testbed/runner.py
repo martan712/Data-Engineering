@@ -280,6 +280,9 @@ class Runner:
 
         Dispatch: config.method == "fused_panel_maxsim_bond" runs the Stage 3b
         fused BOND kernel with document-level pruning;
+        "fused_panel_maxsim_bond_cheap" runs the same document-level kernel
+        with the query-only cheap bound (e09 instrument,
+        docs/bond2002_bound_cost_analysis.md);
         "fused_panel_maxsim_bond_token" runs the same kernel with the token-
         level domination test added (three-arm isolation, Stage 3b §5.8);
         "wide_block_maxsim_bond" runs the legacy wide-block throughput kernel;
@@ -290,13 +293,15 @@ class Runner:
         ResultRecord with ms_per_query, qps populated;
         cells_scanned_pct = None (not meaningful in throughput mode).
         """
-        if config.method in ("fused_panel_maxsim_bond", "fused_panel_maxsim_bond_token"):
+        if config.method in ("fused_panel_maxsim_bond", "fused_panel_maxsim_bond_cheap",
+                             "fused_panel_maxsim_bond_token"):
             level = "token" if config.method.endswith("_token") else "doc"
+            bound = "cheap" if config.method.endswith("_cheap") else "tight"
             return run_fused_bond_mode(
                 self._get_fused_lib(), self._packing, self._queries, config,
                 n_threads=n_threads, n_repeats=n_repeats,
                 exact_ids_list=self._get_exact_ids(config.k),
-                level=level,
+                level=level, bound=bound,
             )
 
         if config.method == "wide_block_maxsim_bond":

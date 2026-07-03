@@ -281,21 +281,52 @@ uint64_t fused_panel_maxsim_brute(
 // per-DOCUMENT Cauchy-Schwarz bound checkpoints (Stage 3b §5.5).
 //
 // The scan of one document is split into dimension segments ending at the
-// checkpoints {32, 64, D} (clamped/deduped for small D; aligned with the
-// DEFAULT_FETCH cumulative boundaries).  Within a segment the register-tiled
-// microkernel runs unchanged over the document's panels, spilling partials
-// to a small L1/L2-resident per-document buffer between segments.  At each
-// non-final checkpoint the document upper bound
+// caller-supplied checkpoint set C plus D (R3: `checkpoints`/`n_checkpoints`
+// ABI parameters; NULL/0 selects the default {32, 64} used by Stage 3b —
+// values are clamped to (0, D), sorted, and deduped).  Within a NON-final segment the
+// register-tiled microkernel runs unchanged over the document's panels,
+// spilling partials to a small L1/L2-resident per-document buffer between
+// segments; the per-lane sum of squares (for resd) is accumulated in the
+// same pass as query tile 0, so each panel column is traversed once per
+// segment.  At each non-final checkpoint the document upper bound
 //     UB_d = sum_i max_j (P_ij + resq_i * resd_j)
 // is evaluated lane-vectorized over the spilled partials; if UB_d < tau the
 // document's remaining dimension segments are skipped entirely (bytes never
 // read — this is the mechanism that goes below the dense DRAM floor).
+// The FINAL segment needs neither sumsq (the residual is 0 at D — no bound
+// is evaluated) nor a spill: it reloads the partials once and folds the
+// per-document max in registers, exactly like the brute epilogue, so Pt is
+// never stored or rescanned after the last checkpoint.
 // Token-level domination pruning is deliberately absent (e03 showed its
 // bookkeeping costs more than it saves at wall-clock; it remains measured by
 // the wide-block ACCOUNTING kernel).
 //
+// Both document-level arms share one templated body (CHEAP below):
+//
+//   fused_panel_maxsim_bond       (CHEAP = false) — the TIGHT bound above:
+//       UB_d = sum_i max_j (P_ij + resq_i * resd_j).
+//       Doc-side residual machinery: sumsq fused into tile 0, one sqrt per
+//       lane per checkpoint (panel_resd), resd loads in the UB reduction.
+//   fused_panel_maxsim_bond_cheap (CHEAP = true)  — the QUERY-ONLY bound
+//       (BOND SIGMOD-2002 H_q lesson: prefer the cheapest bound; see
+//       docs/bond2002_bound_cost_analysis.md).  Unit-norm doc tokens give
+//       resd_j <= 1, so
+//           UB_d = sum_i max_j P_ij + sum_i resq_i
+//       where the second term is query-only and hoisted per checkpoint.
+//       Tile 0 runs the plain microkernel (prefetch kept, NO sumsq), no
+//       sqrt, no resd — the bound costs one plain max-reduction over the
+//       spilled partials plus one add.  Looser: UB_cheap >= UB_tight, so it
+//       never prunes a document the tight bound would keep (still exact-safe
+//       at shrink=1), but it may prune later or not at all (e09 measures
+//       the trade).  shrink applies to resq exactly as in the tight arm.
+//
+// The query-side residuals resq_i(c) = beta_c * sqrt(1 - Qcum[i, cps[c]])
+// depend only on the query and checkpoint, so BOTH arms precompute them once
+// per call (hoisted out of the document loop; identical bound math).
+//
 // Exactness at shrink=1: identical bound math to Stage 1 §2.3 evaluated at
-// document granularity; duplicate-token padding adds identical lanes (max-
+// document granularity (the cheap arm additionally relaxes resd_j to 1,
+// which only raises UB); duplicate-token padding adds identical lanes (max-
 // invariant); zero-padded query rows are excluded from UB and score.
 //
 // tau = max(tau_seed, shared_tau) where shared_tau is the atomic max over
@@ -306,6 +337,33 @@ uint64_t fused_panel_maxsim_brute(
 //            kernel's unpadded live-set counter)
 // stats[1] = docs pruned at a checkpoint (never finalized)
 // ---------------------------------------------------------------------------
+
+// Build the segment-end sequence from the caller's checkpoint set (R3).
+// NULL/0 selects the default {32, 64}; entries are clamped to (0, D), sorted
+// ascending, deduped, and D is always appended as the final segment end.
+// At most MAX_CPS-1 bound checkpoints are honored (more buys nothing: e02
+// shows survival changes on a coarser grid than 8 boundaries).
+static constexpr size_t MAX_CPS = 9;
+static inline size_t build_checkpoints(const uint32_t* checkpoints, size_t n_checkpoints,
+                                       size_t D, size_t* cps) {
+    static const uint32_t kDefault[2] = {32, 64};
+    if (checkpoints == nullptr || n_checkpoints == 0) {
+        checkpoints = kDefault;
+        n_checkpoints = 2;
+    }
+    size_t tmp[MAX_CPS - 1];
+    size_t n = 0;
+    for (size_t i = 0; i < n_checkpoints && n < MAX_CPS - 1; ++i) {
+        size_t c = checkpoints[i];
+        if (c > 0 && c < D) tmp[n++] = c;
+    }
+    std::sort(tmp, tmp + n);
+    size_t n_cps = 0;
+    for (size_t i = 0; i < n; ++i)
+        if (n_cps == 0 || tmp[i] > cps[n_cps - 1]) cps[n_cps++] = tmp[i];
+    cps[n_cps++] = D;
+    return n_cps;
+}
 
 #ifdef __AVX512F__
 
@@ -327,14 +385,86 @@ static inline void panel_tile_seg(const float* panel, const float* qpack,
     for (size_t i = 0; i < M; ++i) _mm512_storeu_ps(Pt + i * PT, acc[i]);
 }
 
-static inline void panel_sumsq_seg(const float* panel, const uint32_t* order,
-                                   size_t z0, size_t z1, float* ss, bool first) {
-    __m512 s = first ? _mm512_setzero_ps() : _mm512_loadu_ps(ss);
-    for (size_t t = z0; t < z1; ++t) {
-        __m512 col = _mm512_loadu_ps(panel + (size_t)order[t] * PT);
-        s = _mm512_fmadd_ps(col, col, s);
+// A permuted dimension order defeats the hardware prefetcher (each column is
+// one scattered 64 B line), so the first tile to touch a panel prefetches the
+// SAME columns of the NEXT panel (pf = panel + PT*D): one panel of compute of
+// lead time hides the miss.  Prefetch is a hint — a pf past the end of
+// panel_data (last panel) is architecturally harmless.
+#define BOND_PF(pf, z) _mm_prefetch((const char*)((pf) + (z) * PT), _MM_HINT_T0)
+
+// panel_tile_seg fused with the per-lane sumsq accumulation (query tile 0
+// only): each panel column is loaded once and feeds both the M dot-product
+// rows and the col*col sum needed for resd at the checkpoint.
+template <size_t M>
+static inline void panel_tile_seg_ss(const float* panel, const float* qpack,
+                                     const uint32_t* order, size_t z0, size_t z1,
+                                     float* Pt, float* ss, bool first,
+                                     const float* pf) {
+    __m512 acc[M], s;
+    if (first) {
+        for (size_t i = 0; i < M; ++i) acc[i] = _mm512_setzero_ps();
+        s = _mm512_setzero_ps();
+    } else {
+        for (size_t i = 0; i < M; ++i) acc[i] = _mm512_loadu_ps(Pt + i * PT);
+        s = _mm512_loadu_ps(ss);
     }
+    for (size_t t = z0; t < z1; ++t) {
+        size_t z = order[t];
+        BOND_PF(pf, z);
+        __m512 col = _mm512_loadu_ps(panel + z * PT);
+        s = _mm512_fmadd_ps(col, col, s);
+        const float* qz = qpack + z * M;
+        for (size_t i = 0; i < M; ++i)
+            acc[i] = _mm512_fmadd_ps(_mm512_set1_ps(qz[i]), col, acc[i]);
+    }
+    for (size_t i = 0; i < M; ++i) _mm512_storeu_ps(Pt + i * PT, acc[i]);
     _mm512_storeu_ps(ss, s);
+}
+
+// Final-segment variant: reloads the spilled partials, accumulates the
+// remaining dims, and folds straight into the per-document running max —
+// no store back to Pt, no sumsq (the residual is 0 at D).
+template <size_t M>
+static inline void panel_tile_seg_final(const float* panel, const float* qpack,
+                                        const uint32_t* order, size_t z0, size_t z1,
+                                        const float* Pt, bool first, __m512* dmax,
+                                        const float* pf) {
+    __m512 acc[M];
+    if (first) for (size_t i = 0; i < M; ++i) acc[i] = _mm512_setzero_ps();
+    else       for (size_t i = 0; i < M; ++i) acc[i] = _mm512_loadu_ps(Pt + i * PT);
+    for (size_t t = z0; t < z1; ++t) {
+        size_t z = order[t];
+        if (pf) BOND_PF(pf, z);
+        __m512 col = _mm512_loadu_ps(panel + z * PT);
+        const float* qz = qpack + z * M;
+        for (size_t i = 0; i < M; ++i)
+            acc[i] = _mm512_fmadd_ps(_mm512_set1_ps(qz[i]), col, acc[i]);
+    }
+    for (size_t i = 0; i < M; ++i) dmax[i] = _mm512_max_ps(dmax[i], acc[i]);
+}
+
+// Masked final-segment fold (token-level kernel): only live lanes enter the
+// per-document max; dead lanes stay at -inf from DocMax::reset.
+template <size_t M>
+static inline void panel_tile_seg_final_masked(const float* panel, const float* qpack,
+                                               const uint32_t* order, size_t z0, size_t z1,
+                                               const float* Pt, bool first,
+                                               uint16_t live, __m512* dmax,
+                                               const float* pf) {
+    __m512 acc[M];
+    if (first) for (size_t i = 0; i < M; ++i) acc[i] = _mm512_setzero_ps();
+    else       for (size_t i = 0; i < M; ++i) acc[i] = _mm512_loadu_ps(Pt + i * PT);
+    for (size_t t = z0; t < z1; ++t) {
+        size_t z = order[t];
+        if (pf) BOND_PF(pf, z);
+        __m512 col = _mm512_loadu_ps(panel + z * PT);
+        const float* qz = qpack + z * M;
+        for (size_t i = 0; i < M; ++i)
+            acc[i] = _mm512_fmadd_ps(_mm512_set1_ps(qz[i]), col, acc[i]);
+    }
+    __mmask16 k = (__mmask16)live;
+    for (size_t i = 0; i < M; ++i)
+        dmax[i] = _mm512_mask_max_ps(dmax[i], k, dmax[i], acc[i]);
 }
 
 // resd = sqrt(max(0, 1 - sumsq)) per lane, one panel.
@@ -356,6 +486,36 @@ static inline float doc_row_ubmax(const float* Pt_row, const float* resd,
     return _mm512_reduce_max_ps(best);
 }
 
+// Cheap-bound variant: max over the document's lanes of P only (the doc-side
+// residual is bounded by 1, so resq moves outside the max as a query-only term).
+static inline float doc_row_pmax(const float* Pt_row, size_t n_panels,
+                                 size_t row_stride) {
+    __m512 best = _mm512_set1_ps(-std::numeric_limits<float>::infinity());
+    for (size_t p = 0; p < n_panels; ++p)
+        best = _mm512_max_ps(best, _mm512_loadu_ps(Pt_row + p * row_stride));
+    return _mm512_reduce_max_ps(best);
+}
+
+// panel_tile_seg with the next-panel prefetch but WITHOUT the sumsq
+// accumulation — query tile 0 of the cheap-bound arm (no doc-side residual).
+template <size_t M>
+static inline void panel_tile_seg_pf(const float* panel, const float* qpack,
+                                     const uint32_t* order, size_t z0, size_t z1,
+                                     float* Pt, bool first, const float* pf) {
+    __m512 acc[M];
+    if (first) for (size_t i = 0; i < M; ++i) acc[i] = _mm512_setzero_ps();
+    else       for (size_t i = 0; i < M; ++i) acc[i] = _mm512_loadu_ps(Pt + i * PT);
+    for (size_t t = z0; t < z1; ++t) {
+        size_t z = order[t];
+        BOND_PF(pf, z);
+        __m512 col = _mm512_loadu_ps(panel + z * PT);
+        const float* qz = qpack + z * M;
+        for (size_t i = 0; i < M; ++i)
+            acc[i] = _mm512_fmadd_ps(_mm512_set1_ps(qz[i]), col, acc[i]);
+    }
+    for (size_t i = 0; i < M; ++i) _mm512_storeu_ps(Pt + i * PT, acc[i]);
+}
+
 #else  // portable fallback
 
 template <size_t M>
@@ -375,15 +535,68 @@ static inline void panel_tile_seg(const float* panel, const float* qpack,
         for (size_t j = 0; j < PT; ++j) Pt[i * PT + j] = acc[i][j];
 }
 
-static inline void panel_sumsq_seg(const float* panel, const uint32_t* order,
-                                   size_t z0, size_t z1, float* ss, bool first) {
-    float s[PT];
+#define BOND_PF(pf, z) __builtin_prefetch((pf) + (z) * PT)
+
+template <size_t M>
+static inline void panel_tile_seg_ss(const float* panel, const float* qpack,
+                                     const uint32_t* order, size_t z0, size_t z1,
+                                     float* Pt, float* ss, bool first,
+                                     const float* pf) {
+    float acc[M][PT], s[PT];
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) acc[i][j] = first ? 0.0f : Pt[i * PT + j];
     for (size_t j = 0; j < PT; ++j) s[j] = first ? 0.0f : ss[j];
     for (size_t t = z0; t < z1; ++t) {
+        BOND_PF(pf, (size_t)order[t]);
         const float* col = panel + (size_t)order[t] * PT;
+        const float* qz = qpack + (size_t)order[t] * M;
         for (size_t j = 0; j < PT; ++j) s[j] += col[j] * col[j];
+        for (size_t i = 0; i < M; ++i)
+            for (size_t j = 0; j < PT; ++j) acc[i][j] += qz[i] * col[j];
     }
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) Pt[i * PT + j] = acc[i][j];
     for (size_t j = 0; j < PT; ++j) ss[j] = s[j];
+}
+
+template <size_t M>
+static inline void panel_tile_seg_final(const float* panel, const float* qpack,
+                                        const uint32_t* order, size_t z0, size_t z1,
+                                        const float* Pt, bool first, float (*dmax)[PT],
+                                        const float* pf) {
+    float acc[M][PT];
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) acc[i][j] = first ? 0.0f : Pt[i * PT + j];
+    for (size_t t = z0; t < z1; ++t) {
+        if (pf) BOND_PF(pf, (size_t)order[t]);
+        const float* col = panel + (size_t)order[t] * PT;
+        const float* qz = qpack + (size_t)order[t] * M;
+        for (size_t i = 0; i < M; ++i)
+            for (size_t j = 0; j < PT; ++j) acc[i][j] += qz[i] * col[j];
+    }
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) dmax[i][j] = std::max(dmax[i][j], acc[i][j]);
+}
+
+template <size_t M>
+static inline void panel_tile_seg_final_masked(const float* panel, const float* qpack,
+                                               const uint32_t* order, size_t z0, size_t z1,
+                                               const float* Pt, bool first,
+                                               uint16_t live, float (*dmax)[PT],
+                                               const float* pf) {
+    float acc[M][PT];
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) acc[i][j] = first ? 0.0f : Pt[i * PT + j];
+    for (size_t t = z0; t < z1; ++t) {
+        if (pf) BOND_PF(pf, (size_t)order[t]);
+        const float* col = panel + (size_t)order[t] * PT;
+        const float* qz = qpack + (size_t)order[t] * M;
+        for (size_t i = 0; i < M; ++i)
+            for (size_t j = 0; j < PT; ++j) acc[i][j] += qz[i] * col[j];
+    }
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j)
+            if (live & (1u << j)) dmax[i][j] = std::max(dmax[i][j], acc[i][j]);
 }
 
 static inline void panel_resd(const float* ss, float* resd) {
@@ -402,6 +615,33 @@ static inline float doc_row_ubmax(const float* Pt_row, const float* resd,
     return best;
 }
 
+static inline float doc_row_pmax(const float* Pt_row, size_t n_panels,
+                                 size_t row_stride) {
+    float best = -std::numeric_limits<float>::infinity();
+    for (size_t p = 0; p < n_panels; ++p)
+        for (size_t j = 0; j < PT; ++j)
+            best = std::max(best, Pt_row[p * row_stride + j]);
+    return best;
+}
+
+template <size_t M>
+static inline void panel_tile_seg_pf(const float* panel, const float* qpack,
+                                     const uint32_t* order, size_t z0, size_t z1,
+                                     float* Pt, bool first, const float* pf) {
+    float acc[M][PT];
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) acc[i][j] = first ? 0.0f : Pt[i * PT + j];
+    for (size_t t = z0; t < z1; ++t) {
+        BOND_PF(pf, (size_t)order[t]);
+        const float* col = panel + (size_t)order[t] * PT;
+        const float* qz = qpack + (size_t)order[t] * M;
+        for (size_t i = 0; i < M; ++i)
+            for (size_t j = 0; j < PT; ++j) acc[i][j] += qz[i] * col[j];
+    }
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) Pt[i * PT + j] = acc[i][j];
+}
+
 #endif  // __AVX512F__
 
 static inline void run_panel_seg(const float* panel, const float* qpack, size_t M,
@@ -414,15 +654,57 @@ static inline void run_panel_seg(const float* panel, const float* qpack, size_t 
     }
 }
 
-extern "C" {
+static inline void run_panel_seg_ss(const float* panel, const float* qpack, size_t M,
+                                    const uint32_t* order, size_t z0, size_t z1,
+                                    float* Pt, float* ss, bool first, const float* pf) {
+    switch (M) {
+        case 8:  panel_tile_seg_ss<8> (panel, qpack, order, z0, z1, Pt, ss, first, pf); break;
+        case 16: panel_tile_seg_ss<16>(panel, qpack, order, z0, z1, Pt, ss, first, pf); break;
+        default: panel_tile_seg_ss<24>(panel, qpack, order, z0, z1, Pt, ss, first, pf); break;
+    }
+}
 
-uint64_t fused_panel_maxsim_bond(
+static inline void run_panel_seg_pf(const float* panel, const float* qpack, size_t M,
+                                    const uint32_t* order, size_t z0, size_t z1,
+                                    float* Pt, bool first, const float* pf) {
+    switch (M) {
+        case 8:  panel_tile_seg_pf<8> (panel, qpack, order, z0, z1, Pt, first, pf); break;
+        case 16: panel_tile_seg_pf<16>(panel, qpack, order, z0, z1, Pt, first, pf); break;
+        default: panel_tile_seg_pf<24>(panel, qpack, order, z0, z1, Pt, first, pf); break;
+    }
+}
+
+static inline void run_panel_seg_final(const float* panel, const float* qpack, size_t M,
+                                       const uint32_t* order, size_t z0, size_t z1,
+                                       const float* Pt, bool first, DocMax& dm,
+                                       const float* pf) {
+    switch (M) {
+        case 8:  panel_tile_seg_final<8> (panel, qpack, order, z0, z1, Pt, first, dm.v, pf); break;
+        case 16: panel_tile_seg_final<16>(panel, qpack, order, z0, z1, Pt, first, dm.v, pf); break;
+        default: panel_tile_seg_final<24>(panel, qpack, order, z0, z1, Pt, first, dm.v, pf); break;
+    }
+}
+
+static inline void run_panel_seg_final_masked(const float* panel, const float* qpack, size_t M,
+                                              const uint32_t* order, size_t z0, size_t z1,
+                                              const float* Pt, bool first,
+                                              uint16_t live, DocMax& dm, const float* pf) {
+    switch (M) {
+        case 8:  panel_tile_seg_final_masked<8> (panel, qpack, order, z0, z1, Pt, first, live, dm.v, pf); break;
+        case 16: panel_tile_seg_final_masked<16>(panel, qpack, order, z0, z1, Pt, first, live, dm.v, pf); break;
+        default: panel_tile_seg_final_masked<24>(panel, qpack, order, z0, z1, Pt, first, live, dm.v, pf); break;
+    }
+}
+
+template <bool CHEAP>
+static uint64_t fused_bond_doc_impl(
         const float* panel_data,
         const uint64_t* group_offsets, size_t n_groups,
         const uint64_t* doc_offsets,
         const uint64_t* group_doc_starts,
         const float* query, size_t m, size_t D,
         const uint32_t* order, const float* Qcum,
+        const uint32_t* checkpoints, size_t n_checkpoints,
         float shrink, float tau_seed, size_t K, int n_threads,
         uint32_t* topk_id, float* topk_score, uint64_t* stats) {
 
@@ -432,10 +714,25 @@ uint64_t fused_panel_maxsim_bond(
     std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
     std::atomic<uint64_t> cells{0}, docs_pruned{0};
 
-    // Checkpoints {32, 64, D}, clamped and deduped for small D.
-    size_t cps[3]; size_t n_cps = 0;
-    for (size_t c : {std::min<size_t>(32, D), std::min<size_t>(64, D), D})
-        if (n_cps == 0 || c > cps[n_cps - 1]) cps[n_cps++] = c;
+    size_t cps[MAX_CPS];
+    size_t n_cps = build_checkpoints(checkpoints, n_checkpoints, D, cps);
+
+    // Query-side residuals per (checkpoint, query row) — query-only, so
+    // computed once per call for both arms; the cheap arm additionally sums
+    // them into its query-only bound term.
+    std::vector<float> resq_cp(n_cps * m, 0.0f);
+    std::vector<float> rq_sum(n_cps, 0.0f);
+    for (size_t c = 0; c < n_cps; ++c) {
+        size_t end = cps[c];
+        if (end == D) continue;                       // final segment: no bound
+        float beta = shrink + (1.0f - shrink) * ((float)(D - end) / (float)D);
+        for (size_t i = 0; i < m; ++i) {
+            float s = 1.0f - Qcum[i * (D + 1) + end];
+            float r = beta * std::sqrt(s > 0.0f ? s : 0.0f);
+            resq_cp[c * m + i] = r;
+            rq_sum[c] += r;
+        }
+    }
 
     // Max padded document length (per-thread spill buffer size).
     size_t max_doc_tok = 0;
@@ -453,11 +750,13 @@ uint64_t fused_panel_maxsim_bond(
     #pragma omp parallel num_threads(nt)
     {
         TopK local(K);
+        DocMax dm[8];
         // Spilled partials: per tile, per panel, per query row: [i*PT] lanes.
         // Row stride across panels within a tile = M*PT.
         std::vector<std::vector<float>> Pt(qt.n_tiles);
         for (size_t t = 0; t < qt.n_tiles; ++t) Pt[t].assign(max_panels * qt.M[t] * PT, 0.0f);
-        std::vector<float> ss(max_panels * PT), resd(max_panels * PT), resq(m);
+        std::vector<float> ss(CHEAP ? 0 : max_panels * PT);
+        std::vector<float> resd(CHEAP ? 0 : max_panels * PT);
         uint64_t l_cells = 0, l_pruned = 0;
 
         #pragma omp for schedule(dynamic)
@@ -468,15 +767,48 @@ uint64_t fused_panel_maxsim_bond(
                 size_t n_tok = tok1 - tok0;
                 if (n_tok == 0) continue;
                 size_t n_panels = n_tok / PT;
+                for (size_t t = 0; t < qt.n_tiles; ++t) dm[t].reset(qt.M[t]);
 
                 bool pruned = false;
                 size_t cur = 0;
                 for (size_t c = 0; c < n_cps && !pruned; ++c) {
                     size_t end = cps[c];
+
+                    if (end == D) {
+                        // Final segment: no bound follows, so skip sumsq and
+                        // fold the per-doc max in registers instead of
+                        // spilling and rescanning Pt.
+                        for (size_t p = 0; p < n_panels; ++p) {
+                            const float* panel = panel_data + (tok0 + p * PT) * D;
+                            for (size_t t = 0; t < qt.n_tiles; ++t)
+                                run_panel_seg_final(panel, qt.qpack.data() + qt.pack_off[t],
+                                                    qt.M[t], order, cur, end,
+                                                    Pt[t].data() + p * qt.M[t] * PT,
+                                                    cur == 0, dm[t],
+                                                    t == 0 ? panel + PT * D : nullptr);
+                        }
+                        l_cells += (uint64_t)(end - cur) * n_tok * m;
+                        cur = end;
+                        break;
+                    }
+
                     for (size_t p = 0; p < n_panels; ++p) {
                         const float* panel = panel_data + (tok0 + p * PT) * D;
-                        panel_sumsq_seg(panel, order, cur, end, ss.data() + p * PT, cur == 0);
-                        for (size_t t = 0; t < qt.n_tiles; ++t)
+                        if (CHEAP) {
+                            // No doc-side residual: tile 0 is the plain
+                            // microkernel (prefetch kept, no sumsq).
+                            run_panel_seg_pf(panel, qt.qpack.data() + qt.pack_off[0], qt.M[0],
+                                             order, cur, end,
+                                             Pt[0].data() + p * qt.M[0] * PT,
+                                             cur == 0, panel + PT * D);
+                        } else {
+                            // Tile 0 accumulates the per-lane sumsq in the same pass.
+                            run_panel_seg_ss(panel, qt.qpack.data() + qt.pack_off[0], qt.M[0],
+                                             order, cur, end,
+                                             Pt[0].data() + p * qt.M[0] * PT,
+                                             ss.data() + p * PT, cur == 0, panel + PT * D);
+                        }
+                        for (size_t t = 1; t < qt.n_tiles; ++t)
                             run_panel_seg(panel, qt.qpack.data() + qt.pack_off[t], qt.M[t],
                                           order, cur, end,
                                           Pt[t].data() + p * qt.M[t] * PT, cur == 0);
@@ -484,38 +816,33 @@ uint64_t fused_panel_maxsim_bond(
                     l_cells += (uint64_t)(end - cur) * n_tok * m;
                     cur = end;
 
-                    if (cur == D) break;   // final segment: no bound needed, finalize below
-
                     // Document upper bound at this checkpoint.
-                    float beta = shrink + (1.0f - shrink) * ((float)(D - cur) / (float)D);
-                    for (size_t i = 0; i < m; ++i) {
-                        float s = 1.0f - Qcum[i * (D + 1) + cur];
-                        resq[i] = beta * std::sqrt(s > 0.0f ? s : 0.0f);
-                    }
-                    for (size_t p = 0; p < n_panels; ++p)
-                        panel_resd(ss.data() + p * PT, resd.data() + p * PT);
+                    const float* resq_c = resq_cp.data() + c * m;
+                    if (!CHEAP)
+                        for (size_t p = 0; p < n_panels; ++p)
+                            panel_resd(ss.data() + p * PT, resd.data() + p * PT);
 
                     float tau = std::max(tau_seed, shared_tau.load(std::memory_order_relaxed));
-                    float UB = 0.0f;
+                    float UB = CHEAP ? rq_sum[c] : 0.0f;
                     for (size_t t = 0; t < qt.n_tiles; ++t) {
                         size_t row_stride = qt.M[t] * PT;
-                        for (size_t i = 0; i < qt.m_real[t]; ++i)
-                            UB += doc_row_ubmax(Pt[t].data() + i * PT, resd.data(),
-                                                n_panels, row_stride,
-                                                resq[t * TILE_MAX + i]);
+                        for (size_t i = 0; i < qt.m_real[t]; ++i) {
+                            if (CHEAP)
+                                UB += doc_row_pmax(Pt[t].data() + i * PT,
+                                                   n_panels, row_stride);
+                            else
+                                UB += doc_row_ubmax(Pt[t].data() + i * PT, resd.data(),
+                                                    n_panels, row_stride,
+                                                    resq_c[t * TILE_MAX + i]);
+                        }
                     }
                     if (UB + UB_EPSILON < tau) { pruned = true; ++l_pruned; }
                 }
 
                 if (!pruned) {
-                    // Residual is zero at cur == D: exact score from partials.
+                    // Exact score from the register-folded per-doc max.
                     float score = 0.0f;
-                    for (size_t t = 0; t < qt.n_tiles; ++t) {
-                        size_t row_stride = qt.M[t] * PT;
-                        for (size_t i = 0; i < qt.m_real[t]; ++i)
-                            score += doc_row_ubmax(Pt[t].data() + i * PT, resd.data(),
-                                                   n_panels, row_stride, 0.0f);
-                    }
+                    for (size_t t = 0; t < qt.n_tiles; ++t) score += dm[t].reduce_sum(qt.m_real[t]);
                     local.offer(score, (uint32_t)d);
                     atomic_max_tau(shared_tau, local.threshold());
                 }
@@ -535,13 +862,47 @@ uint64_t fused_panel_maxsim_bond(
     return stats ? stats[0] : 0;
 }
 
-}  // extern "C" (bond, document-level)
+extern "C" {
+
+uint64_t fused_panel_maxsim_bond(
+        const float* panel_data,
+        const uint64_t* group_offsets, size_t n_groups,
+        const uint64_t* doc_offsets,
+        const uint64_t* group_doc_starts,
+        const float* query, size_t m, size_t D,
+        const uint32_t* order, const float* Qcum,
+        const uint32_t* checkpoints, size_t n_checkpoints,
+        float shrink, float tau_seed, size_t K, int n_threads,
+        uint32_t* topk_id, float* topk_score, uint64_t* stats) {
+    return fused_bond_doc_impl<false>(
+        panel_data, group_offsets, n_groups, doc_offsets, group_doc_starts,
+        query, m, D, order, Qcum, checkpoints, n_checkpoints,
+        shrink, tau_seed, K, n_threads, topk_id, topk_score, stats);
+}
+
+uint64_t fused_panel_maxsim_bond_cheap(
+        const float* panel_data,
+        const uint64_t* group_offsets, size_t n_groups,
+        const uint64_t* doc_offsets,
+        const uint64_t* group_doc_starts,
+        const float* query, size_t m, size_t D,
+        const uint32_t* order, const float* Qcum,
+        const uint32_t* checkpoints, size_t n_checkpoints,
+        float shrink, float tau_seed, size_t K, int n_threads,
+        uint32_t* topk_id, float* topk_score, uint64_t* stats) {
+    return fused_bond_doc_impl<true>(
+        panel_data, group_offsets, n_groups, doc_offsets, group_doc_starts,
+        query, m, D, order, Qcum, checkpoints, n_checkpoints,
+        shrink, tau_seed, K, n_threads, topk_id, topk_score, stats);
+}
+
+}  // extern "C" (bond, document-level: tight + cheap bound arms)
 
 // ---------------------------------------------------------------------------
 // fused_panel_maxsim_bond_token — the TOKEN-level pruning arm.
 //
 // Identical to fused_panel_maxsim_bond in every scheduling respect (same
-// microkernel, same panel layout, same checkpoints {32, 64}, same shared τ,
+// microkernel, same panel layout, same checkpoint-set parameter, same shared τ,
 // same doc-at-a-time order) with EXACTLY ONE mechanism added: the Stage 1
 // §2.4 token-level domination test at each checkpoint.  A token j of doc d
 // is dropped iff  P_ij + resq_i·resd_j < L_i(d)  for EVERY query token i,
@@ -634,6 +995,7 @@ uint64_t fused_panel_maxsim_bond_token(
         const uint64_t* group_doc_starts,
         const float* query, size_t m, size_t D,
         const uint32_t* order, const float* Qcum,
+        const uint32_t* checkpoints, size_t n_checkpoints,
         float shrink, float tau_seed, size_t K, int n_threads,
         uint32_t* topk_id, float* topk_score, uint64_t* stats) {
 
@@ -643,9 +1005,8 @@ uint64_t fused_panel_maxsim_bond_token(
     std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
     std::atomic<uint64_t> cells{0}, docs_pruned{0}, tokens_pruned{0};
 
-    size_t cps[3]; size_t n_cps = 0;
-    for (size_t c : {std::min<size_t>(32, D), std::min<size_t>(64, D), D})
-        if (n_cps == 0 || c > cps[n_cps - 1]) cps[n_cps++] = c;
+    size_t cps[MAX_CPS];
+    size_t n_cps = build_checkpoints(checkpoints, n_checkpoints, D, cps);
 
     size_t max_doc_tok = 0;
     size_t n_docs_total = n_groups > 0 ? (size_t)group_doc_starts[n_groups] : 0;
@@ -662,6 +1023,7 @@ uint64_t fused_panel_maxsim_bond_token(
     #pragma omp parallel num_threads(nt)
     {
         TopK local(K);
+        DocMax dm[8];
         std::vector<std::vector<float>> Pt(qt.n_tiles);
         for (size_t t = 0; t < qt.n_tiles; ++t) Pt[t].assign(max_panels * qt.M[t] * PT, 0.0f);
         std::vector<float> ss(max_panels * PT), resd(max_panels * PT), resq(m), Li(m);
@@ -678,24 +1040,46 @@ uint64_t fused_panel_maxsim_bond_token(
                 size_t n_panels = n_tok / PT;
                 for (size_t p = 0; p < n_panels; ++p) live[p] = 0xFFFFu;
                 size_t n_live_panels = n_panels;
+                for (size_t t = 0; t < qt.n_tiles; ++t) dm[t].reset(qt.M[t]);
 
                 bool doc_pruned = false;
                 size_t cur = 0;
                 for (size_t c = 0; c < n_cps && !doc_pruned; ++c) {
                     size_t end = cps[c];
+
+                    if (end == D) {
+                        // Final segment: register-folded masked max, no sumsq,
+                        // no spill (mirrors the doc-level kernel).
+                        for (size_t p = 0; p < n_panels; ++p) {
+                            if (!live[p]) continue;           // dead panel: skip its bytes
+                            const float* panel = panel_data + (tok0 + p * PT) * D;
+                            for (size_t t = 0; t < qt.n_tiles; ++t)
+                                run_panel_seg_final_masked(
+                                    panel, qt.qpack.data() + qt.pack_off[t], qt.M[t],
+                                    order, cur, end,
+                                    Pt[t].data() + p * qt.M[t] * PT,
+                                    cur == 0, live[p], dm[t],
+                                    t == 0 ? panel + PT * D : nullptr);
+                        }
+                        l_cells += (uint64_t)(end - cur) * (n_live_panels * PT) * m;
+                        cur = end;
+                        break;
+                    }
+
                     for (size_t p = 0; p < n_panels; ++p) {
                         if (!live[p]) continue;               // dead panel: skip its bytes
                         const float* panel = panel_data + (tok0 + p * PT) * D;
-                        panel_sumsq_seg(panel, order, cur, end, ss.data() + p * PT, cur == 0);
-                        for (size_t t = 0; t < qt.n_tiles; ++t)
+                        run_panel_seg_ss(panel, qt.qpack.data() + qt.pack_off[0], qt.M[0],
+                                         order, cur, end,
+                                         Pt[0].data() + p * qt.M[0] * PT,
+                                         ss.data() + p * PT, cur == 0, panel + PT * D);
+                        for (size_t t = 1; t < qt.n_tiles; ++t)
                             run_panel_seg(panel, qt.qpack.data() + qt.pack_off[t], qt.M[t],
                                           order, cur, end,
                                           Pt[t].data() + p * qt.M[t] * PT, cur == 0);
                     }
                     l_cells += (uint64_t)(end - cur) * (n_live_panels * PT) * m;
                     cur = end;
-
-                    if (cur == D) break;
 
                     float beta = shrink + (1.0f - shrink) * ((float)(D - cur) / (float)D);
                     for (size_t i = 0; i < m; ++i) {
@@ -772,13 +1156,7 @@ uint64_t fused_panel_maxsim_bond_token(
                     // Exact score over surviving lanes (survival invariant §2.4
                     // guarantees each query token's argmax lane is live).
                     float score = 0.0f;
-                    for (size_t t = 0; t < qt.n_tiles; ++t) {
-                        size_t row_stride = qt.M[t] * PT;
-                        for (size_t i = 0; i < qt.m_real[t]; ++i)
-                            score += doc_row_ubmax_masked(Pt[t].data() + i * PT, resd.data(),
-                                                          live.data(), n_panels, row_stride,
-                                                          0.0f);
-                    }
+                    for (size_t t = 0; t < qt.n_tiles; ++t) score += dm[t].reduce_sum(qt.m_real[t]);
                     local.offer(score, (uint32_t)d);
                     atomic_max_tau(shared_tau, local.threshold());
                 }
