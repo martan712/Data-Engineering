@@ -39,7 +39,7 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 │   ├── config.py                   # paths, pinned commits, constants (D=128, default K, …)
 │   ├── schema.py                   # ResultRecord dataclass + JSON IO (shared result schema)
 │   ├── data/                       # embedding export, token packing, doc offsets, dataset loaders
-│   ├── oracle/                     # exact MaxSim, normalization guard, exact-agreement test
+│   ├── oracle/                     # exact MaxSim, normalization guard, exact-agreement, checkpoint simulator (R2)
 │   ├── ordering/                   # dimension-order signals: natural / bond / pca (rotation)
 │   ├── threshold/                  # threshold policies: self_bound / oracle / seed
 │   ├── kernels/                    # ctypes bindings to the C++ kernels + build helpers
@@ -54,7 +54,7 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 │
 ├── experiments/                    # thin reproducible drivers — import bondmaxsim, never duplicate logic
 │   ├── stage2_testbed/             # normalization guard, exact-agreement, two-mode smoke
-│   ├── stage3_mechanism/           # bound slack, pruning-rate, order ablation, shrink sweep
+│   ├── stage3_mechanism/           # bound slack, pruning-rate, order/checkpoint ablations, shrink sweep
 │   ├── stage4_integration/         # method arms vs fixed candidate sets
 │   └── stage5_corect/              # CoRECT IR evaluation
 │
@@ -152,8 +152,8 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 | 1 BOND-MaxSim formalization | `docs/stage1_bond_maxsim_formalization.md` | Done (incl. §10 addendum, 2026-07-03: proof transfer to the fused panel kernel) |
 | Structure & self-containment | this file + scaffold + submodules | In progress |
 | 2 Mechanism testbed (instruments v1) | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | Done. Post-3b instrument roles: wide-block ACCOUNTING kernel = algorithmic-work microscope (active); wide-block THROUGHPUT kernel = retired from experiments (Stage 2 record + gate tests only); wide-block dense scan = removed |
-| 3b Fused panel kernels (instruments v2) | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | Done (K1–K5; brute = decision-gate dense baseline, bond = wall-clock mechanism instrument; gates green; scifact measured) |
-| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress. e01+e02 (RQ1) done on scifact+nfcorpus; e03 rebuilt on v2 instruments and run on scifact (exact-safe gate: negative there); remaining: R2 alignment, e08 checkpoint ablation, other datasets, e05 fused port (see plan doc "Status And Research Plan") |
+| 3b Fused panel kernels (instruments v2) | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | Done (K1–K5; brute = decision-gate dense baseline, bond doc/token = wall-clock mechanism instruments; overhead revision + parameterized checkpoints 2026-07-03, §6.1.1; cheap query-only bound arm `_bond_cheap` added 2026-07-03, `docs/bond2002_bound_cost_analysis.md`; gates green; scifact measured) |
+| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress. e01+e02 (RQ1) done on scifact+nfcorpus; e03 run on scifact with the REVISED kernels (exact-safe gate: negative there); R2 checkpoint simulator + R3 e08 driver + R5/R6 driver upgrades landed 2026-07-03; R11 e09 bound-tightness driver landed 2026-07-03; runs pending via run_pending_experiments.sh (see plan doc "Status And Research Plan") |
 | 4 Candidate-kernel integration | `experiments/stage4_integration/` | Not started |
 | 5 CoRECT IR evaluation | `experiments/stage5_corect/` | Not started |
 

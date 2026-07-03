@@ -634,11 +634,13 @@ organized as a research argument.
 
 ## Status And Research Plan (Revised)
 
-Last updated 2026-07-03 (full revision after Stage 3b: the fused panel
-kernels replaced the wall-clock instruments, the Stage 1 proof was extended
-to them, and the exact-safe decision gate got its first — negative — data
-point on scifact). This section is the working plan for future
-sessions/agents. Keep it and the status table in `docs/project_structure.md`
+Last updated 2026-07-03 (second pass: after the fused-kernel overhead
+revision — stage3b doc §6.1.1: fused sumsq, register-folded final segment,
+next-panel prefetch — plus the R2 checkpoint simulator, the R3 checkpoint
+parameterization + e08 driver, and the R5/R6 driver upgrades. First pass
+same day: fused panel kernels replaced the wall-clock instruments, Stage 1
+proof extended, first — negative — exact-safe data point on scifact). This
+section is the working plan for future sessions/agents. Keep it and the status table in `docs/project_structure.md`
 in sync. Conventions (uv toolchain, thin drivers, shared schema,
 exact/approx separation) are in `docs/project_structure.md`.
 
@@ -665,9 +667,14 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   dense baseline in wall-clock?
   → e03/e04/e08. **First data point (scifact): NO** — at feasible
   checkpoints {32, 64} pruning fires on <2% of documents (consistent with
-  RQ1's survival curves), and the BOND arm pays ~1.3x overhead over dense.
-  RQ1 bounds the ceiling at ≤16% even with perfect late checkpoints. The
-  remaining datasets + the checkpoint ablation (e08) close this gate.
+  RQ1's survival curves). After the 2026-07-03 kernel revision (stage3b
+  §6.1.1) the checkpoint overhead is no longer the story: at all cores the
+  BOND arms sit AT the dense DRAM floor (13.6–16.3 vs 13.9 ms/q) and at 1T
+  the overhead is 15–49% (was 54–78%) — yet BOND still does not win, because
+  pruning fires on ~0–2% of documents. The verdict is now cleanly
+  attributable to the bound math, not engineering. RQ1 bounds the ceiling at
+  ≤16% even with perfect late checkpoints. The remaining datasets (R4) + the
+  checkpoint ablation (e08, instruments ready) close this gate.
 - **RQ4 (approximate frontier)**: does `shrink < 1` buy wall-clock at
   acceptable recall? Smaller residual scaling collapses the bounds earlier,
   which is the most plausible positive-result region.
@@ -704,17 +711,20 @@ doc-at-a-time. Roles after the Stage 3b revision:
 | wide-block THROUGHPUT kernel | — | **retired** (its wall-clock numbers measured runtime-`m` codegen artifacts, Stage 3b §1; kept in-tree only for the Stage 2 record + gate tests) |
 | wide-block dense scan ("brute_pdx") | — | **removed** (superseded) |
 | fused panel BRUTE (`cpp/fused_panel_maxsim/`) | dense wall-clock baseline (decision gate) | active |
-| fused panel BOND | wall-clock mechanism instrument (doc-granularity checkpoints) | active |
+| fused panel BOND (doc + token levels) | wall-clock mechanism instrument; checkpoint set C parameterized (R3); revised 2026-07-03 for overhead (§6.1.1) | active |
+| fused panel BOND cheap bound (`_bond_cheap`) | doc-level arm with the query-only H_q-analog bound (BOND SIGMOD-2002 lesson; `docs/bond2002_bound_cost_analysis.md`) — bookkeeping-vs-tightness ablation | active (R11/e09, run pending) |
+| NumPy checkpoint simulator (`oracle/checkpoint_sim.py`) | instrument-aligned accounting: docs pruned + cells% under the FUSED doc-checkpoint policy at fixed tau — PREDICTS fused wall-clock savings | active (R2, validated vs kernel stats in `tests/test_checkpoint_sim.py`) |
 | NumPy/BLAS dense (1T + all cores) | external reference baseline | active |
 
-Known instrument-alignment gap (to fix, R2 below): because the two kernels
-are different algorithms, the accounting kernel's numbers (per-boundary,
-token+document, breadth-first) describe the mechanism's upper envelope, NOT
-what the wall-clock algorithm can capture — accounting `pruned_docs_pct`
-(99.8%) vs fused `pruned_docs_pct` (<2%) answer different questions. Both
-are correct; e02's survival curves reconcile them. For gate-quality
-predictions we need accounting numbers computed under the FUSED algorithm
-itself (doc-at-a-time, document-level, checkpoint set C).
+Instrument-alignment gap (CLOSED by R2, 2026-07-03): because the two pruning
+kernels are different algorithms, the wide-block accounting numbers
+(per-boundary, token+document, breadth-first) describe the mechanism's upper
+envelope, NOT what the wall-clock algorithm can capture — accounting
+`pruned_docs_pct` (99.8%) vs fused `pruned_docs_pct` (<2%) answer different
+questions. Both are correct; e02's survival curves reconcile them. The
+checkpoint simulator now provides the missing third number: accounting under
+the FUSED algorithm itself (doc-at-a-time, document-level, checkpoint set C),
+used by e08.
 
 ### Done (condensed history)
 
@@ -745,36 +755,61 @@ itself (doc-at-a-time, document-level, checkpoint set C).
 - [x] e03 scifact finding recorded: exact-safe BOND does not beat the fused
       dense baseline (16.4–17.1 vs 13.1 ms/q all-cores; <2% docs pruned),
       consistent with e02 survival — the honest RQ3 first data point.
+- [x] Fused-kernel overhead revision (2026-07-03, stage3b §6.1.1, after
+      external review): sumsq fused into the tile-0 pass; final segment folds
+      the per-doc max in registers (no Pt spill/rescan, no wasted sumsq);
+      next-panel software prefetch (the old separate sumsq pass was an
+      accidental prefetcher for permuted orders — removing it without the
+      explicit prefetch REGRESSED bond/pca). BOND 1T overhead vs dense fell
+      from ~54–78% to ~15–49%; at all cores natural/pca BOND sits at the
+      dense DRAM floor. Scores bit-identical; all gates green; e03 scifact
+      re-run on the revised kernel (results JSON refreshed). RQ3 verdict
+      unchanged — now attributable to bound math alone.
+- [x] R2 instrument (2026-07-03): NumPy checkpoint-accounting simulator
+      (`src/bondmaxsim/oracle/checkpoint_sim.py`), fixed-tau policies,
+      validated against fused kernel stats[1] across checkpoint sets
+      (`tests/test_checkpoint_sim.py`).
+- [x] R3 instrument (2026-07-03): checkpoint set parameterized through the
+      kernel ABI (`checkpoints`/`n_checkpoints`, NULL = {32,64}), bindings,
+      RunConfig.checkpoints, exactness gate for arbitrary C
+      (`test_bond_custom_checkpoints_exact`); e08 driver written
+      (`experiments/stage3_mechanism/e08_checkpoint_ablation.py`).
+- [x] R5/R6 driver upgrades (2026-07-03): e05 gained the fused wall-clock
+      shrink frontier vs the dense baseline (gate G2 surface); e06 gained a
+      fused confirmation arm for the winning policy; e04 gained the 1T lens +
+      fused prune stats; e07's prep/kernel decomposition fixed (Runner times
+      kernel-only; total = kernel + prep).
 
 ### Required next (R-items, in order)
 
 - [ ] **R1 — Stage 1 hygiene**: none outstanding (§10 addendum written
       2026-07-03). Re-audit only if the fused kernel's policy changes shape
       (e.g. panel-level pruning inside documents).
-- [ ] **R2 — instrument alignment**: NumPy "checkpoint accounting" simulator
-      (exact partial scores at each checkpoint via cumulative matmul) that
-      computes, under the FUSED kernel's document-checkpoint policy: docs
-      pruned per checkpoint and bytes/cells actually skipped. Cheap, exact,
-      and gives cells% that PREDICTS fused wall-clock savings. Validate its
-      doc-pruned counts against the fused kernel's stats[1] (1-thread run:
-      deterministic τ evolution under oracle policy).
-- [ ] **R3 — e08 checkpoint ablation (new)**: parameterize the fused BOND
-      kernel's checkpoint set (C as an argument instead of the hard-coded
-      {32, 64}); sweep C ⊆ {32, 48, 64, 96, 112} chosen from e02 survival
-      curves; measure overhead-vs-pruning and find the wall-clock-optimal C
-      per dataset. Expected on scifact: even optimal C saves ≤16% (RQ1
-      ceiling) — this experiment closes RQ3 with numbers instead of a guess.
+- [x] **R2 — instrument alignment**: DONE 2026-07-03 —
+      `src/bondmaxsim/oracle/checkpoint_sim.py` (exact partial scores per
+      checkpoint via incremental matmul, fixed-tau policies, both padded and
+      unpadded cells conventions), validated against the fused kernel's
+      stats[1] across three checkpoint sets in `tests/test_checkpoint_sim.py`.
+      self_bound (order-dependent rising τ) deliberately out of scope.
+- [ ] **R3 — e08 checkpoint ablation**: instruments DONE 2026-07-03 (kernel
+      checkpoint-set ABI parameter + exactness gate + e08 driver sweeping 8
+      sets ⊆ {32, 48, 64, 96, 112} × {natural, bond} with simulator-predicted
+      cells% alongside measured wall-clock). **Run pending**
+      (`run_pending_experiments.sh`). Expected on scifact: even optimal C
+      saves ≤16% (RQ1 ceiling) — this closes RQ3 with numbers instead of a
+      guess.
 - [ ] **R4 — e03/e04/e07 on remaining datasets** (nfcorpus, arguana,
-      scidocs) with the rebuilt drivers; then record the RQ3 gate verdict in
-      this document.
-- [ ] **R5 — e05 approximate frontier on the fused kernel**: add the
-      `shrink < 1` sweep to `run_fused_bond_mode` arms (kernel already takes
-      shrink); report recall@10-vs-latency frontier against the fused dense
-      baseline, per dataset. Keep the existing accounting version as the
-      work-based frontier. This is the RQ4 decision experiment.
-- [ ] **R6 — e06 threshold policies**: keep accounting comparison; add fused
-      wall-clock arms for the winning policy only (policy choice is a
-      mechanism question; wall-clock confirmation needs one arm, not nine).
+      scidocs; e03 scifact already refreshed on the revised kernel) with the
+      upgraded drivers; then record the RQ3 gate verdict in this document.
+      **Run pending.**
+- [ ] **R5 — e05 approximate frontier on the fused kernel**: driver DONE
+      2026-07-03 (fused doc-level all-cores arm per order × shrink, dense
+      baseline reference, wall-clock frontier panel in the figure; accounting
+      frontier kept). **Run pending — this is the RQ4 / gate-G2 decision
+      experiment and the main open question.**
+- [ ] **R6 — e06 threshold policies**: driver DONE 2026-07-03 (accounting
+      comparison kept; one fused wall-clock confirmation arm for the
+      cells%-winning policy). **Run pending.**
 - [ ] **R7 — scale check**: one 100k–1M doc corpus (CoRECT pools,
       `[retrieval]` extra) exported to the packed format; re-run e03/e05
       there — both the DRAM-floor argument and pruning behavior may shift
@@ -791,9 +826,35 @@ itself (doc-at-a-time, document-level, checkpoint set C).
       GEMM-shaped; vertical layout wins via packing amortization + epilogue
       fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
       independent of the RQ3 verdict.
-- [ ] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details.
+- [ ] **R11 — e09 bound-tightness ablation**: instruments DONE 2026-07-03
+      (`fused_panel_maxsim_bond_cheap` — the BOND-2002 H_q-analog query-only
+      bound `UB = Σ_i max_j P_ij + Σ_i resq_i` on the identical templated
+      doc-level body; gates green incl. the `cells_cheap ≥ cells_tight`
+      invariant; e09 driver sweeping bound × {natural, bond, pca}, oracle
+      policy, dense baseline). **Run pending**
+      (`run_pending_experiments.sh`). Rationale, 2002-paper reading, and
+      decision criteria: `docs/bond2002_bound_cost_analysis.md` — the 2002
+      paper found tight per-vector bounds lose to cheap query-only bounds at
+      wall-clock; our tight Cauchy-Schwarz arm is the analog of the bound
+      family they rejected, so e09 tests whether e07's checkpoint overhead
+      is E_v's price or MaxSim's price. If cheap wins: adopt as doc-level
+      default and rerun e05/e08 on it.
+- [x] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details —
+      DONE 2026-07-03: A. P. de Vries, N. Mamoulis, N. Nes, M. Kersten,
+      "Efficient k-NN Search on Vertically Decomposed Data", ACM SIGMOD
+      2002 (June 4-6, Madison, WI), pp. 322-333 (paper read; lessons in
+      `docs/bond2002_bound_cost_analysis.md`).
 - [ ] Optional (only after a positive RQ3/RQ4): PDX-in-DuckDB integration
       as future work.
+- [ ] Optional (post-e08, only if bond order wins on pruning but loses on
+      wall-clock): pack-time static dimension order. The bond order's 1T
+      penalty is the permuted access pattern itself (one scattered 64 B line
+      per dim; PDX-sigmod pays the same via its `indices_dimensions`
+      translation index — our `order[t]` is the faithful equivalent, incl.
+      the DISTANCE_TO_MEANS_IMPROVED per-partition physical sort). A
+      corpus-global importance order applied physically at pack time (as the
+      pca arm already does with its rotation) would give sequential access +
+      early energy concentration, at the cost of query-independence.
 
 ### Decision gates (explicit criteria)
 

@@ -272,7 +272,9 @@ epilogue:
 
 ### 5.5 Panel-granularity BOND bounds (the pruning variant)
 
-The fused kernel comes in two entry points:
+The fused kernel comes in the following entry points (see also §5.8 for the
+token arm and `docs/bond2002_bound_cost_analysis.md` for the cheap-bound
+arm added 2026-07-03):
 
 - `fused_panel_maxsim_brute` — dense, no bounds. The dense layout baseline in
   e03+ (the old `brute_pdx` wide-block dense scan and the wide-block
@@ -288,6 +290,13 @@ The fused kernel comes in two entry points:
   pruning (§2.4 of Stage 1) is **not** performed in the wall-clock kernel —
   e03's numbers show its bookkeeping costs more than it saves at wall-clock;
   it remains measured in the accounting kernel where it belongs.
+- `fused_panel_maxsim_bond_cheap` — same templated body as the doc-level
+  arm, differing ONLY in the bound: the query-only relaxation
+  `UB_d = Σ_i max_j P_ij + Σ_i resq_i` (`resd_j ≤ 1` for unit-norm doc
+  tokens), which deletes the doc-side residual machinery (sumsq in the hot
+  loop, per-lane sqrt, resd loads in the UB reduction). Looser but far
+  cheaper — the BOND SIGMOD-2002 H_q lesson; rationale, exactness argument,
+  and the e09 ablation design in `docs/bond2002_bound_cost_analysis.md`.
 - Threshold policies (self_bound / oracle / seed) and `shrink` semantics are
   unchanged; `tau` is read per checkpoint exactly as today.
 - Exactness: same bound math as Stage 1 §2.3 at coarser granularity — a
@@ -467,6 +476,62 @@ answer on scifact:
    kernel's 84–92% cells bound the exact-safe ceiling at ≤16% even with
    per-boundary checks.
 
+#### 6.1.1 Checkpoint-overhead reduction (kernel revision, 2026-07-03)
+
+An external review of the kernel flagged the checkpoint bookkeeping as the
+dominant overhead source. Three of its points survived verification and were
+applied to BOTH pruning kernels (identically, preserving the three-arm
+isolation); the exact-agreement gates and all 126 tests stay green, and the
+per-document scores are bit-identical (same FMA order, same max values):
+
+1. **Fused sumsq** — the per-lane `col*col` accumulation (for `resd`) now
+   rides in the same pass as query tile 0 (`panel_tile_seg_ss`) instead of a
+   separate traversal of every panel column per segment.
+2. **Register-folded final segment** — the last dimension segment needs no
+   bound (residual is 0 at D), so it no longer computes sumsq (previously
+   half of D wasted), no longer spills `Pt`, and folds the per-document max
+   in registers exactly like the brute epilogue — `Pt` is never stored or
+   rescanned after the last checkpoint.
+3. **Next-panel prefetch** — a permuted dimension order defeats the hardware
+   prefetcher (each column is one scattered 64 B line); the old separate
+   sumsq pass was accidentally acting as a software prefetch, so fusing it
+   (1) initially REGRESSED the bond/pca orders. The first tile to touch a
+   panel now explicitly prefetches the same columns of the next panel, which
+   both restores and beats the old behavior.
+
+Re-measured under the §6.1 protocol (25 queries, best-of-3, same machine):
+
+| arm (1T / MT ms/q) | before | after |
+|---|---|---|
+| dense fused | 50.1 / 13.5 | 50.1 / 13.2 (unchanged, untouched) |
+| BOND doc, natural | 76.1 / 15.7 | 57.4 / 13.6 |
+| BOND doc, bond | 86.1 / 16.8 | 71.8 / 15.6 |
+| BOND token, natural | 79.1 / 16.9 | 62.2 / 13.4 |
+| BOND token, bond | 89.1 / 17.6 | 74.7 / 16.5 |
+
+The 1-thread overhead over dense drops from ~54–78% to ~15–49%. The full
+e03 protocol (50 queries, best-of-5, re-run 2026-07-03, tracked in
+`results/json/stage3_mechanism_e03_order_ablation_scifact.json`) confirms:
+dense 54.2/13.9 ms/q (1T/MT); doc-level BOND 60.3/60.6/73.5 (pca/natural/
+bond order) at 1T, 13.6–16.0 MT; token-level 65.6–77.4 at 1T, 14.1–16.3 MT;
+recall 1.000 and pruning rates unchanged everywhere (cells 83.7–91.9%,
+docs 0.0–2.0%, tokens 0.00% — the mechanism is untouched). At all cores the
+natural/pca BOND arms now sit AT the dense DRAM floor (13.6–13.8 vs 13.9).
+
+Review
+points that did NOT survive verification: "maintain running maxima instead
+of rescanning Pt" is impossible for this bound (`resd` changes at every
+checkpoint, so the max is not incrementally maintainable); `Pt` is ~24 KB
+per document tile on scifact (L2-resident), not hundreds of KB; the sqrt
+and `resd`-reread costs are noise; and "τ rises too slowly" is already
+controlled for — e03 runs the ORACLE policy and still prunes ~0%.
+
+**The §6.1 conclusions are unchanged and strengthened**: pruning rates are
+properties of the bound math, not the implementation, and even with the
+overhead halved no exact-safe arm beats the dense fused baseline (the
+closest, doc-level/natural, is still +15% at 1T while pruning 0.0% of
+documents).
+
 Why this differs from PDX-sigmod BOND, where the same idea works "very very
 well" (§5.8 has the source-level contrast): their L2 pruning predicate is
 `partial_distance >= threshold` — one comparison, zero slack, because
@@ -478,6 +543,19 @@ dimensions are paid for, and evaluating the bound costs O(live_tokens × m)
 instead of one compare. The mechanism transfer fails in the MATH of the
 bound, not in the engineering — which is exactly what the three-arm design
 was built to distinguish.
+
+#### 6.1.2 Bound-tightness arm (added 2026-07-03)
+
+One dimension of the design space remained untested by §6.1.1: the tight
+Cauchy–Schwarz bound was the only bound we ever built, and the original
+BOND paper (SIGMOD 2002) reports that its analogous tight bounds LOST to a
+cheap query-only bound at wall-clock ("the additional bookkeeping does not
+pay off"). `fused_panel_maxsim_bond_cheap` adds the H_q-analog —
+`UB_d = Σ_i max_j P_ij + Σ_i resq_i`, doc-side residual relaxed to 1 — on
+the identical templated body, and e09 (bound × order, oracle policy,
+shrink = 1) measures the package trade: bookkeeping shed vs pruning lost.
+Full analysis and decision criteria: `docs/bond2002_bound_cost_analysis.md`.
+Run pending.
 
 Decision-gate implication: on scifact, no exact-safe arm (either
 granularity) beats the dense fused baseline. The exact-safe win, if it
