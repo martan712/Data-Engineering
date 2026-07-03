@@ -26,9 +26,11 @@ See **`docs/project_structure.md`** for the canonical map and conventions. In sh
 
 Stages 0 (references), 1 (BOND-MaxSim formalization + exact-safe proof), 2
 (mechanism testbed), and 3b (fused panel kernels) are complete; Stage 3
-mechanism experiments are in progress (e01–e03 and e07–e09 run; headline so
-far: exact-safe BOND with late checkpoints beats the fused dense baseline on
-3 of 4 small corpora). See the status table in `docs/project_structure.md`
+mechanism experiments are largely run (e01–e09; e05 on 2 of 4 datasets, e07
+missing scidocs; headline so far: exact-safe BOND with late checkpoints beats
+the fused dense baseline on 3 of 4 small corpora, and the approximate
+frontier at default checkpoints offers no ≥0.99-recall win). See the status
+table in `docs/project_structure.md`
 and the plan in `docs/project_b_analysis_and_research_plan.md`.
 
 ## Getting Started

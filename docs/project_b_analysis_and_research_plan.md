@@ -659,8 +659,10 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
 
 - **RQ1 (mechanism)**: how much algorithmic work can the bounds save, and
   WHERE in the dimension scan does pruning become possible?
-  → e01 (bound slack), e02 (survival curves). **Answered for scifact +
-  nfcorpus**: documents survive until late in the scan — under the oracle
+  → e01 (bound slack), e02 (survival curves). **Answered — e01/e02 now run
+  on all four datasets** (arguana + scidocs added 2026-07-03; the analysis
+  below cites scifact/nfcorpus): documents survive until late in the scan —
+  under the oracle
   threshold on scifact, 98–100% of documents are still alive at dim 64 of
   128; total avoidable work (cells) is only 8–16% even with token-level
   pruning and per-boundary checks. e08 (2026-07-03) confirmed the flip
@@ -691,13 +693,19 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   pruned final segment is disproportionately expensive (epilogue max-fold +
   top-k?); (b) e09 compared bounds only at {32, 64} where nothing prunes —
   the tight-vs-cheap question must be re-asked at the winning late
-  checkpoints (see R12). G1 now has a positive signal on ≥2 datasets;
-  e03/e04 on the remaining datasets (R4) complete the record.
+  checkpoints (see R12). G1 now has a positive signal on ≥2 datasets.
+  e03/e04 ran on all four datasets (2026-07-03) and confirm the default-C
+  negative across the board — the RQ3 record is complete (e07 on scidocs
+  deferred, memory issue).
 - **RQ4 (approximate frontier)**: does `shrink < 1` buy wall-clock at
   acceptable recall? Smaller residual scaling collapses the bounds earlier,
   which is the most plausible positive-result region.
-  → e05, which must be ported to the fused kernel (currently
-  accounting-only). **Open — this is now the main open question.**
+  → e05. **Partial answer (scifact + nfcorpus, default C={32,64},
+  2026-07-03): NO G2 point there** — shrink=0.8 buys 20–25% latency but
+  only at recall 0.96–0.97; by shrink=0.9 recall is back to 1.0 but pruning
+  has collapsed (≤1.5% docs) and the win is gone. The frontier must be
+  re-mapped from the late-checkpoint operating point (R5 remainder, after
+  R12) — that is now the main open question.
 - **RQ5 (system context)**: candidate-set seeding (IVF/PLAID) interplay and
   IR-quality metrics at fixed candidate sets. → Stages 4–5. Open.
 
@@ -797,8 +805,13 @@ used by e08.
       fused confirmation arm for the winning policy; e04 gained the 1T lens +
       fused prune stats; e07's prep/kernel decomposition fixed (Runner times
       kernel-only; total = kernel + prep).
-- [x] e07 run (2026-07-03) on scifact/nfcorpus/arguana (scidocs still
-      pending, see R4): per-query reorder cost is negligible
+- [x] e01–e06 runs on the upgraded drivers, committed 2026-07-03 ("Add
+      Stage 3 e01-e06 results across all datasets"): e01/e02 extended to
+      arguana + scidocs; e03/e04/e06 on all four datasets; e05 on
+      scifact + nfcorpus. Findings recorded under R4/R5/R6 below and in
+      RQ1/RQ3/RQ4 above.
+- [x] e07 run (2026-07-03) on scifact/nfcorpus/arguana (scidocs deferred —
+      memory issue; see end of queue): per-query reorder cost is negligible
       (reorder_fraction ≈ 0.1% of total; prep is µs-scale vs ms-scale
       kernels); one-time corpus prep is sub-second on all three (packing
       0.12–0.25 s, PCA fit ~1 ms, rotated packing 0.28–0.51 s). The order
@@ -849,6 +862,25 @@ Completed:
       dense — but on arguana/scidocs/nfcorpus late checkpoints
       (C={96}/{112}) prune 88–98% of docs and beat dense (arguana −19% MT /
       −29% 1T). RQ3 verdict recorded above; follow-ups split into R12.
+- [x] **R4 — e03/e04 on remaining datasets**: DONE 2026-07-03 (committed as
+      "Add Stage 3 e01-e06 results across all datasets", post-driver-
+      upgrade; that commit also extended e01/e02 to arguana + scidocs, so
+      the RQ1 evidence now covers all four datasets). e03 all 4: exact-safe
+      BOND at the default C={32,64} loses to or at best ties dense_fused
+      everywhere (dense MT 36.6 / 10.5 / 57.7 / 13.9 vs best BOND arm 39.9 /
+      10.7 / 60.3 / 13.6 ms/q on arguana/nfcorpus/scidocs/scifact) while the
+      ACCOUNTING envelope prunes 99.7–99.96% of docs — envelope vs captured,
+      as e02 predicted. e04 all 4: accounting cells scanned FALLS with
+      corpus size (scidocs 99.7% at 250 docs → 83.9% at 25.7k) — the R7
+      scale question is live. The e07-scidocs remainder is split out to the
+      end of the queue (memory issue; run later).
+- [x] **R6 — e06 threshold policies**: DONE 2026-07-03, all 4 datasets
+      (same commit). Oracle policy wins cells% (83.9–91.9% scanned);
+      realistic policies land close behind it (self_bound 88.4–96.0, seed
+      87.3–95.3) — the policy choice moves cells only a few points, and
+      even the oracle leaves ≤16% on the table at C={32,64}. The fused
+      confirmation arm (oracle policy, natural order) prunes ~0% and shows
+      no wall-clock win, consistent with e03/e08-at-default.
 - [x] **R11 — e09 bound-tightness ablation**: DONE 2026-07-03 (all 4
       datasets, tight vs cheap × {natural, bond, pca}, oracle policy,
       recall 1.0 everywhere). Outcome at the default C={32,64}: the third
@@ -882,21 +914,17 @@ Queue (execute top to bottom):
       register-folded max/epilogue cost, top-k insertion, last-panel memory
       traffic. (c) Fold the winning C into e05 (R5) so the RQ4 frontier
       starts from the strongest exact-safe operating point.
-- [ ] **R4 — e03/e04 on remaining datasets + e07 on scidocs** (e03 scifact
-      already refreshed on the revised kernel; e07 ran 2026-07-03 on
-      scifact/nfcorpus/arguana — scidocs was dropped from that run and is
-      still owed); then the RQ3 record is complete across datasets.
-      Independent of R12 (record-completion at the documented defaults) —
-      can run alongside it. **Run pending.**
-- [ ] **R5 — e05 approximate frontier on the fused kernel**: driver DONE
-      2026-07-03 (fused doc-level all-cores arm per order × shrink, dense
-      baseline reference, wall-clock frontier panel in the figure; accounting
-      frontier kept). **Run pending — this is the RQ4 / gate-G2 decision
-      experiment.** Depends on R12a/c: run it at the winning bound + late
-      checkpoint set, not only the default {32,64}.
-- [ ] **R6 — e06 threshold policies**: driver DONE 2026-07-03 (accounting
-      comparison kept; one fused wall-clock confirmation arm for the
-      cells%-winning policy). **Run pending.**
+- [ ] **R5 — e05 approximate frontier, remainder**: PARTIALLY DONE
+      2026-07-03 — ran on scifact + nfcorpus at the default C={32,64}
+      (fused wall-clock frontier + accounting frontier, self_bound policy).
+      Result so far: NO G2 point — wall-clock wins only below the recall
+      bar (shrink=0.8: 11.7 vs 15.6 ms/q scifact / 8.6 vs 10.8 nfcorpus at
+      recall 0.96–0.97); at shrink ≥0.9 recall is 1.0 but pruning collapses
+      (≤1.5% docs) and the win vanishes. Remaining — and this is the RQ4 /
+      gate-G2 decision experiment: arguana + scidocs, and rerun ALL four at
+      the R12a-winning bound + late checkpoint set, where the exact-safe
+      arm already prunes 88–98% and shrink<1 starts from a winning
+      position. Depends on R12a/c.
 - [ ] **R7 — scale check**: one 100k–1M doc corpus (CoRECT pools,
       `[retrieval]` extra) exported to the packed format; re-run e03/e05
       there — both the DRAM-floor argument and pruning behavior may shift
@@ -913,6 +941,10 @@ Queue (execute top to bottom):
       GEMM-shaped; vertical layout wins via packing amortization + epilogue
       fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
       independent of the RQ3 verdict.
+- [ ] **e07 on scidocs (deferred to the back)**: the only R4 remainder.
+      Hits a memory issue on the 25.7k-doc corpus — run later once
+      resolved; until then the e07 record (reorder cost negligible) rests
+      on scifact/nfcorpus/arguana.
 
 Optional (not in the queue; triggered by outcomes above):
 
@@ -945,4 +977,8 @@ Optional (not in the queue; triggered by outcomes above):
   manufacture a win.
 - **G2 (approximate, RQ4)**: a `shrink < 1` frontier point dominating the
   dense baseline (lower latency, recall ≥ 0.99) or a clearly better
-  latency-recall curve than dimension-truncation at equal recall. Open.
+  latency-recall curve than dimension-truncation at equal recall. Current
+  evidence (e05 scifact + nfcorpus at C={32,64}, 2026-07-03): NOT met —
+  the best sub-baseline latencies sit at recall 0.96–0.97, and recall
+  recovers to 1.0 only where pruning (and the win) has collapsed. Open at
+  the late-checkpoint operating point (R5 remainder, after R12).
