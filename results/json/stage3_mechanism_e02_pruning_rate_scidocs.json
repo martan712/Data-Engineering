@@ -1,0 +1,369 @@
+{
+  "experiment": "e02_pruning_rate",
+  "dataset": "scidocs",
+  "method": "wide_block_maxsim_bond",
+  "n_docs": 25657,
+  "total_tokens": 4531496,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "shrink": 1.0,
+  "D": 128,
+  "fetch_boundary_dims": [
+    4,
+    12,
+    20,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "policies": [
+    "self_bound",
+    "oracle",
+    "seed"
+  ],
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "arms": [
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 88.40376169370998,
+      "pruned_docs_pct": 99.61679073936938,
+      "tokens_pruned_pct": 50.458913347821564,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.999968819425498,
+        0.5358981954242508,
+        0.003832092606306271
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999642943522404,
+        0.5361861733961588,
+        0.0002449301511024174
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 80.19226448616527,
+      "pruned_docs_pct": 99.61679073936938,
+      "tokens_pruned_pct": 26.356962027551166,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999984409712749,
+        0.9953135596523365,
+        0.9299185407491133,
+        0.2811263982538878,
+        0.003832092606306271
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999982743005841,
+        0.9951792255802498,
+        0.9289329263448538,
+        0.2811689031613401,
+        0.0002449257375489243
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 1.725699415922044e-06
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 88.8188370904443,
+      "pruned_docs_pct": 99.61679073936938,
+      "tokens_pruned_pct": 51.97752265477009,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999789531122111,
+        0.5528339244650583,
+        0.003832092606306271
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999743263593304,
+        0.5527791572584418,
+        0.0002449301511024174
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 83.87136632140908,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 33.30602608939741,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999189305062945,
+        0.35394083485988226,
+        0.00039677281053903415
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999080038909888,
+        0.3549466489653748,
+        2.966349302746819e-05
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 75.90666217072685,
+      "pruned_docs_pct": 99.96040067038237,
+      "tokens_pruned_pct": 15.136655091387038,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999961024281873,
+        0.9866944693455977,
+        0.8824601473282144,
+        0.16113419339751336,
+        0.0003959932961764821
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999955952736138,
+        0.9863730388375054,
+        0.8811467647770185,
+        0.16193540499649564,
+        2.9606116832057227e-05
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 4.40472638618683e-06
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 85.01077789763028,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 37.54436018480431,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.999940756908446,
+        0.40018006781774956,
+        0.00039677281053903415
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999327330312108,
+        0.40049838287400014,
+        2.966349302746819e-05
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 87.30863383747885,
+      "pruned_docs_pct": 99.90295046186228,
+      "tokens_pruned_pct": 46.293579427191375,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.999968819425498,
+        0.49228748489690927,
+        0.0009704953813774018
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999642943522404,
+        0.49238105914691305,
+        7.076250315569075e-05
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 77.61380331131264,
+      "pruned_docs_pct": 99.93077912460538,
+      "tokens_pruned_pct": 19.792318916313725,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999961024281873,
+        0.9874217562458588,
+        0.9004232762988658,
+        0.21113614218341972,
+        0.0006922087539462915
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        0.9999955952736138,
+        0.9871678889267473,
+        0.899269534829116,
+        0.2117008555232091,
+        5.226971401938786e-05
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 4.40472638618683e-06
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 88.05345828397509,
+      "pruned_docs_pct": 99.90037806446583,
+      "tokens_pruned_pct": 49.07026818516446,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999789531122111,
+        0.5220290758857232,
+        0.000996219355341622
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999743263593304,
+        0.5221640049996734,
+        7.214394539904703e-05
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    }
+  ],
+  "numpy_crosscheck": {
+    "arm": "oracle/natural",
+    "n_queries": 10,
+    "dims_grid": [
+      4,
+      12,
+      20,
+      32,
+      48,
+      64,
+      96,
+      128
+    ],
+    "kernel_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.4492185368515415,
+      0.00039365475308882563
+    ],
+    "numpy_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.4460264205466956,
+      0.0003741668944712728
+    ],
+    "kernel_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.4456219756124688,
+      2.6039965609591183e-05
+    ],
+    "numpy_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.04983310177922249
+    ],
+    "doc_max_abs_diff": 0.0031921163048458934,
+    "token_max_abs_diff": 0.5543780243875311
+  }
+}

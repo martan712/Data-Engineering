@@ -1,0 +1,53 @@
+{
+  "experiment": "e06_threshold_policy_ablation",
+  "dataset": "scidocs",
+  "method": "wide_block_maxsim_bond",
+  "n_docs": 25657,
+  "total_tokens": 4531496,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "shrink": 1.0,
+  "order": "natural",
+  "policies": [
+    "self_bound",
+    "oracle",
+    "seed"
+  ],
+  "n_repeats_throughput": 5,
+  "arms": [
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 88.40376169370998,
+      "pruned_docs_pct": 99.61679073936938,
+      "tokens_pruned_pct": 50.458913347821564
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 83.87136632140908,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 33.30602608939741
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 87.30863383747885,
+      "pruned_docs_pct": 99.90295046186228,
+      "tokens_pruned_pct": 46.293579427191375
+    }
+  ],
+  "fused_confirmation_arm": {
+    "threshold_policy": "oracle",
+    "dimension_order": "natural",
+    "recall_vs_exact_at_10": 1.0,
+    "ms_per_query_1t": 199.64740491999692,
+    "ms_per_query_mt": 60.152100439991045,
+    "pruned_docs_pct_fused": 0.007561289316755661,
+    "dense_fused_ms_per_query_mt": 57.58278995999717
+  }
+}

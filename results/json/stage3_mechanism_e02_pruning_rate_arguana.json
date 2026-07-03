@@ -1,0 +1,369 @@
+{
+  "experiment": "e02_pruning_rate",
+  "dataset": "arguana",
+  "method": "wide_block_maxsim_bond",
+  "n_docs": 8674,
+  "total_tokens": 1513840,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "shrink": 1.0,
+  "D": 128,
+  "fetch_boundary_dims": [
+    4,
+    12,
+    20,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "policies": [
+    "self_bound",
+    "oracle",
+    "seed"
+  ],
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "arms": [
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 90.65536351265654,
+      "pruned_docs_pct": 99.13096610560297,
+      "tokens_pruned_pct": 54.326771653543304,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999815540696334,
+        0.6147359926216279,
+        0.008690338943970486
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999995772340539,
+        0.6262149632722084,
+        0.001233234687945886
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 85.06156165777097,
+      "pruned_docs_pct": 99.13096610560297,
+      "tokens_pruned_pct": 36.45412328911906,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999976942587041,
+        0.9811413419414342,
+        0.41033894397048654,
+        0.008690338943970486
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999999471542567,
+        0.9814929450932728,
+        0.4209695476404376,
+        0.0012332478993817048
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "self_bound",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 90.54616207789464,
+      "pruned_docs_pct": 99.13096610560297,
+      "tokens_pruned_pct": 53.96555382338952,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9995964952732304,
+        0.6136753516255476,
+        0.008690338943970486
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9996539396501612,
+        0.6221925434656238,
+        0.0012332611108175236
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 89.07394209427682,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.81379670242561,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999815540696334,
+        0.5493013603873645,
+        0.001164399354392437
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999995772340539,
+        0.5629581065370184,
+        0.00021541246102626434
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 83.21888508693125,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 30.332677165354333,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999976942587041,
+        0.977821074475444,
+        0.3373437860272077,
+        0.001164399354392437
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999999471542567,
+        0.9783253976642182,
+        0.3504300322359034,
+        0.00021538603815462665
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "oracle",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 89.10813461131956,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.95848702637003,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.999481208208439,
+        0.5547982476366151,
+        0.001164399354392437
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9995469270200286,
+        0.5647784574327538,
+        0.00021539924959044547
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "natural",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 90.6151611134598,
+      "pruned_docs_pct": 99.69033894397049,
+      "tokens_pruned_pct": 54.18739496908523,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999815540696334,
+        0.6128591192068249,
+        0.003096610560295135
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999995772340539,
+        0.6246068673043387,
+        0.0005167785234899329
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "bond",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 84.87339910426465,
+      "pruned_docs_pct": 99.73230343555453,
+      "tokens_pruned_pct": 35.799277334460704,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999976942587041,
+        0.9811413419414342,
+        0.4020797786488356,
+        0.002676965644454692
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9999999471542567,
+        0.9814929450932728,
+        0.41344304550018496,
+        0.00045650795328436295
+      ],
+      "dims_to_prune_50pct_docs": 96,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    },
+    {
+      "threshold_policy": "seed",
+      "dimension_order": "pca",
+      "recall_vs_exact_at_10": 1.0,
+      "cells_scanned_pct": 90.52239107171168,
+      "pruned_docs_pct": 99.69725616785797,
+      "tokens_pruned_pct": 53.882492205252866,
+      "doc_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9995964952732304,
+        0.612605487664284,
+        0.003027438321420337
+      ],
+      "token_survival": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9996539396501612,
+        0.6212417032183057,
+        0.0005085610104106114
+      ],
+      "dims_to_prune_50pct_docs": 128,
+      "dims_to_prune_90pct_docs": 128,
+      "early_token_pruning_rate": 0.0
+    }
+  ],
+  "numpy_crosscheck": {
+    "arm": "oracle/natural",
+    "n_queries": 10,
+    "dims_grid": [
+      4,
+      12,
+      20,
+      32,
+      48,
+      64,
+      96,
+      128
+    ],
+    "kernel_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9999769425870416,
+      0.4536315425409269,
+      0.001164399354392437
+    ],
+    "numpy_doc_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9999769449234008,
+      0.4522019790951163,
+      0.0011413418920710682
+    ],
+    "kernel_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.9999994715425672,
+      0.46460108069545,
+      0.00020702319928129787
+    ],
+    "numpy_token_survival": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.12545599341392516
+    ],
+    "doc_max_abs_diff": 0.0014295634458106332,
+    "token_max_abs_diff": 0.5353989193045501
+  }
+}

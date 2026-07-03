@@ -1,13 +1,13 @@
 {
   "experiment": "e03_order_ablation",
-  "dataset": "scifact",
+  "dataset": "arguana",
   "method_accounting": "wide_block_maxsim_bond",
   "methods_wallclock": [
     "fused_panel_maxsim_bond",
     "fused_panel_maxsim_bond_token"
   ],
-  "n_docs": 5183,
-  "total_tokens": 1141434,
+  "n_docs": 8674,
+  "total_tokens": 1513840,
   "n_queries": 50,
   "query_seed": 42,
   "k": 10,
@@ -30,14 +30,14 @@
       "dimension_order": "natural",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.92280587401461,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 63.837818042917945,
-      "pruned_docs_pct_fused": 0.005402276673741077,
+      "cells_scanned_pct": 89.07394209427682,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.81379670242561,
+      "pruned_docs_pct_fused": 0.0018445930366612867,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 60.60534812044352,
-      "ms_per_query_mt": 13.755573659436777,
-      "qps_mt": 72.69780415984084
+      "ms_per_query_1t": 149.9168309200013,
+      "ms_per_query_mt": 39.862270960002206,
+      "qps_mt": 25.08637806921236
     },
     {
       "arm_type": "bond",
@@ -45,14 +45,14 @@
       "dimension_order": "natural",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.92280587401461,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 63.837818042917945,
-      "pruned_docs_pct_fused": 0.005402276673741077,
+      "cells_scanned_pct": 89.07394209427682,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.81379670242561,
+      "pruned_docs_pct_fused": 0.0018445930366612867,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 67.12455254048109,
-      "ms_per_query_mt": 14.12025050027296,
-      "qps_mt": 70.82027333584973
+      "ms_per_query_1t": 163.32948320000014,
+      "ms_per_query_mt": 42.296494259999236,
+      "qps_mt": 23.642621392045793
     },
     {
       "arm_type": "bond",
@@ -60,14 +60,14 @@
       "dimension_order": "bond",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 83.72345926264681,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 34.66497581112881,
-      "pruned_docs_pct_fused": 1.982249662357708,
+      "cells_scanned_pct": 83.21888508693125,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 30.332677165354333,
+      "pruned_docs_pct_fused": 2.2061332718468987,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 73.51700467988849,
-      "ms_per_query_mt": 16.024688200559467,
-      "qps_mt": 62.403710292789796
+      "ms_per_query_1t": 171.14572492000207,
+      "ms_per_query_mt": 42.25088577999941,
+      "qps_mt": 23.668142845738323
     },
     {
       "arm_type": "bond",
@@ -75,14 +75,14 @@
       "dimension_order": "bond",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 83.72345926264681,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 34.66497581112881,
-      "pruned_docs_pct_fused": 1.982249662357708,
+      "cells_scanned_pct": 83.21888508693125,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 30.332677165354333,
+      "pruned_docs_pct_fused": 2.2052109753285682,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 77.40849269903265,
-      "ms_per_query_mt": 16.34603512007743,
-      "qps_mt": 61.17691493099294
+      "ms_per_query_1t": 184.9836699799971,
+      "ms_per_query_mt": 43.9098938799998,
+      "qps_mt": 22.773910652867297
     },
     {
       "arm_type": "bond",
@@ -90,14 +90,14 @@
       "dimension_order": "pca",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.53250472651068,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 62.338383121582154,
-      "pruned_docs_pct_fused": 0.0019293845263360988,
+      "cells_scanned_pct": 89.10813461131956,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.95848702637003,
+      "pruned_docs_pct_fused": 0.050034586119437396,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 60.33028903999366,
-      "ms_per_query_mt": 13.551422719610855,
-      "qps_mt": 73.79298990893822
+      "ms_per_query_1t": 153.03874846000326,
+      "ms_per_query_mt": 40.02256574000057,
+      "qps_mt": 24.98590436446081
     },
     {
       "arm_type": "bond",
@@ -105,14 +105,14 @@
       "dimension_order": "pca",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.53250472651068,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 62.338383121582154,
-      "pruned_docs_pct_fused": 0.0019293845263360988,
+      "cells_scanned_pct": 89.10813461131956,
+      "pruned_docs_pct": 99.88356006456075,
+      "tokens_pruned_pct": 48.95848702637003,
+      "pruned_docs_pct_fused": 0.050034586119437396,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 65.62186727998778,
-      "ms_per_query_mt": 14.194227579282597,
-      "qps_mt": 70.45117421250632
+      "ms_per_query_1t": 162.47551490000205,
+      "ms_per_query_mt": 42.33539605999795,
+      "qps_mt": 23.620896296394505
     },
     {
       "arm_type": "dense",
@@ -125,9 +125,9 @@
       "tokens_pruned_pct": null,
       "pruned_docs_pct_fused": null,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 54.24893304007128,
-      "ms_per_query_mt": 13.923599000554532,
-      "qps_mt": 71.82051134625273
+      "ms_per_query_1t": 138.64108677999866,
+      "ms_per_query_mt": 36.580443339998965,
+      "qps_mt": 27.337011492874606
     },
     {
       "arm_type": "dense",
@@ -140,9 +140,9 @@
       "tokens_pruned_pct": null,
       "pruned_docs_pct_fused": null,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 121.34097771951929,
-      "ms_per_query_mt": 45.7594617200084,
-      "qps_mt": 21.853403917178255
+      "ms_per_query_1t": 246.38064234000012,
+      "ms_per_query_mt": 115.33450359999733,
+      "qps_mt": 8.670432253891654
     }
   ]
 }

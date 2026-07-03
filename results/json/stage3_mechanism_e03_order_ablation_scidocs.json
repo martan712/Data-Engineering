@@ -1,13 +1,13 @@
 {
   "experiment": "e03_order_ablation",
-  "dataset": "scifact",
+  "dataset": "scidocs",
   "method_accounting": "wide_block_maxsim_bond",
   "methods_wallclock": [
     "fused_panel_maxsim_bond",
     "fused_panel_maxsim_bond_token"
   ],
-  "n_docs": 5183,
-  "total_tokens": 1141434,
+  "n_docs": 25657,
+  "total_tokens": 4531496,
   "n_queries": 50,
   "query_seed": 42,
   "k": 10,
@@ -30,14 +30,14 @@
       "dimension_order": "natural",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.92280587401461,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 63.837818042917945,
-      "pruned_docs_pct_fused": 0.005402276673741077,
+      "cells_scanned_pct": 83.87136632140908,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 33.30602608939741,
+      "pruned_docs_pct_fused": 0.007561289316755661,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 60.60534812044352,
-      "ms_per_query_mt": 13.755573659436777,
-      "qps_mt": 72.69780415984084
+      "ms_per_query_1t": 199.93707688000086,
+      "ms_per_query_mt": 60.40466617999755,
+      "qps_mt": 16.555012439273124
     },
     {
       "arm_type": "bond",
@@ -45,14 +45,14 @@
       "dimension_order": "natural",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.92280587401461,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 63.837818042917945,
-      "pruned_docs_pct_fused": 0.005402276673741077,
+      "cells_scanned_pct": 83.87136632140908,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 33.30602608939741,
+      "pruned_docs_pct_fused": 0.007561289316755661,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 67.12455254048109,
-      "ms_per_query_mt": 14.12025050027296,
-      "qps_mt": 70.82027333584973
+      "ms_per_query_1t": 211.3118806600005,
+      "ms_per_query_mt": 61.76425648000077,
+      "qps_mt": 16.190593993854673
     },
     {
       "arm_type": "bond",
@@ -60,14 +60,14 @@
       "dimension_order": "bond",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 83.72345926264681,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 34.66497581112881,
-      "pruned_docs_pct_fused": 1.982249662357708,
+      "cells_scanned_pct": 75.90666217072685,
+      "pruned_docs_pct": 99.96040067038237,
+      "tokens_pruned_pct": 15.136655091387038,
+      "pruned_docs_pct_fused": 11.745410609190474,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 73.51700467988849,
-      "ms_per_query_mt": 16.024688200559467,
-      "qps_mt": 62.403710292789796
+      "ms_per_query_1t": 233.82527396000114,
+      "ms_per_query_mt": 67.30774080000629,
+      "qps_mt": 14.857132153214488
     },
     {
       "arm_type": "bond",
@@ -75,14 +75,14 @@
       "dimension_order": "bond",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 83.72345926264681,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 34.66497581112881,
-      "pruned_docs_pct_fused": 1.982249662357708,
+      "cells_scanned_pct": 75.90666217072685,
+      "pruned_docs_pct": 99.96040067038237,
+      "tokens_pruned_pct": 15.136655091387038,
+      "pruned_docs_pct_fused": 11.745410609190474,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 77.40849269903265,
-      "ms_per_query_mt": 16.34603512007743,
-      "qps_mt": 61.17691493099294
+      "ms_per_query_1t": 247.99917641999855,
+      "ms_per_query_mt": 68.64543791999495,
+      "qps_mt": 14.567610467653836
     },
     {
       "arm_type": "bond",
@@ -90,14 +90,14 @@
       "dimension_order": "pca",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.53250472651068,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 62.338383121582154,
-      "pruned_docs_pct_fused": 0.0019293845263360988,
+      "cells_scanned_pct": 85.01077789763028,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 37.54436018480431,
+      "pruned_docs_pct_fused": 0.005768406282885762,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 60.33028903999366,
-      "ms_per_query_mt": 13.551422719610855,
-      "qps_mt": 73.79298990893822
+      "ms_per_query_1t": 198.62882553999953,
+      "ms_per_query_mt": 60.277230339997914,
+      "qps_mt": 16.590012420269318
     },
     {
       "arm_type": "bond",
@@ -105,14 +105,14 @@
       "dimension_order": "pca",
       "threshold_policy": "oracle",
       "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": 91.53250472651068,
-      "pruned_docs_pct": 99.80513216284007,
-      "tokens_pruned_pct": 62.338383121582154,
-      "pruned_docs_pct_fused": 0.0019293845263360988,
+      "cells_scanned_pct": 85.01077789763028,
+      "pruned_docs_pct": 99.9603227189461,
+      "tokens_pruned_pct": 37.54436018480431,
+      "pruned_docs_pct_fused": 0.005768406282885762,
       "tokens_pruned_pct_fused": 0.0,
-      "ms_per_query_1t": 65.62186727998778,
-      "ms_per_query_mt": 14.194227579282597,
-      "qps_mt": 70.45117421250632
+      "ms_per_query_1t": 218.22238016000483,
+      "ms_per_query_mt": 61.83917836000546,
+      "qps_mt": 16.17097811646784
     },
     {
       "arm_type": "dense",
@@ -125,9 +125,9 @@
       "tokens_pruned_pct": null,
       "pruned_docs_pct_fused": null,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 54.24893304007128,
-      "ms_per_query_mt": 13.923599000554532,
-      "qps_mt": 71.82051134625273
+      "ms_per_query_1t": 174.3860467400009,
+      "ms_per_query_mt": 57.71685640000214,
+      "qps_mt": 17.325960947519015
     },
     {
       "arm_type": "dense",
@@ -140,9 +140,9 @@
       "tokens_pruned_pct": null,
       "pruned_docs_pct_fused": null,
       "tokens_pruned_pct_fused": null,
-      "ms_per_query_1t": 121.34097771951929,
-      "ms_per_query_mt": 45.7594617200084,
-      "qps_mt": 21.853403917178255
+      "ms_per_query_1t": 426.6241632600031,
+      "ms_per_query_mt": 171.8946892800068,
+      "qps_mt": 5.817515387988841
     }
   ]
 }
