@@ -3,8 +3,15 @@
 Single responsibility: quantify the wall-clock overhead introduced by
 non-natural dimension orders (bond, pca) relative to natural order by
 measuring both the per-query pre-processing cost (building Q_eff, order
-permutation, Qcum, and tau_seed) and the total throughput (ms/query), then
+permutation, and Qcum) and the total throughput (ms/query), then
 computing the reorder fraction = pre-processing time / total time.
+
+tau_seed resolution is deliberately EXCLUDED from the timed pre-processing:
+the oracle policy computes a full exact MaxSim scan per query (an ablation
+instrument, not deployable preprocessing — see thresholds.resolve_tau_seed),
+and a real system uses self_bound (tau = -inf, zero cost) or an in-kernel
+seed at the first checkpoint.  Including it would charge every order the
+cost of a dense scan and swamp the reorder cost being measured.
 
 A large reorder fraction means the SIMD kernel spends most of its time on
 bookkeeping rather than arithmetic; a small fraction means dimension ordering
@@ -17,9 +24,10 @@ The wall-clock instrument is the Stage 3b fused panel BOND kernel
   dense_numpy — row-major NumPy/BLAS
 
 For each order, the pre-processing cost is timed by running the packing
-dispatch in isolation (without the kernel call), matching what wide_modes.py
-does before it enters the timing loop.  The total latency is the best-of-N
-throughput run from the Runner.
+dispatch in isolation (without the kernel call).  The Runner's fused
+throughput mode pre-builds per-query inputs OUTSIDE its timing loop, so its
+ms/query is pure kernel time; total = kernel + pre-processing, and
+reorder_fraction = prep / total.
 
 Datasets  : scifact, nfcorpus, arguana, scidocs
 Orders    : natural, bond, pca  (+ two brute-force baselines)
@@ -54,7 +62,6 @@ from bondmaxsim.data.loader import load_dataset
 from bondmaxsim.data.packing import build_qcum
 from bondmaxsim.testbed.runner import Runner, RunConfig
 from bondmaxsim.testbed.packing_cache import PackingCache
-from bondmaxsim.testbed.thresholds import resolve_tau_seed
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -80,26 +87,16 @@ def time_preprocessing(
     packing: PackingCache,
     queries: list[np.ndarray],
     order: str,
-    policy: str,
-    k: int,
     n_repeats: int,
 ) -> float:
-    """Return best-of-n_repeats total wall-clock for dispatch + Qcum + tau_seed
-    over all queries, in seconds.  Does NOT call the C++ kernel.
+    """Return best-of-n_repeats total wall-clock for dispatch + Qcum over all
+    queries, in seconds.  tau_seed resolution is excluded (see module
+    docstring).  Does NOT call the C++ kernel.
     """
-    cfg = RunConfig(
-        dataset="",
-        method="fused_panel_maxsim_bond",
-        dimension_order=order,
-        threshold_policy=policy,
-        k=k,
-        shrink=1.0,
-    )
     # Warm up (triggers lazy builds so timing reflects steady state).
     for query in queries:
         pd_, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_panel(query, order)
         build_qcum(Q_eff, ord_)
-        resolve_tau_seed(cfg, query, ord_, order, packing)
 
     best_s = float("inf")
     for _ in range(n_repeats):
@@ -107,7 +104,6 @@ def time_preprocessing(
         for query in queries:
             pd_, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_panel(query, order)
             build_qcum(Q_eff, ord_)
-            resolve_tau_seed(cfg, query, ord_, order, packing)
         best_s = min(best_s, time.perf_counter() - t0)
     return best_s
 
@@ -142,20 +138,18 @@ def run_dataset(dataset: str) -> None:
             shrink=1.0,
         )
 
-        # Total throughput (pre-processing + kernel), all cores.
-        t1 = time.perf_counter()
+        # Kernel-only throughput, all cores.  The Runner's fused throughput
+        # mode pre-builds all per-query inputs OUTSIDE its timing loop
+        # (fused_modes.run_fused_bond_mode), so rec.ms_per_query is pure
+        # kernel time; total = kernel + separately-timed pre-processing.
         rec = runner.throughput_mode(cfg, n_repeats=N_REPEATS, n_threads=0)
-        t_total_wall = time.perf_counter() - t1
-        total_best_s = rec.ms_per_query * len(queries) / 1e3
 
-        # Pre-processing only (no kernel).
-        prep_best_s = time_preprocessing(
-            packing, queries, order, POLICY, K_TOP, N_REPEATS
-        )
+        # Pre-processing only (no kernel, no tau_seed).
+        prep_best_s = time_preprocessing(packing, queries, order, N_REPEATS)
 
-        ms_per_query_total = rec.ms_per_query
-        ms_per_query_prep  = prep_best_s / len(queries) * 1e3
-        ms_per_query_kernel = max(0.0, ms_per_query_total - ms_per_query_prep)
+        ms_per_query_kernel = rec.ms_per_query
+        ms_per_query_prep   = prep_best_s / len(queries) * 1e3
+        ms_per_query_total  = ms_per_query_kernel + ms_per_query_prep
         reorder_fraction = ms_per_query_prep / ms_per_query_total if ms_per_query_total > 0 else 0.0
 
         arm = {
@@ -271,7 +265,7 @@ def _save_figure(arms: list[dict], brute_arms: list[dict], dataset: str, out_pat
 
     fig.suptitle(
         f"e07 cache/layout sensitivity — {dataset}  "
-        f"(wide kernel, oracle policy, shrink=1, {N_REPEATS} repeats)",
+        f"(fused panel BOND kernel, oracle policy, shrink=1, {N_REPEATS} repeats)",
         fontsize=10,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.92))
