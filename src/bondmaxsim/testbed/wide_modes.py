@@ -22,7 +22,7 @@ from typing import Optional
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum
-from bondmaxsim.kernels.wide_block import run_wide_block_accounting, run_wide_block_brute, run_wide_block_throughput
+from bondmaxsim.kernels.wide_block import run_wide_block_accounting, run_wide_block_throughput
 from bondmaxsim.oracle.agreement import exact_agreement
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
 from bondmaxsim.schema import ResultRecord
@@ -163,97 +163,6 @@ def run_wide_accounting_mode(
         notes                 = config.notes,
     )
     return record, mean_block_doc_live, mean_block_token_live
-
-
-def run_wide_brute_mode(
-    lib: ctypes.CDLL,
-    packing: PackingCache,
-    queries: list[np.ndarray],
-    config: RunConfig,
-    n_repeats: int = 5,
-) -> ResultRecord:
-    """PDX-layout brute force: scan all dimensions, zero pruning.
-
-    Uses the natural-order (z=0..D-1) wide-block packing and calls
-    wide_block_maxsim_brute — no bound checks, no token or document pruning.
-    This isolates the PDX columnar-layout benefit from the BOND-pruning
-    benefit and is the correct apples-to-apples baseline for the wall-clock
-    decision gate.
-
-    Returns a ResultRecord with ms_per_query and qps populated; all
-    pruning/cells fields are None (not meaningful for brute force).
-    """
-    K      = config.k
-    n_docs = packing.num_docs
-    nq     = len(queries)
-
-    # Always use the natural-order (un-rotated) wide packing.
-    group_data, group_offsets, doc_offsets, group_doc_starts = (
-        packing._get_wide_packing()
-    )
-
-    # Pre-build Q for every query so timing is kernel-only.
-    Qs: list[np.ndarray] = [
-        np.ascontiguousarray(q, dtype=np.float32) for q in queries
-    ]
-
-    def _run_all():
-        for Q in Qs:
-            run_wide_block_brute(
-                lib, group_data, group_offsets, doc_offsets, group_doc_starts,
-                Q, K,
-            )
-
-    # Warmup.
-    _run_all()
-
-    best_s = float("inf")
-    for _ in range(n_repeats):
-        t0 = time.perf_counter()
-        _run_all()
-        best_s = min(best_s, time.perf_counter() - t0)
-
-    ms_per_query = best_s / nq * 1e3
-    qps          = nq / best_s if best_s > 0.0 else float("inf")
-
-    # Recall check on one pass (brute force = exact, so recall vs exact = 1.0 always).
-    exact_ids_list = [
-        exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
-        for q in queries
-    ]
-    recall_list: list[float] = []
-    for Q, exact_ids in zip(Qs, exact_ids_list):
-        ids, _ = run_wide_block_brute(
-            lib, group_data, group_offsets, doc_offsets, group_doc_starts,
-            Q, K,
-        )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
-
-    return ResultRecord(
-        dataset               = config.dataset,
-        num_docs              = n_docs,
-        num_queries           = nq,
-        method                = "wide_block_brute",
-        candidate_budget      = None,
-        dimension_order       = "natural",
-        threshold_policy      = "none",
-        recall_vs_exact_at_10 = float(np.mean(recall_list)),
-        nDCG_at_10            = None,
-        recall_at_100         = None,
-        MRR_at_10             = None,
-        CoRECT_RC_metrics     = None,
-        ms_per_query          = ms_per_query,
-        qps                   = qps,
-        cells_scanned_pct     = None,
-        pruned_docs_pct       = None,
-        bound_checks_per_query= None,
-        machine               = config.machine,
-        os                    = config.os,
-        thread_count          = config.thread_count,
-        shrink                = 1.0,
-        tokens_pruned_pct     = None,
-        notes                 = "PDX columnar layout, no pruning",
-    )
 
 
 def run_wide_throughput_mode(

@@ -59,8 +59,11 @@ class PackingCache:
         self._wide: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
         self._wide_rot: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
 
-        # Fused-panel kernel packing (Stage 3b) — built lazily.
+        # Fused-panel kernel packings (Stage 3b) — built lazily.
         self._panel: Optional[
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        ] = None
+        self._panel_rot: Optional[
             tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         ] = None
 
@@ -113,12 +116,60 @@ class PackingCache:
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Panel-major packing of the ORIGINAL corpus for the Stage 3b fused
-        kernel (pack_corpus_panels: 16-token panels, duplicate-last-token doc
-        padding).  Natural dimension order only — the fused brute kernel
-        scans all dimensions, so order is irrelevant."""
+        kernels (pack_corpus_panels: 16-token panels, duplicate-last-token doc
+        padding).  Dimensions are stored in natural z order; the bond kernel
+        applies a scan-order permutation at access time within the
+        L1-resident panel, so natural and bond orders share this packing."""
         if self._panel is None:
             self._panel = pack_corpus_panels(self.flat_tokens, self.doc_starts)
         return self._panel
+
+    def _get_panel_packing_rot(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Panel-major packing of the pca-ROTATED corpus (mirrors
+        _get_wide_packing_rot)."""
+        if self._panel_rot is None:
+            flat_rot = self.get_flat_tokens_rot()
+            self._panel_rot = pack_corpus_panels(flat_rot, self.doc_starts)
+        return self._panel_rot
+
+    def dispatch_order_panel(
+        self,
+        query: np.ndarray,
+        dimension_order: str,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return (panel_data, group_offsets, doc_offsets_padded,
+        group_doc_starts, Q_eff, order_u32) for the given order (fused-panel
+        kernel packing), mirroring dispatch_order_wide()."""
+        if dimension_order == "natural":
+            order = natural_order(query).astype(np.uint32)
+            panel_data, group_offsets, doc_offsets, group_doc_starts, _ = (
+                self._get_panel_packing()
+            )
+            return panel_data, group_offsets, doc_offsets, group_doc_starts, query, order
+
+        elif dimension_order == "bond":
+            order = bond_order(query, self._mu).astype(np.uint32)
+            panel_data, group_offsets, doc_offsets, group_doc_starts, _ = (
+                self._get_panel_packing()
+            )
+            return panel_data, group_offsets, doc_offsets, group_doc_starts, query, order
+
+        elif dimension_order == "pca":
+            R = self.get_pca_rotation()
+            panel_data, group_offsets, doc_offsets, group_doc_starts, _ = (
+                self._get_panel_packing_rot()
+            )
+            q_rot, order = pca_order(query, R)
+            order = order.astype(np.uint32)
+            return panel_data, group_offsets, doc_offsets, group_doc_starts, q_rot, order
+
+        else:
+            raise ValueError(
+                f"Unknown dimension_order: {dimension_order!r}. "
+                "Expected one of 'natural', 'bond', 'pca'."
+            )
 
     # ------------------------------------------------------------------
     # Order dispatch

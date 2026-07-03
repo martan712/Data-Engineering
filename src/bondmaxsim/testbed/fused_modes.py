@@ -1,11 +1,15 @@
-"""Fused-panel kernel testbed mode (Stage 3b K5).
+"""Fused-panel kernel testbed modes (Stage 3b K4/K5).
 
 Single responsibility: wire the PackingCache + RunConfig into the fused panel
-MaxSim brute kernel (cpp/fused_panel_maxsim/) and return a ResultRecord,
-mirroring bondmaxsim.testbed.wide_modes.run_wide_brute_mode.
+MaxSim kernels (cpp/fused_panel_maxsim/) and return ResultRecords, mirroring
+bondmaxsim.testbed.wide_modes:
+  run_fused_brute_mode — dense scan, the decision-gate baseline
+  run_fused_bond_mode  — BOND document-checkpoint pruning on the same
+                         microkernel (the wall-clock BOND instrument)
 
-Design and rationale: docs/stage3b_fused_panel_maxsim_kernel.md §5–6.  This is
-a wall-clock instrument only (dense scan, no pruning, no accounting stats).
+Design and rationale: docs/stage3b_fused_panel_maxsim_kernel.md §5–6.  These
+are wall-clock instruments only; algorithmic-work accounting stays on the
+wide-block accounting kernel.
 """
 
 from __future__ import annotations
@@ -15,12 +19,14 @@ import time
 
 import numpy as np
 
-from bondmaxsim.kernels.fused_panel import run_fused_panel_brute
+from bondmaxsim.data.packing import build_qcum
+from bondmaxsim.kernels.fused_panel import run_fused_panel_bond, run_fused_panel_brute
 from bondmaxsim.oracle.agreement import exact_agreement
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
 from bondmaxsim.testbed.packing_cache import PackingCache
+from bondmaxsim.testbed.thresholds import resolve_tau_seed
 
 
 def run_fused_brute_mode(
@@ -112,4 +118,111 @@ def run_fused_brute_mode(
         shrink                = 1.0,
         tokens_pruned_pct     = None,
         notes                 = f"fused panel brute force, n_threads={n_threads}",
+    )
+
+
+def run_fused_bond_mode(
+    lib: ctypes.CDLL,
+    packing: PackingCache,
+    queries: list[np.ndarray],
+    config: RunConfig,
+    n_threads: int = 1,
+    n_repeats: int = 5,
+    exact_ids_list: list[np.ndarray] | None = None,
+) -> ResultRecord:
+    """Fused panel BOND: dimension-incremental scan with per-document bound
+    checkpoints at dims {32, 64} on the register-tiled microkernel
+    (Stage 3b §5.5).  The wall-clock BOND instrument — compare against
+    run_fused_brute_mode at the SAME n_threads.
+
+    Order/policy semantics match the wide-block kernel: dimension_order via
+    dispatch_order_panel (natural/bond share the natural packing, pca uses
+    the rotated packing), threshold_policy via resolve_tau_seed, shrink=1 is
+    exact-safe.
+
+    Returns a ResultRecord with ms_per_query / qps and pruned_docs_pct
+    populated; cells_scanned_pct uses the PADDED-token wall-clock convention
+    (not comparable to the accounting kernel's live-set counter — reported
+    in notes, kept out of cells_scanned_pct to avoid conflation).
+    """
+    K      = config.k
+    n_docs = packing.num_docs
+    nq     = len(queries)
+
+    # Pre-build all per-query inputs so timing is kernel-only.
+    prepared = []
+    for q in queries:
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order = (
+            packing.dispatch_order_panel(q, config.dimension_order)
+        )
+        Qcum = build_qcum(Q_eff, order)
+        tau  = resolve_tau_seed(config, q, order, config.dimension_order, packing)
+        prepared.append(
+            (panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau)
+        )
+
+    def _run_all():
+        for panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau in prepared:
+            run_fused_panel_bond(
+                lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
+                Q_eff, order, Qcum,
+                shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
+            )
+
+    # Warmup.
+    _run_all()
+
+    best_s = float("inf")
+    for _ in range(n_repeats):
+        t0 = time.perf_counter()
+        _run_all()
+        best_s = min(best_s, time.perf_counter() - t0)
+
+    ms_per_query = best_s / nq * 1e3
+    qps          = nq / best_s if best_s > 0.0 else float("inf")
+
+    # Recall + pruning stats on one pass.
+    if exact_ids_list is None:
+        exact_ids_list = [
+            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+            for q in queries
+        ]
+    recall_list: list[float] = []
+    docs_pruned_total = 0
+    for prep, exact_ids in zip(prepared, exact_ids_list):
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau = prep
+        ids, _, stats = run_fused_panel_bond(
+            lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
+            Q_eff, order, Qcum,
+            shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
+        )
+        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        docs_pruned_total += int(stats[1])
+
+    pruned_docs_pct = 100.0 * docs_pruned_total / (n_docs * nq) if n_docs * nq else 0.0
+
+    return ResultRecord(
+        dataset               = config.dataset,
+        num_docs              = n_docs,
+        num_queries           = nq,
+        method                = "fused_panel_bond",
+        candidate_budget      = config.candidate_budget,
+        dimension_order       = config.dimension_order,
+        threshold_policy      = config.threshold_policy,
+        recall_vs_exact_at_10 = float(np.mean(recall_list)),
+        nDCG_at_10            = None,
+        recall_at_100         = None,
+        MRR_at_10             = None,
+        CoRECT_RC_metrics     = None,
+        ms_per_query          = ms_per_query,
+        qps                   = qps,
+        cells_scanned_pct     = None,
+        pruned_docs_pct       = pruned_docs_pct,
+        bound_checks_per_query= None,
+        machine               = config.machine,
+        os                    = config.os,
+        thread_count          = n_threads if n_threads > 0 else None,
+        shrink                = config.shrink,
+        tokens_pruned_pct     = None,
+        notes                 = f"fused panel BOND (doc checkpoints 32/64), n_threads={n_threads}",
     )

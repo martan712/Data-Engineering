@@ -24,6 +24,7 @@ from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, exact_maxsim_top
 pytest.importorskip("bondmaxsim.kernels.fused_panel")
 from bondmaxsim.kernels.fused_panel import (  # noqa: E402
     load_fused_panel_kernel,
+    run_fused_panel_bond,
     run_fused_panel_brute,
 )
 
@@ -130,6 +131,87 @@ def test_negative_similarity_docs_not_clamped():
     assert (ref < 0).any(), "fixture should produce negative MaxSim scores"
     packed = pack_corpus_panels(flat, doc_starts, target_group_tokens=64)
     _assert_agrees(flat, doc_starts, q, packed, k=len(doc_starts))
+
+
+ORDERS = ["natural", "bond", "pca"]
+POLICIES = ["self_bound", "oracle"]
+
+
+@pytest.mark.parametrize("order", ORDERS)
+@pytest.mark.parametrize("policy", POLICIES)
+def test_bond_exact_agreement_shrink1(order, policy):
+    """Stage 3b K4 blocking gate: the fused BOND kernel at shrink=1 must be
+    exact-safe for every dimension order and threshold policy (the Stage 2
+    gate re-run on the new kernel), single- and multi-threaded."""
+    from bondmaxsim.data.packing import build_qcum
+    from bondmaxsim.testbed.packing_cache import PackingCache
+    from bondmaxsim.testbed.config import RunConfig
+    from bondmaxsim.testbed.thresholds import resolve_tau_seed
+
+    flat, doc_starts, queries = _make_corpus(53, 120, 32, n_queries=5)
+    packing = PackingCache(flat, doc_starts)
+    cfg = RunConfig(dataset="", method="fused_panel_maxsim_bond",
+                    dimension_order=order, threshold_policy=policy,
+                    k=10, shrink=1.0)
+    for q in queries:
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, ord_ = (
+            packing.dispatch_order_panel(q, order)
+        )
+        Qcum = build_qcum(Q_eff, ord_)
+        tau = resolve_tau_seed(cfg, q, ord_, order, packing)
+        ref_scores = exact_maxsim_scores(q, flat, doc_starts)
+        kth = np.sort(ref_scores)[-10]
+        for n_threads in (1, 4):
+            ids, scores, stats = run_fused_panel_bond(
+                LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+                Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=10,
+                n_threads=n_threads,
+            )
+            for i in range(10):
+                assert abs(scores[i] - ref_scores[ids[i]]) <= SCORE_ATOL
+            assert (ref_scores[ids] >= kth - SCORE_ATOL).all(), (
+                f"order={order} policy={policy} nt={n_threads}: "
+                f"top-k set mismatch (recall < 1 at shrink=1)"
+            )
+
+
+def test_bond_prunes_documents():
+    """With an oracle threshold the bond kernel must actually prune (stats[1]
+    > 0) — otherwise it is just the brute kernel with extra steps.
+
+    Uniform random vectors spread energy evenly across dimensions, which
+    leaves the Cauchy-Schwarz residuals large at the mid-scan checkpoints and
+    (correctly) prunes nothing.  Real embeddings under bond/pca ordering
+    concentrate energy in early dimensions, so the fixture mimics that:
+    dims >= 32 are scaled down and vectors renormalized."""
+    from bondmaxsim.data.packing import build_qcum
+    from bondmaxsim.testbed.packing_cache import PackingCache
+    from bondmaxsim.testbed.config import RunConfig
+    from bondmaxsim.testbed.thresholds import resolve_tau_seed
+
+    flat, doc_starts, queries = _make_corpus(61, 300, 64, n_queries=2)
+    # Concentrate ~99.8% of every vector's energy in dims [0, 32).
+    flat = flat.copy(); flat[:, 32:] *= 0.05
+    flat /= np.linalg.norm(flat, axis=1, keepdims=True)
+    queries = [q.copy() for q in queries]
+    for q in queries:
+        q[:, 32:] *= 0.05
+        q /= np.linalg.norm(q, axis=1, keepdims=True)
+    packing = PackingCache(flat, doc_starts)
+    cfg = RunConfig(dataset="", method="fused_panel_maxsim_bond",
+                    dimension_order="natural", threshold_policy="oracle",
+                    k=5, shrink=1.0)
+    q = queries[0]
+    panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, ord_ = (
+        packing.dispatch_order_panel(q, "natural")
+    )
+    Qcum = build_qcum(Q_eff, ord_)
+    tau = resolve_tau_seed(cfg, q, ord_, "natural", packing)
+    _, _, stats = run_fused_panel_bond(
+        LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+        Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=5, n_threads=1,
+    )
+    assert int(stats[1]) > 0, "oracle-seeded bond kernel pruned zero documents"
 
 
 def test_thread_invariance():

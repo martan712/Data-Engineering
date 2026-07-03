@@ -17,6 +17,12 @@ ABI:
       const float* query, size_t m, size_t D,
       size_t K, int n_threads,
       uint32_t* topk_id, float* topk_score)
+
+  uint64 fused_panel_maxsim_bond(
+      ... same corpus/query arguments ...,
+      const uint32_t* order, const float* Qcum,   // [D], [m, D+1]
+      float shrink, float tau_seed, size_t K, int n_threads,
+      uint32_t* topk_id, float* topk_score, uint64_t* stats)  // stats: u64[2]
 """
 
 from __future__ import annotations
@@ -55,6 +61,18 @@ def load_fused_panel_kernel() -> ctypes.CDLL:
         u32p, f32p,                 # topk_id, topk_score
     ]
     lib.fused_panel_maxsim_brute.restype = ctypes.c_uint64
+
+    lib.fused_panel_maxsim_bond.argtypes = [
+        f32p,                       # panel_data
+        u64p, csz,                  # group_offsets, n_groups
+        u64p,                       # doc_offsets (padded)
+        u64p,                       # group_doc_starts
+        f32p, csz, csz,             # query, m, D
+        u32p, f32p,                 # order, Qcum
+        ctypes.c_float, ctypes.c_float, csz, ctypes.c_int,  # shrink, tau_seed, K, n_threads
+        u32p, f32p, u64p,           # topk_id, topk_score, stats
+    ]
+    lib.fused_panel_maxsim_bond.restype = ctypes.c_uint64
 
     return lib
 
@@ -110,3 +128,69 @@ def run_fused_panel_brute(
         up(ids), fp(scores),
     )
     return ids, scores
+
+
+def run_fused_panel_bond(
+    lib: ctypes.CDLL,
+    panel_data: np.ndarray,
+    group_offsets: np.ndarray,
+    doc_offsets: np.ndarray,
+    group_doc_starts: np.ndarray,
+    Q: np.ndarray,
+    order: np.ndarray,
+    Qcum: np.ndarray,
+    shrink: float,
+    tau_seed: float,
+    K: int,
+    n_threads: int = 1,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Call fused_panel_maxsim_bond — fused MaxSim with document bound
+    checkpoints at dims {32, 64} (Stage 3b §5.5).
+
+    Parameters
+    ----------
+    lib, panel_data, group_offsets, doc_offsets, group_doc_starts, Q, K,
+    n_threads : as run_fused_panel_brute
+    order     : int/uint [D] — dimension scan order (permutation of 0..D-1);
+                the panel packing itself is order-agnostic (natural storage,
+                permuted access within the L1-resident panel)
+    Qcum      : float32 [m, D+1] — cumulative squared norms along order
+                (bondmaxsim.data.packing.build_qcum)
+    shrink    : float — recall knob (1.0 = exact-safe)
+    tau_seed  : float — pruning-threshold seed (-inf = self_bound; the kernel
+                additionally shares a rising threshold across threads)
+
+    Returns
+    -------
+    ids    : uint32 [K]
+    scores : float32 [K]
+    stats  : uint64 [2] — [cells_scanned (padded-token wall-clock convention),
+             docs_pruned]
+    """
+    panel_data       = np.ascontiguousarray(panel_data,       dtype=np.float32)
+    group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
+    doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
+    group_doc_starts = np.ascontiguousarray(group_doc_starts, dtype=np.uint64)
+    Q         = np.ascontiguousarray(Q,     dtype=np.float32)
+    Qcum      = np.ascontiguousarray(Qcum,  dtype=np.float32)
+    order_u32 = np.ascontiguousarray(order, dtype=np.uint32)
+
+    m = Q.shape[0]
+    D = Q.shape[1]
+    n_groups = len(group_offsets) - 1
+
+    ids    = np.empty(K, dtype=np.uint32)
+    scores = np.empty(K, dtype=np.float32)
+    stats  = np.zeros(2, dtype=np.uint64)
+
+    lib.fused_panel_maxsim_bond(
+        fp(panel_data),
+        lp(group_offsets), csz(n_groups),
+        lp(doc_offsets),
+        lp(group_doc_starts),
+        fp(Q), csz(m), csz(D),
+        up(order_u32), fp(Qcum),
+        ctypes.c_float(shrink), ctypes.c_float(tau_seed), csz(K), ctypes.c_int(n_threads),
+        up(ids), fp(scores), lp(stats),
+    )
+    return ids, scores, stats

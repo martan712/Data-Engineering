@@ -274,8 +274,11 @@ epilogue:
 
 The fused kernel comes in two entry points:
 
-- `fused_panel_maxsim_brute` — dense, no bounds. Replaces `brute_pdx` as the
-  honest layout baseline in e03+.
+- `fused_panel_maxsim_brute` — dense, no bounds. The dense layout baseline in
+  e03+ (the old `brute_pdx` wide-block dense scan and the wide-block
+  THROUGHPUT kernel were **removed** from the wall-clock surface entirely;
+  the wide-block ACCOUNTING kernel remains as the algorithmic-work
+  instrument).
 - `fused_panel_maxsim_bond` — identical microkernel, but the z-loop is split
   at a small number of checkpoints (e.g. z = 32, 64; aligned to the existing
   fetch-schedule boundaries). At a checkpoint the partials are already in
@@ -333,6 +336,35 @@ Integration rules:
 - The accounting kernel and all e01/e02 results are unaffected (algorithmic
   work is layout- and codegen-independent); no re-runs needed there.
 - Stage 4/5 inherit the fused kernels as the production wall-clock path.
+
+### 6.1 K4 outcome (measured 2026-07-02, scifact, oracle policy, shrink = 1)
+
+All arms recall 1.000. Wall-clock (50 queries, best-of-5):
+
+| arm | 1 thread | all cores |
+|---|---|---|
+| BOND fused (natural / bond / pca order) | 81.0 / 89.1 / 81.6 ms/q | 16.7 / 17.1 / 16.4 ms/q |
+| dense fused | 54.9 ms/q | 13.1 ms/q |
+| dense NumPy/BLAS | 121.5 ms/q | 42.5 ms/q |
+
+The instruments now agree with each other and the mechanism question gets a
+clean answer on scifact: **exact-safe document-level pruning at the {32, 64}
+checkpoints fires almost never** (0.0–2.0% of documents, vs the accounting
+kernel's 99.8% "pruned before scan end") — the bounds are too loose mid-scan,
+exactly as e01's bound-slack trajectories and e02's survival curves showed:
+documents only become prunable late in the dimension scan, where most of
+their bytes are already read. The BOND arms therefore pay the segment
+spill/reload + bound-evaluation overhead (~1.3–1.6x over dense fused) and
+prune nothing back. Note the accounting kernel's 84–92% cells-scanned had
+already bounded the best case: even perfect pruning could save at most ~16%
+of dense work on scifact at shrink = 1.
+
+Decision-gate implication: on scifact, no exact-safe arm beats the dense
+fused baseline; the exact-safe wall-clock win, if it exists, must come from
+datasets/orders with earlier bound collapse or from the approximate regime
+(shrink < 1, e05 — smaller residual scaling brings checkpoints forward).
+This is now a *defensible* negative signal because both sides run the same
+microkernel — the remaining e03 datasets and e05 decide the gate.
 
 Risks / open points:
 

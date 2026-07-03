@@ -11,10 +11,10 @@ bookkeeping rather than arithmetic; a small fraction means dimension ordering
 is essentially free and the cells% reduction translates to a proportional
 latency reduction.
 
-Two brute-force baselines are included so the wall-clock decision gate can be
-evaluated:
-  brute_pdx   — same columnar layout, natural order, no pruning overhead
-  brute_numpy — row-major NumPy/BLAS
+The wall-clock instrument is the Stage 3b fused panel BOND kernel
+(docs/stage3b_fused_panel_maxsim_kernel.md); dense baselines:
+  dense_fused — fused panel brute (decision-gate baseline)
+  dense_numpy — row-major NumPy/BLAS
 
 For each order, the pre-processing cost is timed by running the packing
 dispatch in isolation (without the kernel call), matching what wide_modes.py
@@ -89,7 +89,7 @@ def time_preprocessing(
     """
     cfg = RunConfig(
         dataset="",
-        method="wide_block_maxsim_bond",
+        method="fused_panel_maxsim_bond",
         dimension_order=order,
         threshold_policy=policy,
         k=k,
@@ -97,7 +97,7 @@ def time_preprocessing(
     )
     # Warm up (triggers lazy builds so timing reflects steady state).
     for query in queries:
-        gd, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_wide(query, order)
+        pd_, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_panel(query, order)
         build_qcum(Q_eff, ord_)
         resolve_tau_seed(cfg, query, ord_, order, packing)
 
@@ -105,7 +105,7 @@ def time_preprocessing(
     for _ in range(n_repeats):
         t0 = time.perf_counter()
         for query in queries:
-            gd, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_wide(query, order)
+            pd_, go, do_, gds, Q_eff, ord_ = packing.dispatch_order_panel(query, order)
             build_qcum(Q_eff, ord_)
             resolve_tau_seed(cfg, query, ord_, order, packing)
         best_s = min(best_s, time.perf_counter() - t0)
@@ -135,16 +135,16 @@ def run_dataset(dataset: str) -> None:
     for order in ORDER_NAMES:
         cfg = RunConfig(
             dataset=dataset,
-            method="wide_block_maxsim_bond",
+            method="fused_panel_maxsim_bond",
             dimension_order=order,
             threshold_policy=POLICY,
             k=K_TOP,
             shrink=1.0,
         )
 
-        # Total throughput (pre-processing + kernel).
+        # Total throughput (pre-processing + kernel), all cores.
         t1 = time.perf_counter()
-        rec = runner.throughput_mode(cfg, n_repeats=N_REPEATS)
+        rec = runner.throughput_mode(cfg, n_repeats=N_REPEATS, n_threads=0)
         t_total_wall = time.perf_counter() - t1
         total_best_s = rec.ms_per_query * len(queries) / 1e3
 
@@ -178,14 +178,15 @@ def run_dataset(dataset: str) -> None:
     # Brute-force baselines (no pre-processing timing needed — brute has no reorder step).
     cfg_brute = RunConfig(
         dataset=dataset,
-        method="wide_block_maxsim_bond",
+        method="fused_panel_maxsim_bond",
         dimension_order="natural",
         threshold_policy="none",
         k=K_TOP,
         shrink=1.0,
     )
-    for kind, label in [("pdx", "brute_pdx"), ("numpy", "brute_numpy")]:
-        rec = runner.brute_force_mode(cfg_brute, kind=kind, n_repeats=N_REPEATS)
+    for kind, label in [("fused", "dense_fused"), ("numpy", "dense_numpy")]:
+        rec = runner.brute_force_mode(cfg_brute, kind=kind, n_repeats=N_REPEATS,
+                                      n_threads=0)
         brute_arms.append({
             "dimension_order": label,
             "ms_per_query_total": rec.ms_per_query,
@@ -205,7 +206,7 @@ def run_dataset(dataset: str) -> None:
     payload = {
         "experiment": "e07_cache_layout_sensitivity",
         "dataset": dataset,
-        "method": "wide_block_maxsim_bond",
+        "method": "fused_panel_maxsim_bond",
         "n_docs": len(doc_starts),
         "total_tokens": flat_tokens.shape[0],
         "n_queries": len(queries),
@@ -214,7 +215,7 @@ def run_dataset(dataset: str) -> None:
         "shrink": 1.0,
         "n_repeats": N_REPEATS,
         "orders": ORDER_NAMES,
-        "baselines": ["brute_pdx", "brute_numpy"],
+        "baselines": ["dense_fused", "dense_numpy"],
         "arms": arms,
         "brute_arms": brute_arms,
     }
@@ -244,7 +245,7 @@ def _save_figure(arms: list[dict], brute_arms: list[dict], dataset: str, out_pat
     ax1.bar(x, prep_ms,   label="preprocess", color=colors, width=0.5,
             bottom=kernel_ms, alpha=0.4, hatch="//")
     # Horizontal reference lines for brute baselines.
-    brute_colors = {"brute_pdx": "#888888", "brute_numpy": "#bbbbbb"}
+    brute_colors = {"dense_fused": "#5c4a9e", "dense_numpy": "#888888"}
     for ba in brute_arms:
         c = brute_colors.get(ba["dimension_order"], "gray")
         ax1.axhline(ba["ms_per_query_total"], color=c, linestyle="--", linewidth=1.2,

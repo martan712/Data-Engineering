@@ -57,7 +57,9 @@
 //   precomputed tau_seed (oracle/seed policy) pruning can also fire inside
 //   the very first group.
 //
-// Two entry points (extern "C"), identical ABI:
+// Two entry points (extern "C"), identical ABI (a former third entry point,
+// wide_block_maxsim_brute, was removed in Stage 3b — the fused panel kernel
+// in cpp/fused_panel_maxsim/ is the dense wall-clock baseline now):
 //   uint64_t wide_block_maxsim_{accounting,throughput}(
 //       const float* group_data, const uint64_t* group_offsets, size_t n_groups,
 //       const uint64_t* doc_offsets, size_t n_docs,
@@ -528,74 +530,6 @@ uint64_t wide_block_maxsim_throughput(
     emit_topk(topk, K, topk_id, topk_score);
     stats[0] = cells; stats[1] = docs_pruned; stats[2] = tokens_pruned;
     return cells;
-}
-
-// ---------------------------------------------------------------------------
-// wide_block_maxsim_brute
-// PDX-layout brute force: dense scan of ALL D dimensions for ALL tokens,
-// no bound checks, no pruning.  This is the "PDX brute force" baseline —
-// same columnar group layout as the BOND kernels, but zero algorithmic
-// overhead from the bound mechanism.  Used by Stage 3 experiments to
-// separate the PDX-layout cache benefit from the BOND-pruning benefit.
-//
-// Signature is intentionally narrower than accounting/throughput: no order
-// (always natural z=0..D-1), no Qcum/shrink/tau_seed (no bounds), no stats
-// or block_* side channels (nothing to measure).
-// ---------------------------------------------------------------------------
-uint64_t wide_block_maxsim_brute(
-        const float* group_data, const uint64_t* group_offsets, size_t n_groups,
-        const uint64_t* doc_offsets,
-        const uint64_t* group_doc_starts,
-        const float* query, size_t m, size_t D,
-        size_t K,
-        uint32_t* topk_id, float* topk_score) {
-
-    size_t max_G = 0;
-    for (size_t g = 0; g < n_groups; ++g)
-        max_G = std::max(max_G, (size_t)(group_offsets[g + 1] - group_offsets[g]));
-
-    std::vector<float> P(max_G * m);
-    std::vector<float> qz(m);
-    TopK topk(K);
-    const float NEG = -std::numeric_limits<float>::infinity();
-
-    for (size_t g = 0; g < n_groups; ++g) {
-        uint64_t g0 = group_offsets[g], g1 = group_offsets[g + 1];
-        size_t G = (size_t)(g1 - g0);
-        if (G == 0) continue;
-        const float* base = group_data + (size_t)g0 * D;
-        size_t d0 = (size_t)group_doc_starts[g], d1 = (size_t)group_doc_starts[g + 1];
-
-        std::fill_n(P.data(), G * m, 0.0f);
-        for (size_t z = 0; z < D; ++z) {
-            const float* col = base + z * G;
-            for (size_t i = 0; i < m; ++i) qz[i] = query[i * D + z];
-            for (size_t j = 0; j < G; ++j) {
-                float dv = col[j];
-                float* Pj = P.data() + j * m;
-                for (size_t i = 0; i < m; ++i) Pj[i] += qz[i] * dv;
-            }
-        }
-
-        for (size_t d = d0; d < d1; ++d) {
-            size_t ls = (size_t)(doc_offsets[d]     - g0);
-            size_t le = (size_t)(doc_offsets[d + 1] - g0);
-            if (le <= ls) continue;
-            float score = 0.0f;
-            for (size_t i = 0; i < m; ++i) {
-                float mx = NEG;
-                for (size_t j = ls; j < le; ++j) {
-                    float v = P[j * m + i];
-                    if (v > mx) mx = v;
-                }
-                score += mx;
-            }
-            topk.offer(score, (uint32_t)d);
-        }
-    }
-
-    emit_topk(topk, K, topk_id, topk_score);
-    return 0;
 }
 
 }  // extern "C"

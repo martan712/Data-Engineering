@@ -24,7 +24,6 @@ from bondmaxsim.kernels.per_document import (
 from bondmaxsim.kernels.wide_block import (
     load_wide_block_kernel,
     run_wide_block_accounting,
-    run_wide_block_brute,
     run_wide_block_throughput,
 )
 
@@ -35,6 +34,5 @@ __all__ = [
     "run_full",
     "load_wide_block_kernel",
     "run_wide_block_accounting",
-    "run_wide_block_brute",
     "run_wide_block_throughput",
 ]

@@ -42,9 +42,11 @@
 // Build: make -C cpp/fused_panel_maxsim  (adds -fopenmp; AVX-512 fast path
 // under __AVX512F__, portable autovectorized fallback otherwise).
 
+#include <atomic>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
+#include <cmath>
 #include <vector>
 #include <limits>
 #include <algorithm>
@@ -60,6 +62,10 @@
 static constexpr size_t PT = 16;          // panel width (tokens)
 static constexpr size_t TILE_MAX = 24;    // largest query tile (register budget)
 
+// float32 guard on the per-document UB < tau pruning test (same constant and
+// rationale as cpp/wide_block_maxsim_bond).
+static constexpr float UB_EPSILON = 1e-4f;
+
 // ---------------------------------------------------------------------------
 // TopK — identical pattern to cpp/wide_block_maxsim_bond (kept self-contained).
 // ---------------------------------------------------------------------------
@@ -69,12 +75,26 @@ struct TopK {
     size_t K;
     explicit TopK(size_t k) : score(k, -std::numeric_limits<float>::infinity()),
                               id(k, 0xffffffffu), K(k) {}
+    float threshold() const {
+        float t = score[0];
+        for (size_t i = 1; i < K; ++i) t = std::min(t, score[i]);
+        return t;
+    }
     void offer(float s, uint32_t v) {
         size_t mn = 0;
         for (size_t i = 1; i < K; ++i) if (score[i] < score[mn]) mn = i;
         if (s > score[mn]) { score[mn] = s; id[mn] = v; }
     }
 };
+
+// Monotonically rising shared pruning threshold.  A thread's local top-K
+// threshold is the k-th best over a SUBSET of documents, hence <= the final
+// global k-th score, so publishing it can only make tau safer-or-equal —
+// a stale read prunes less, never incorrectly (Stage 3b §5.6).
+static inline void atomic_max_tau(std::atomic<float>& a, float v) {
+    float cur = a.load(std::memory_order_relaxed);
+    while (v > cur && !a.compare_exchange_weak(cur, v, std::memory_order_relaxed)) {}
+}
 
 static void emit_topk(const TopK& topk, size_t K, uint32_t* topk_id, float* topk_score) {
     std::vector<size_t> idx(K);
@@ -252,6 +272,267 @@ uint64_t fused_panel_maxsim_brute(
 
     emit_topk(global, K, topk_id, topk_score);
     return 0;
+}
+
+}  // extern "C" (brute)
+
+// ---------------------------------------------------------------------------
+// fused_panel_maxsim_bond — same microkernel, dimension-incremental with
+// per-DOCUMENT Cauchy-Schwarz bound checkpoints (Stage 3b §5.5).
+//
+// The scan of one document is split into dimension segments ending at the
+// checkpoints {32, 64, D} (clamped/deduped for small D; aligned with the
+// DEFAULT_FETCH cumulative boundaries).  Within a segment the register-tiled
+// microkernel runs unchanged over the document's panels, spilling partials
+// to a small L1/L2-resident per-document buffer between segments.  At each
+// non-final checkpoint the document upper bound
+//     UB_d = sum_i max_j (P_ij + resq_i * resd_j)
+// is evaluated lane-vectorized over the spilled partials; if UB_d < tau the
+// document's remaining dimension segments are skipped entirely (bytes never
+// read — this is the mechanism that goes below the dense DRAM floor).
+// Token-level domination pruning is deliberately absent (e03 showed its
+// bookkeeping costs more than it saves at wall-clock; it remains measured by
+// the wide-block ACCOUNTING kernel).
+//
+// Exactness at shrink=1: identical bound math to Stage 1 §2.3 evaluated at
+// document granularity; duplicate-token padding adds identical lanes (max-
+// invariant); zero-padded query rows are excluded from UB and score.
+//
+// tau = max(tau_seed, shared_tau) where shared_tau is the atomic max over
+// all threads' local top-K thresholds (safe: see atomic_max_tau).
+//
+// stats[0] = cells actually scanned (dims x PADDED tokens x m real query
+//            tokens; wall-clock convention, NOT comparable to the accounting
+//            kernel's unpadded live-set counter)
+// stats[1] = docs pruned at a checkpoint (never finalized)
+// ---------------------------------------------------------------------------
+
+#ifdef __AVX512F__
+
+// One panel x one tile over dims order[z0:z1); partials spilled to Pt[i*PT].
+template <size_t M>
+static inline void panel_tile_seg(const float* panel, const float* qpack,
+                                  const uint32_t* order, size_t z0, size_t z1,
+                                  float* Pt, bool first) {
+    __m512 acc[M];
+    if (first) for (size_t i = 0; i < M; ++i) acc[i] = _mm512_setzero_ps();
+    else       for (size_t i = 0; i < M; ++i) acc[i] = _mm512_loadu_ps(Pt + i * PT);
+    for (size_t t = z0; t < z1; ++t) {
+        size_t z = order[t];
+        __m512 col = _mm512_loadu_ps(panel + z * PT);
+        const float* qz = qpack + z * M;
+        for (size_t i = 0; i < M; ++i)
+            acc[i] = _mm512_fmadd_ps(_mm512_set1_ps(qz[i]), col, acc[i]);
+    }
+    for (size_t i = 0; i < M; ++i) _mm512_storeu_ps(Pt + i * PT, acc[i]);
+}
+
+static inline void panel_sumsq_seg(const float* panel, const uint32_t* order,
+                                   size_t z0, size_t z1, float* ss, bool first) {
+    __m512 s = first ? _mm512_setzero_ps() : _mm512_loadu_ps(ss);
+    for (size_t t = z0; t < z1; ++t) {
+        __m512 col = _mm512_loadu_ps(panel + (size_t)order[t] * PT);
+        s = _mm512_fmadd_ps(col, col, s);
+    }
+    _mm512_storeu_ps(ss, s);
+}
+
+// resd = sqrt(max(0, 1 - sumsq)) per lane, one panel.
+static inline void panel_resd(const float* ss, float* resd) {
+    __m512 s = _mm512_sub_ps(_mm512_set1_ps(1.0f), _mm512_loadu_ps(ss));
+    _mm512_storeu_ps(resd, _mm512_sqrt_ps(_mm512_max_ps(s, _mm512_setzero_ps())));
+}
+
+// max over the document's lanes of (P + resq*resd) for one query row.
+static inline float doc_row_ubmax(const float* Pt_row, const float* resd,
+                                  size_t n_panels, size_t row_stride, float resq) {
+    __m512 vq = _mm512_set1_ps(resq);
+    __m512 best = _mm512_set1_ps(-std::numeric_limits<float>::infinity());
+    for (size_t p = 0; p < n_panels; ++p) {
+        __m512 P = _mm512_loadu_ps(Pt_row + p * row_stride);
+        __m512 r = _mm512_loadu_ps(resd + p * PT);
+        best = _mm512_max_ps(best, _mm512_fmadd_ps(vq, r, P));
+    }
+    return _mm512_reduce_max_ps(best);
+}
+
+#else  // portable fallback
+
+template <size_t M>
+static inline void panel_tile_seg(const float* panel, const float* qpack,
+                                  const uint32_t* order, size_t z0, size_t z1,
+                                  float* Pt, bool first) {
+    float acc[M][PT];
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) acc[i][j] = first ? 0.0f : Pt[i * PT + j];
+    for (size_t t = z0; t < z1; ++t) {
+        const float* col = panel + (size_t)order[t] * PT;
+        const float* qz = qpack + (size_t)order[t] * M;
+        for (size_t i = 0; i < M; ++i)
+            for (size_t j = 0; j < PT; ++j) acc[i][j] += qz[i] * col[j];
+    }
+    for (size_t i = 0; i < M; ++i)
+        for (size_t j = 0; j < PT; ++j) Pt[i * PT + j] = acc[i][j];
+}
+
+static inline void panel_sumsq_seg(const float* panel, const uint32_t* order,
+                                   size_t z0, size_t z1, float* ss, bool first) {
+    float s[PT];
+    for (size_t j = 0; j < PT; ++j) s[j] = first ? 0.0f : ss[j];
+    for (size_t t = z0; t < z1; ++t) {
+        const float* col = panel + (size_t)order[t] * PT;
+        for (size_t j = 0; j < PT; ++j) s[j] += col[j] * col[j];
+    }
+    for (size_t j = 0; j < PT; ++j) ss[j] = s[j];
+}
+
+static inline void panel_resd(const float* ss, float* resd) {
+    for (size_t j = 0; j < PT; ++j) {
+        float s = 1.0f - ss[j];
+        resd[j] = std::sqrt(s > 0.0f ? s : 0.0f);
+    }
+}
+
+static inline float doc_row_ubmax(const float* Pt_row, const float* resd,
+                                  size_t n_panels, size_t row_stride, float resq) {
+    float best = -std::numeric_limits<float>::infinity();
+    for (size_t p = 0; p < n_panels; ++p)
+        for (size_t j = 0; j < PT; ++j)
+            best = std::max(best, Pt_row[p * row_stride + j] + resq * resd[p * PT + j]);
+    return best;
+}
+
+#endif  // __AVX512F__
+
+static inline void run_panel_seg(const float* panel, const float* qpack, size_t M,
+                                 const uint32_t* order, size_t z0, size_t z1,
+                                 float* Pt, bool first) {
+    switch (M) {
+        case 8:  panel_tile_seg<8> (panel, qpack, order, z0, z1, Pt, first); break;
+        case 16: panel_tile_seg<16>(panel, qpack, order, z0, z1, Pt, first); break;
+        default: panel_tile_seg<24>(panel, qpack, order, z0, z1, Pt, first); break;
+    }
+}
+
+extern "C" {
+
+uint64_t fused_panel_maxsim_bond(
+        const float* panel_data,
+        const uint64_t* group_offsets, size_t n_groups,
+        const uint64_t* doc_offsets,
+        const uint64_t* group_doc_starts,
+        const float* query, size_t m, size_t D,
+        const uint32_t* order, const float* Qcum,
+        float shrink, float tau_seed, size_t K, int n_threads,
+        uint32_t* topk_id, float* topk_score, uint64_t* stats) {
+
+    (void)group_offsets;
+    QueryTiles qt(query, m, D);
+    TopK global(K);
+    std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
+    std::atomic<uint64_t> cells{0}, docs_pruned{0};
+
+    // Checkpoints {32, 64, D}, clamped and deduped for small D.
+    size_t cps[3]; size_t n_cps = 0;
+    for (size_t c : {std::min<size_t>(32, D), std::min<size_t>(64, D), D})
+        if (n_cps == 0 || c > cps[n_cps - 1]) cps[n_cps++] = c;
+
+    // Max padded document length (per-thread spill buffer size).
+    size_t max_doc_tok = 0;
+    size_t n_docs_total = n_groups > 0 ? (size_t)group_doc_starts[n_groups] : 0;
+    for (size_t d = 0; d < n_docs_total; ++d)
+        max_doc_tok = std::max(max_doc_tok, (size_t)(doc_offsets[d + 1] - doc_offsets[d]));
+    size_t max_panels = max_doc_tok / PT;
+
+#ifdef _OPENMP
+    int nt = n_threads > 0 ? n_threads : omp_get_max_threads();
+#else
+    int nt = 1; (void)n_threads;
+#endif
+
+    #pragma omp parallel num_threads(nt)
+    {
+        TopK local(K);
+        // Spilled partials: per tile, per panel, per query row: [i*PT] lanes.
+        // Row stride across panels within a tile = M*PT.
+        std::vector<std::vector<float>> Pt(qt.n_tiles);
+        for (size_t t = 0; t < qt.n_tiles; ++t) Pt[t].assign(max_panels * qt.M[t] * PT, 0.0f);
+        std::vector<float> ss(max_panels * PT), resd(max_panels * PT), resq(m);
+        uint64_t l_cells = 0, l_pruned = 0;
+
+        #pragma omp for schedule(dynamic)
+        for (size_t g = 0; g < n_groups; ++g) {
+            size_t d0 = (size_t)group_doc_starts[g], d1 = (size_t)group_doc_starts[g + 1];
+            for (size_t d = d0; d < d1; ++d) {
+                size_t tok0 = (size_t)doc_offsets[d], tok1 = (size_t)doc_offsets[d + 1];
+                size_t n_tok = tok1 - tok0;
+                if (n_tok == 0) continue;
+                size_t n_panels = n_tok / PT;
+
+                bool pruned = false;
+                size_t cur = 0;
+                for (size_t c = 0; c < n_cps && !pruned; ++c) {
+                    size_t end = cps[c];
+                    for (size_t p = 0; p < n_panels; ++p) {
+                        const float* panel = panel_data + (tok0 + p * PT) * D;
+                        panel_sumsq_seg(panel, order, cur, end, ss.data() + p * PT, cur == 0);
+                        for (size_t t = 0; t < qt.n_tiles; ++t)
+                            run_panel_seg(panel, qt.qpack.data() + qt.pack_off[t], qt.M[t],
+                                          order, cur, end,
+                                          Pt[t].data() + p * qt.M[t] * PT, cur == 0);
+                    }
+                    l_cells += (uint64_t)(end - cur) * n_tok * m;
+                    cur = end;
+
+                    if (cur == D) break;   // final segment: no bound needed, finalize below
+
+                    // Document upper bound at this checkpoint.
+                    float beta = shrink + (1.0f - shrink) * ((float)(D - cur) / (float)D);
+                    for (size_t i = 0; i < m; ++i) {
+                        float s = 1.0f - Qcum[i * (D + 1) + cur];
+                        resq[i] = beta * std::sqrt(s > 0.0f ? s : 0.0f);
+                    }
+                    for (size_t p = 0; p < n_panels; ++p)
+                        panel_resd(ss.data() + p * PT, resd.data() + p * PT);
+
+                    float tau = std::max(tau_seed, shared_tau.load(std::memory_order_relaxed));
+                    float UB = 0.0f;
+                    for (size_t t = 0; t < qt.n_tiles; ++t) {
+                        size_t row_stride = qt.M[t] * PT;
+                        for (size_t i = 0; i < qt.m_real[t]; ++i)
+                            UB += doc_row_ubmax(Pt[t].data() + i * PT, resd.data(),
+                                                n_panels, row_stride,
+                                                resq[t * TILE_MAX + i]);
+                    }
+                    if (UB + UB_EPSILON < tau) { pruned = true; ++l_pruned; }
+                }
+
+                if (!pruned) {
+                    // Residual is zero at cur == D: exact score from partials.
+                    float score = 0.0f;
+                    for (size_t t = 0; t < qt.n_tiles; ++t) {
+                        size_t row_stride = qt.M[t] * PT;
+                        for (size_t i = 0; i < qt.m_real[t]; ++i)
+                            score += doc_row_ubmax(Pt[t].data() + i * PT, resd.data(),
+                                                   n_panels, row_stride, 0.0f);
+                    }
+                    local.offer(score, (uint32_t)d);
+                    atomic_max_tau(shared_tau, local.threshold());
+                }
+            }
+        }
+
+        cells.fetch_add(l_cells, std::memory_order_relaxed);
+        docs_pruned.fetch_add(l_pruned, std::memory_order_relaxed);
+
+        #pragma omp critical
+        for (size_t i = 0; i < K; ++i)
+            if (local.id[i] != 0xffffffffu) global.offer(local.score[i], local.id[i]);
+    }
+
+    emit_topk(global, K, topk_id, topk_score);
+    if (stats) { stats[0] = cells.load(); stats[1] = docs_pruned.load(); }
+    return stats ? stats[0] : 0;
 }
 
 }  // extern "C"

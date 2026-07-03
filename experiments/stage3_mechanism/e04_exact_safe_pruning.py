@@ -12,9 +12,13 @@ k-th score within the subset (eliminating threshold-quality variance as a
 confound).  Throughput mode is also run so that both work reduction (cells%)
 and wall-clock (ms/q) are measured at each size.
 
-Two brute-force baselines are run at each corpus size so the speedup ratio can
-be computed: brute_pdx (same columnar layout, no pruning) and brute_numpy
-(row-major NumPy/BLAS).
+Wall-clock instruments are the Stage 3b fused panel kernels
+(docs/stage3b_fused_panel_maxsim_kernel.md): the BOND arm runs
+fused_panel_maxsim_bond (all cores) and two dense baselines are run at each
+corpus size for the speedup ratio — dense_fused (fused panel brute, all
+cores; the decision-gate baseline) and dense_numpy (row-major NumPy/BLAS,
+all cores).  Algorithmic work (cells%) still comes from the wide-block
+accounting kernel.
 
 Datasets  : scifact, nfcorpus, arguana, scidocs
 Sizes     : 250, 500, 1000, 2000, full (dataset-dependent; capped at n_docs)
@@ -122,22 +126,34 @@ def run_dataset(dataset: str) -> None:
         rec_acc = runner.accounting_mode(cfg)
         t_acc = time.perf_counter() - t1
 
+        # Wall-clock BOND: Stage 3b fused panel kernel, all cores.
+        cfg_fused = RunConfig(
+            dataset=dataset,
+            method="fused_panel_maxsim_bond",
+            dimension_order=ORDER,
+            threshold_policy=POLICY,
+            k=K_TOP,
+            shrink=1.0,
+            candidate_budget=n_docs,
+        )
         t1 = time.perf_counter()
-        rec_thr = runner.throughput_mode(cfg, n_repeats=N_REPEATS)
+        rec_thr = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=0)
         t_thr = time.perf_counter() - t1
 
-        # Brute-force baselines at this corpus size.
+        # Dense baselines at this corpus size (all cores, like the BOND arm).
         cfg_brute = RunConfig(
             dataset=dataset,
-            method="wide_block_maxsim_bond",
+            method="fused_panel_maxsim_bond",
             dimension_order="natural",
             threshold_policy="none",
             k=K_TOP,
             shrink=1.0,
             candidate_budget=n_docs,
         )
-        rec_brute_pdx   = runner.brute_force_mode(cfg_brute, kind="pdx",   n_repeats=N_REPEATS)
-        rec_brute_numpy = runner.brute_force_mode(cfg_brute, kind="numpy",  n_repeats=N_REPEATS)
+        rec_brute_fused = runner.brute_force_mode(cfg_brute, kind="fused", n_repeats=N_REPEATS,
+                                                  n_threads=0)
+        rec_brute_numpy = runner.brute_force_mode(cfg_brute, kind="numpy", n_repeats=N_REPEATS,
+                                                  n_threads=0)
 
         arm = {
             "n_docs": n_docs,
@@ -147,10 +163,10 @@ def run_dataset(dataset: str) -> None:
             "pruned_docs_pct": rec_acc.pruned_docs_pct,
             "tokens_pruned_pct": rec_acc.tokens_pruned_pct,
             "ms_per_query_bond": rec_thr.ms_per_query,
-            "ms_per_query_brute_pdx": rec_brute_pdx.ms_per_query,
+            "ms_per_query_brute_fused": rec_brute_fused.ms_per_query,
             "ms_per_query_brute_numpy": rec_brute_numpy.ms_per_query,
-            "speedup_vs_pdx": rec_brute_pdx.ms_per_query / rec_thr.ms_per_query
-                              if rec_thr.ms_per_query > 0 else None,
+            "speedup_vs_fused": rec_brute_fused.ms_per_query / rec_thr.ms_per_query
+                                if rec_thr.ms_per_query > 0 else None,
             "speedup_vs_numpy": rec_brute_numpy.ms_per_query / rec_thr.ms_per_query
                                 if rec_thr.ms_per_query > 0 else None,
             "qps_bond": rec_thr.qps,
@@ -160,8 +176,8 @@ def run_dataset(dataset: str) -> None:
               f"recall={arm['recall_vs_exact_at_10']:.3f}  "
               f"cells={arm['cells_scanned_pct']:.2f}%  "
               f"bond={arm['ms_per_query_bond']:.3f}ms  "
-              f"pdx={arm['ms_per_query_brute_pdx']:.3f}ms  "
-              f"numpy={arm['ms_per_query_brute_numpy']:.3f}ms  "
+              f"dense_fused={arm['ms_per_query_brute_fused']:.3f}ms  "
+              f"dense_numpy={arm['ms_per_query_brute_numpy']:.3f}ms  "
               f"[acc={t_acc:.1f}s thr={t_thr:.1f}s]")
 
         if rec_acc.recall_vs_exact_at_10 < 1.0:
@@ -203,8 +219,8 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
     xs         = [a["n_docs"] for a in arms]
     cells      = [a["cells_scanned_pct"] for a in arms]
     ms_bond    = [a["ms_per_query_bond"] for a in arms]
-    ms_pdx     = [a["ms_per_query_brute_pdx"] for a in arms]
     ms_numpy   = [a["ms_per_query_brute_numpy"] for a in arms]
+    ms_fused   = [a["ms_per_query_brute_fused"] for a in arms]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
 
@@ -217,9 +233,9 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
     ax1.grid(color="#e9e8e2", linewidth=0.6)
     ax1.spines[["top", "right"]].set_visible(False)
 
-    ax2.plot(xs, ms_bond,  marker="o", color="#2a78d6", linewidth=2, label="BOND oracle")
-    ax2.plot(xs, ms_pdx,   marker="s", color="#888888", linewidth=2, label="PDX brute")
-    ax2.plot(xs, ms_numpy, marker="^", color="#bbbbbb", linewidth=2, label="NumPy brute")
+    ax2.plot(xs, ms_bond,  marker="o", color="#2a78d6", linewidth=2, label="BOND fused (all cores)")
+    ax2.plot(xs, ms_fused, marker="D", color="#5c4a9e", linewidth=2, label="dense fused (all cores)")
+    ax2.plot(xs, ms_numpy, marker="^", color="#888888", linewidth=2, label="dense NumPy (all cores)")
     ax2.set_xlabel("corpus size (docs)")
     ax2.set_ylabel("ms / query (best-of-5)")
     ax2.set_title("Wall-clock latency vs corpus size")

@@ -28,10 +28,10 @@ from bondmaxsim.kernels.per_document import load_per_document_oracle
 from bondmaxsim.kernels.wide_block import load_wide_block_kernel
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
-from bondmaxsim.testbed.fused_modes import run_fused_brute_mode
+from bondmaxsim.testbed.fused_modes import run_fused_bond_mode, run_fused_brute_mode
 from bondmaxsim.testbed.oracle_modes import run_accounting_mode, run_throughput_mode
 from bondmaxsim.testbed.packing_cache import PackingCache
-from bondmaxsim.testbed.wide_modes import run_wide_accounting_mode, run_wide_brute_mode, run_wide_throughput_mode
+from bondmaxsim.testbed.wide_modes import run_wide_accounting_mode, run_wide_throughput_mode
 
 __all__ = ["Runner", "RunConfig"]
 
@@ -135,7 +135,7 @@ class Runner:
     def brute_force_mode(
         self,
         config: RunConfig,
-        kind: str = "pdx",
+        kind: str = "fused",
         n_repeats: int = 5,
         n_threads: int = 1,
     ) -> ResultRecord:
@@ -143,34 +143,29 @@ class Runner:
 
         Parameters
         ----------
-        kind : "pdx"   — wide_block_maxsim_brute: same columnar group layout as
-                         the BOND kernels, natural dimension order, zero bound
-                         checks.  Isolates PDX-layout cache benefit.
+        kind : "fused" — fused_panel_maxsim_brute (Stage 3b): register-tiled
+                         panel-major dense scan with fused per-doc max;
+                         ``n_threads`` OpenMP threads over groups.  The
+                         decision-gate baseline.
                "numpy" — exact_maxsim_topk timed in a throughput loop: plain
                          row-major MatMul baseline via NumPy/BLAS.  BLAS thread
                          count pinned to ``n_threads`` via threadpoolctl
                          (<= 0 = leave OpenBLAS default, i.e. all cores).
-               "fused" — fused_panel_maxsim_brute (Stage 3b): register-tiled
-                         panel-major dense scan with fused per-doc max;
-                         ``n_threads`` OpenMP threads over groups.
-        n_threads : thread count for the "numpy" and "fused" kinds
-                    (ignored for "pdx", which is single-threaded).
+        n_threads : thread count (<= 0 = library default, i.e. all cores).
+
+        (The former "pdx" kind — the wide-block dense scan — was removed in
+        Stage 3b; the fused kernel supersedes it as the layout baseline.)
         """
-        if kind == "pdx":
-            return run_wide_brute_mode(
-                self._get_wide_lib(), self._packing, self._queries, config,
-                n_repeats=n_repeats,
-            )
-        elif kind == "numpy":
-            return self._numpy_brute_force(config, n_repeats, n_threads)
-        elif kind == "fused":
+        if kind == "fused":
             return run_fused_brute_mode(
                 self._get_fused_lib(), self._packing, self._queries, config,
                 n_threads=n_threads, n_repeats=n_repeats,
             )
+        elif kind == "numpy":
+            return self._numpy_brute_force(config, n_repeats, n_threads)
         else:
             raise ValueError(
-                f"Unknown brute_force kind: {kind!r}. Expected 'pdx', 'numpy' or 'fused'."
+                f"Unknown brute_force kind: {kind!r}. Expected 'fused' or 'numpy'."
             )
 
     def _numpy_brute_force(self, config: RunConfig, n_repeats: int,
@@ -276,17 +271,30 @@ class Runner:
         self,
         config: RunConfig,
         n_repeats: int = 5,
+        n_threads: int = 1,
     ) -> ResultRecord:
         """Run throughput-mode kernel: measure realistic wall-clock latency.
 
         Reports min-of-repeats ms/query and QPS.  cells_scanned_pct is not the
         true algorithmic work in this mode (see Stage 1 §6).
 
+        Dispatch: config.method == "fused_panel_maxsim_bond" runs the Stage 3b
+        fused BOND kernel (n_threads OpenMP threads; the wall-clock BOND
+        instrument); "wide_block_maxsim_bond" runs the legacy wide-block
+        throughput kernel; anything else runs the per-document oracle.
+
         Returns
         -------
         ResultRecord with ms_per_query, qps populated;
         cells_scanned_pct = None (not meaningful in throughput mode).
         """
+        if config.method == "fused_panel_maxsim_bond":
+            return run_fused_bond_mode(
+                self._get_fused_lib(), self._packing, self._queries, config,
+                n_threads=n_threads, n_repeats=n_repeats,
+                exact_ids_list=self._get_exact_ids(config.k),
+            )
+
         if config.method == "wide_block_maxsim_bond":
             return run_wide_throughput_mode(
                 self._get_wide_lib(), self._packing, self._queries, config,

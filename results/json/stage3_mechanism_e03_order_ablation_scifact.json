@@ -1,7 +1,8 @@
 {
   "experiment": "e03_order_ablation",
   "dataset": "scifact",
-  "method": "wide_block_maxsim_bond",
+  "method_accounting": "wide_block_maxsim_bond",
+  "method_wallclock": "fused_panel_maxsim_bond",
   "n_docs": 5183,
   "total_tokens": 1141434,
   "n_queries": 50,
@@ -15,11 +16,8 @@
     "pca"
   ],
   "baselines": [
-    "brute_pdx",
-    "brute_numpy",
-    "brute_numpy_1t",
-    "brute_fused_1t",
-    "brute_fused_mt"
+    "dense_fused",
+    "dense_numpy"
   ],
   "n_repeats_throughput": 5,
   "arms": [
@@ -31,8 +29,10 @@
       "cells_scanned_pct": 91.92280587401461,
       "pruned_docs_pct": 99.80513216284007,
       "tokens_pruned_pct": 63.837818042917945,
-      "ms_per_query": 383.6558720190078,
-      "qps": 2.6065025272191225
+      "pruned_docs_pct_fused": 0.005402276673741077,
+      "ms_per_query_1t": 80.97763906000182,
+      "ms_per_query_mt": 16.70659549999982,
+      "qps_mt": 59.85659974828568
     },
     {
       "arm_type": "bond",
@@ -42,8 +42,10 @@
       "cells_scanned_pct": 83.72345926264681,
       "pruned_docs_pct": 99.80513216284007,
       "tokens_pruned_pct": 34.66497581112881,
-      "ms_per_query": 356.59112945897505,
-      "qps": 2.8043322376448727
+      "pruned_docs_pct_fused": 1.982249662357708,
+      "ms_per_query_1t": 89.06791282002814,
+      "ms_per_query_mt": 17.102137899491936,
+      "qps_mt": 58.47222176998746
     },
     {
       "arm_type": "bond",
@@ -53,63 +55,36 @@
       "cells_scanned_pct": 91.53250472651068,
       "pruned_docs_pct": 99.80513216284007,
       "tokens_pruned_pct": 62.338383121582154,
-      "ms_per_query": 377.331107580103,
-      "qps": 2.6501923109737557
+      "pruned_docs_pct_fused": 0.0019293845263360988,
+      "ms_per_query_1t": 81.5731848590076,
+      "ms_per_query_mt": 16.430975019466132,
+      "qps_mt": 60.86066096596692
     },
     {
-      "arm_type": "brute",
-      "dimension_order": "brute_pdx",
+      "arm_type": "dense",
+      "dimension_order": "dense_fused",
       "threshold_policy": "none",
       "recall_vs_exact_at_10": 1.0,
       "cells_scanned_pct": null,
       "pruned_docs_pct": null,
       "tokens_pruned_pct": null,
-      "ms_per_query": 290.38305178051814,
-      "qps": 3.443727152354042
+      "pruned_docs_pct_fused": null,
+      "ms_per_query_1t": 54.93759119999595,
+      "ms_per_query_mt": 13.08176432037726,
+      "qps_mt": 76.44228832668355
     },
     {
-      "arm_type": "brute",
-      "dimension_order": "brute_numpy",
+      "arm_type": "dense",
+      "dimension_order": "dense_numpy",
       "threshold_policy": "none",
       "recall_vs_exact_at_10": 1.0,
       "cells_scanned_pct": null,
       "pruned_docs_pct": null,
       "tokens_pruned_pct": null,
-      "ms_per_query": 43.51051850011572,
-      "qps": 22.982948364482034
-    },
-    {
-      "arm_type": "brute",
-      "dimension_order": "brute_numpy_1t",
-      "threshold_policy": "none",
-      "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": null,
-      "pruned_docs_pct": null,
-      "tokens_pruned_pct": null,
-      "ms_per_query": 121.78570601972751,
-      "qps": 8.21114425233134
-    },
-    {
-      "arm_type": "brute",
-      "dimension_order": "brute_fused_1t",
-      "threshold_policy": "none",
-      "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": null,
-      "pruned_docs_pct": null,
-      "tokens_pruned_pct": null,
-      "ms_per_query": 54.527104079024866,
-      "qps": 18.339503204694736
-    },
-    {
-      "arm_type": "brute",
-      "dimension_order": "brute_fused_mt",
-      "threshold_policy": "none",
-      "recall_vs_exact_at_10": 1.0,
-      "cells_scanned_pct": null,
-      "pruned_docs_pct": null,
-      "tokens_pruned_pct": null,
-      "ms_per_query": 15.818551880074667,
-      "qps": 63.216911862812054
+      "pruned_docs_pct_fused": null,
+      "ms_per_query_1t": 121.53371591935866,
+      "ms_per_query_mt": 42.45765523985028,
+      "qps_mt": 23.552878611662265
     }
   ]
 }
