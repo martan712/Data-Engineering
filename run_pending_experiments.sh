@@ -25,14 +25,6 @@ echo "=== Gate tests (must be green before results count) ==="
 uv run pytest tests/test_fused_panel_gate.py tests/test_checkpoint_sim.py -q
 
 # ---------------------------------------------------------------------------
-# Stage 3: e07 cache/layout sensitivity (R4)
-# all 4 datasets, all 3 orders, oracle policy, all queries, 10 repeats
-# ---------------------------------------------------------------------------
-echo ""
-echo "=== Stage 3 e07: cache/layout sensitivity (all datasets) ==="
-uv run python -m experiments.stage3_mechanism.e07_cache_layout_sensitivity
-
-# ---------------------------------------------------------------------------
 # Stage 3: e08 checkpoint-set ablation (R3 — closes RQ3 with numbers)
 # all 4 datasets ("wall-clock-optimal C per dataset"); fused doc-level BOND,
 # 8 checkpoint sets x {natural, bond} orders, oracle policy; R2 simulator-

@@ -1,0 +1,79 @@
+{
+  "experiment": "e07_cache_layout_sensitivity",
+  "dataset": "nfcorpus",
+  "method": "fused_panel_maxsim_bond",
+  "n_docs": 3633,
+  "total_tokens": 838305,
+  "n_queries": 200,
+  "k": 10,
+  "policy": "oracle",
+  "shrink": 1.0,
+  "n_repeats": 10,
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "baselines": [
+    "dense_fused",
+    "dense_numpy"
+  ],
+  "arms": [
+    {
+      "dimension_order": "natural",
+      "ms_per_query_total": 11.00124180500643,
+      "ms_per_query_preprocess": 0.010546040002736845,
+      "ms_per_query_kernel": 10.990695765003693,
+      "reorder_fraction": 0.0009586226891165657,
+      "qps": 90.98605050866531,
+      "recall_vs_exact_at_10": 0.9990000000000001,
+      "kernel_penalty_vs_natural_pct": 0.0
+    },
+    {
+      "dimension_order": "bond",
+      "ms_per_query_total": 11.526208060004137,
+      "ms_per_query_preprocess": 0.027677104999384028,
+      "ms_per_query_kernel": 11.498530955004753,
+      "reorder_fraction": 0.0024012324656383214,
+      "qps": 86.96763124899434,
+      "recall_vs_exact_at_10": 0.9995,
+      "kernel_penalty_vs_natural_pct": 4.620591824751411
+    },
+    {
+      "dimension_order": "pca",
+      "ms_per_query_total": 10.725397894993876,
+      "ms_per_query_preprocess": 0.013799279995510005,
+      "ms_per_query_kernel": 10.711598614998366,
+      "reorder_fraction": 0.001286598420926731,
+      "qps": 93.35674682580071,
+      "recall_vs_exact_at_10": 0.9995,
+      "kernel_penalty_vs_natural_pct": -2.539394738720926
+    }
+  ],
+  "brute_arms": [
+    {
+      "dimension_order": "dense_fused",
+      "ms_per_query_total": 10.745096965001721,
+      "ms_per_query_preprocess": 0.0,
+      "ms_per_query_kernel": 10.745096965001721,
+      "reorder_fraction": 0.0,
+      "qps": 93.06570273466488,
+      "recall_vs_exact_at_10": 0.9995
+    },
+    {
+      "dimension_order": "dense_numpy",
+      "ms_per_query_total": 24.023636350002562,
+      "ms_per_query_preprocess": 0.0,
+      "ms_per_query_kernel": 24.023636350002562,
+      "reorder_fraction": 0.0,
+      "qps": 41.62567171059819,
+      "recall_vs_exact_at_10": 1.0
+    }
+  ],
+  "corpus_prep_s": {
+    "corpus_stats_s": 0.14225387400074396,
+    "panel_packing_s": 0.11905430900151259,
+    "pca_fit_s": 0.0011680860006890725,
+    "panel_packing_rot_s": 0.27904709600079514
+  }
+}
