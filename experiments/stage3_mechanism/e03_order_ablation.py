@@ -6,11 +6,15 @@ ms_per_query (Stage 3b fused panel BOND kernel, wall-clock), and confirm that
 shrink=1 recall is 1.0 for all orders (correctness regression, Stage 1 §8
 item 5).
 
-Instruments (docs/stage3b_fused_panel_maxsim_kernel.md §6):
+Instruments (docs/stage3b_fused_panel_maxsim_kernel.md §6) — THREE-ARM
+isolation on the identical microkernel, so any wall-clock difference is
+attributable to the pruning mechanism alone:
   - algorithmic work : wide-block accounting kernel (unchanged Stage 2
     instrument; live-set cells counter, token+doc pruning stats)
-  - wall-clock BOND  : fused_panel_maxsim_bond (register-tiled panel scan,
-    per-document bound checkpoints at dims 32/64), 1 thread and all cores
+  - BOND doc-level   : fused_panel_maxsim_bond (document bound checkpoints
+    at dims 32/64), 1 thread and all cores
+  - BOND token-level : fused_panel_maxsim_bond_token (same + Stage 1 §2.4
+    token domination test, lane masks, dead-panel skip)
   - dense baselines  : fused_panel_maxsim_brute (decision-gate baseline) and
     NumPy/BLAS row-major, each at 1 thread and all cores
 
@@ -77,6 +81,12 @@ ORDER_COLORS = {
     "dense_numpy": "#888888",
 }
 
+# (level, method) pairs for the two BOND pruning granularities.
+BOND_LEVELS = [
+    ("doc",   "fused_panel_maxsim_bond"),
+    ("token", "fused_panel_maxsim_bond_token"),
+]
+
 # Dense baselines: (kind, label) — each is run at 1 thread and all cores.
 DENSE_BASELINES = [
     ("fused", "dense_fused"),   # fused panel brute: decision-gate baseline
@@ -110,7 +120,8 @@ def run_dataset(dataset: str) -> None:
     runner = Runner(flat_tokens, doc_starts, queries)
     arms: list[dict] = []
 
-    # BOND arms: accounting (algorithmic work) + fused wall-clock per order.
+    # BOND arms: accounting (algorithmic work) once per order + fused
+    # wall-clock at both pruning levels (doc / token).
     for order in ORDER_NAMES:
         cfg_acc = RunConfig(
             dataset=dataset,
@@ -120,52 +131,56 @@ def run_dataset(dataset: str) -> None:
             k=K_TOP,
             shrink=1.0,
         )
-        cfg_fused = RunConfig(
-            dataset=dataset,
-            method="fused_panel_maxsim_bond",
-            dimension_order=order,
-            threshold_policy=POLICY,
-            k=K_TOP,
-            shrink=1.0,
-        )
-
         t1 = time.perf_counter()
         rec_acc = runner.accounting_mode(cfg_acc)
         t_acc = time.perf_counter() - t1
 
-        t1 = time.perf_counter()
-        rec_1t = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=1)
-        rec_mt = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=0)
-        t_thr = time.perf_counter() - t1
-
-        recall = min(rec_acc.recall_vs_exact_at_10,
-                     rec_1t.recall_vs_exact_at_10,
-                     rec_mt.recall_vs_exact_at_10)
-        arm = {
-            "arm_type": "bond",
-            "dimension_order": order,
-            "threshold_policy": POLICY,
-            "recall_vs_exact_at_10": recall,
-            "cells_scanned_pct": rec_acc.cells_scanned_pct,
-            "pruned_docs_pct": rec_acc.pruned_docs_pct,
-            "tokens_pruned_pct": rec_acc.tokens_pruned_pct,
-            "pruned_docs_pct_fused": rec_mt.pruned_docs_pct,
-            "ms_per_query_1t": rec_1t.ms_per_query,
-            "ms_per_query_mt": rec_mt.ms_per_query,
-            "qps_mt": rec_mt.qps,
-        }
-        arms.append(arm)
-        print(f"  bond[{order:<7}]  recall={recall:.3f}  "
-              f"cells={arm['cells_scanned_pct']:.2f}%  "
-              f"prune_docs={arm['pruned_docs_pct']:.2f}%  "
-              f"fused_prune_docs={arm['pruned_docs_pct_fused']:.2f}%  "
-              f"ms/q 1T={arm['ms_per_query_1t']:.3f}  MT={arm['ms_per_query_mt']:.3f}  "
-              f"[acc={t_acc:.1f}s thr={t_thr:.1f}s]")
-
-        if recall < 1.0:
-            raise RuntimeError(
-                f"Exact-agreement failed at shrink=1: order={order!r} recall={recall}"
+        for level, method in BOND_LEVELS:
+            cfg_fused = RunConfig(
+                dataset=dataset,
+                method=method,
+                dimension_order=order,
+                threshold_policy=POLICY,
+                k=K_TOP,
+                shrink=1.0,
             )
+            t1 = time.perf_counter()
+            rec_1t = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=1)
+            rec_mt = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=0)
+            t_thr = time.perf_counter() - t1
+
+            recall = min(rec_acc.recall_vs_exact_at_10,
+                         rec_1t.recall_vs_exact_at_10,
+                         rec_mt.recall_vs_exact_at_10)
+            arm = {
+                "arm_type": "bond",
+                "prune_level": level,
+                "dimension_order": order,
+                "threshold_policy": POLICY,
+                "recall_vs_exact_at_10": recall,
+                "cells_scanned_pct": rec_acc.cells_scanned_pct,
+                "pruned_docs_pct": rec_acc.pruned_docs_pct,
+                "tokens_pruned_pct": rec_acc.tokens_pruned_pct,
+                "pruned_docs_pct_fused": rec_mt.pruned_docs_pct,
+                "tokens_pruned_pct_fused": rec_mt.tokens_pruned_pct,
+                "ms_per_query_1t": rec_1t.ms_per_query,
+                "ms_per_query_mt": rec_mt.ms_per_query,
+                "qps_mt": rec_mt.qps,
+            }
+            arms.append(arm)
+            tok = (f"fused_tok_prune={arm['tokens_pruned_pct_fused']:.2f}%  "
+                   if arm["tokens_pruned_pct_fused"] is not None else "")
+            print(f"  bond_{level:<5}[{order:<7}]  recall={recall:.3f}  "
+                  f"cells={arm['cells_scanned_pct']:.2f}%  "
+                  f"fused_doc_prune={arm['pruned_docs_pct_fused']:.2f}%  {tok}"
+                  f"ms/q 1T={arm['ms_per_query_1t']:.3f}  MT={arm['ms_per_query_mt']:.3f}  "
+                  f"[acc={t_acc:.1f}s thr={t_thr:.1f}s]")
+
+            if recall < 1.0:
+                raise RuntimeError(
+                    f"Exact-agreement failed at shrink=1: level={level!r} "
+                    f"order={order!r} recall={recall}"
+                )
 
     # Dense baselines (no pruning), each at 1 thread and all cores.
     cfg_brute = RunConfig(
@@ -185,6 +200,7 @@ def run_dataset(dataset: str) -> None:
         elapsed = time.perf_counter() - t1
         arm = {
             "arm_type": "dense",
+            "prune_level": None,
             "dimension_order": label,
             "threshold_policy": "none",
             "recall_vs_exact_at_10": min(rec_1t.recall_vs_exact_at_10,
@@ -193,6 +209,7 @@ def run_dataset(dataset: str) -> None:
             "pruned_docs_pct": None,
             "tokens_pruned_pct": None,
             "pruned_docs_pct_fused": None,
+            "tokens_pruned_pct_fused": None,
             "ms_per_query_1t": rec_1t.ms_per_query,
             "ms_per_query_mt": rec_mt.ms_per_query,
             "qps_mt": rec_mt.qps,
@@ -209,7 +226,7 @@ def run_dataset(dataset: str) -> None:
         "experiment": "e03_order_ablation",
         "dataset": dataset,
         "method_accounting": "wide_block_maxsim_bond",
-        "method_wallclock": "fused_panel_maxsim_bond",
+        "methods_wallclock": [m for _, m in BOND_LEVELS],
         "n_docs": len(doc_starts),
         "total_tokens": flat_tokens.shape[0],
         "n_queries": len(queries),
@@ -238,17 +255,18 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
     dense_arms = [a for a in arms if a["arm_type"] == "dense"]
     all_arms   = bond_arms + dense_arms
 
-    labels = [a["dimension_order"] for a in all_arms]
-    colors = [ORDER_COLORS.get(l, "gray") for l in labels]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.2),
+                                   gridspec_kw={"width_ratios": [1, 2]})
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-
-    # Left: algorithmic work (accounting kernel; BOND arms only).
-    xb = np.arange(len(bond_arms))
-    cells = [a["cells_scanned_pct"] for a in bond_arms]
-    ax1.bar(xb, cells, color=colors[:len(bond_arms)], width=0.5)
+    # Left: algorithmic work (accounting kernel; one bar per ORDER — the
+    # accounting numbers are identical for both fused pruning levels).
+    acc_arms = [a for a in bond_arms if a["prune_level"] == "doc"]
+    xb = np.arange(len(acc_arms))
+    cells = [a["cells_scanned_pct"] for a in acc_arms]
+    acc_colors = [ORDER_COLORS.get(a["dimension_order"], "gray") for a in acc_arms]
+    ax1.bar(xb, cells, color=acc_colors, width=0.5)
     ax1.set_xticks(xb)
-    ax1.set_xticklabels([a["dimension_order"] for a in bond_arms], fontsize=9)
+    ax1.set_xticklabels([a["dimension_order"] for a in acc_arms], fontsize=9)
     ax1.set_ylabel("cells scanned %")
     ax1.set_title("Algorithmic work (accounting kernel)")
     ax1.set_ylim(0, 105)
@@ -257,7 +275,14 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
     for xi, v in zip(xb, cells):
         ax1.text(xi, v + 1, f"{v:.1f}", ha="center", fontsize=8)
 
-    # Right: wall-clock, paired 1T / all-cores bars per arm (fused kernels).
+    # Right: wall-clock, paired 1T / all-cores bars per arm.
+    def _label(a: dict) -> str:
+        if a["arm_type"] == "bond":
+            return f"{a['prune_level']}\n{a['dimension_order']}"
+        return a["dimension_order"].replace("_", "\n")
+
+    labels = [_label(a) for a in all_arms]
+    colors = [ORDER_COLORS.get(a["dimension_order"], "gray") for a in all_arms]
     x = np.arange(len(all_arms))
     w = 0.38
     ms_1t = [a["ms_per_query_1t"] for a in all_arms]
@@ -265,13 +290,10 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
     ax2.bar(x - w / 2, ms_1t, width=w, color=colors, alpha=0.45, label="1 thread")
     ax2.bar(x + w / 2, ms_mt, width=w, color=colors, label="all cores")
     ax2.set_xticks(x)
-    ax2.set_xticklabels(
-        [("BOND\n" + l) if a["arm_type"] == "bond" else l.replace("_", "\n")
-         for l, a in zip(labels, all_arms)],
-        fontsize=8,
-    )
+    ax2.set_xticklabels(labels, fontsize=8)
     ax2.set_ylabel("ms / query (best-of-5)")
-    ax2.set_title("Wall-clock latency (fused panel kernels + NumPy)")
+    ax2.set_title("Wall-clock latency — dense vs doc-prune vs token-prune "
+                  "(identical microkernel)")
     ax2.grid(axis="y", color="#e9e8e2", linewidth=0.6)
     ax2.spines[["top", "right"]].set_visible(False)
     ax2.legend(fontsize=8, frameon=False)

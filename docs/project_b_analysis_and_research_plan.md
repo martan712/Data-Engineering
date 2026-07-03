@@ -679,11 +679,22 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
 A negative RQ3 with a defensible baseline plus a quantified mechanism
 explanation (RQ1) and a mapped RQ4 frontier is a sound, publishable result.
 
-### Instruments (single mechanism, three measurement roles)
+### Instruments (shared bound math, two distinct ALGORITHMS)
 
-The bound math is ONE mechanism (Stage 1 §2, extended §10); the kernels are
-instruments measuring different quantities of it. Their roles, after the
-Stage 3b revision:
+The Cauchy-Schwarz bound math is shared (Stage 1 §2, extended §10), but the
+two pruning kernels are DIFFERENT ALGORITHMS, not one algorithm with two
+meters (Stage 3b §5.7 has the full table): the wide-block kernel is
+breadth-first (all group tokens advance through dimensions in lockstep) with
+token-level + document-level pruning at every fetch boundary — the faithful
+PDX-BOND extension; the fused BOND kernel is depth-first (document by
+document) with document-level pruning at sparse checkpoints — architecturally
+the "Option B" granularity Stage 1 demoted, deliberately readopted at
+wall-clock because e02/e03 showed token pruning fires as late as document
+pruning and its bookkeeping costs more than it saves, while depth-first
+scanning keeps checkpoint re-scans L2-resident and gives self_bound a
+continuously rising τ. Consequence for the paper: "wide token block"
+describes the ANALYSIS instrument only; the wall-clock artifact is
+doc-at-a-time. Roles after the Stage 3b revision:
 
 | instrument | role | status |
 |---|---|---|
@@ -696,13 +707,14 @@ Stage 3b revision:
 | fused panel BOND | wall-clock mechanism instrument (doc-granularity checkpoints) | active |
 | NumPy/BLAS dense (1T + all cores) | external reference baseline | active |
 
-Known instrument-alignment gap (to fix, R2 below): the accounting kernel
-measures the per-boundary token+document policy while the fused kernel
-implements sparse document-level checkpoints, so accounting `pruned_docs_pct`
-(99.8%) and fused `pruned_docs_pct` (<2%) answer different questions. Both
+Known instrument-alignment gap (to fix, R2 below): because the two kernels
+are different algorithms, the accounting kernel's numbers (per-boundary,
+token+document, breadth-first) describe the mechanism's upper envelope, NOT
+what the wall-clock algorithm can capture — accounting `pruned_docs_pct`
+(99.8%) vs fused `pruned_docs_pct` (<2%) answer different questions. Both
 are correct; e02's survival curves reconcile them. For gate-quality
-predictions we need accounting numbers computed under the FUSED kernel's own
-policy.
+predictions we need accounting numbers computed under the FUSED algorithm
+itself (doc-at-a-time, document-level, checkpoint set C).
 
 ### Done (condensed history)
 

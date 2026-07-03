@@ -137,12 +137,14 @@ ORDERS = ["natural", "bond", "pca"]
 POLICIES = ["self_bound", "oracle"]
 
 
+@pytest.mark.parametrize("level", ["doc", "token"])
 @pytest.mark.parametrize("order", ORDERS)
 @pytest.mark.parametrize("policy", POLICIES)
-def test_bond_exact_agreement_shrink1(order, policy):
-    """Stage 3b K4 blocking gate: the fused BOND kernel at shrink=1 must be
-    exact-safe for every dimension order and threshold policy (the Stage 2
-    gate re-run on the new kernel), single- and multi-threaded."""
+def test_bond_exact_agreement_shrink1(order, policy, level):
+    """Stage 3b K4 blocking gate: both fused BOND kernels (document-level and
+    token-level pruning) at shrink=1 must be exact-safe for every dimension
+    order and threshold policy (the Stage 2 gate re-run on the new kernels),
+    single- and multi-threaded."""
     from bondmaxsim.data.packing import build_qcum
     from bondmaxsim.testbed.packing_cache import PackingCache
     from bondmaxsim.testbed.config import RunConfig
@@ -165,12 +167,12 @@ def test_bond_exact_agreement_shrink1(order, policy):
             ids, scores, stats = run_fused_panel_bond(
                 LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
                 Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=10,
-                n_threads=n_threads,
+                n_threads=n_threads, level=level,
             )
             for i in range(10):
                 assert abs(scores[i] - ref_scores[ids[i]]) <= SCORE_ATOL
             assert (ref_scores[ids] >= kth - SCORE_ATOL).all(), (
-                f"order={order} policy={policy} nt={n_threads}: "
+                f"level={level} order={order} policy={policy} nt={n_threads}: "
                 f"top-k set mismatch (recall < 1 at shrink=1)"
             )
 
@@ -212,6 +214,19 @@ def test_bond_prunes_documents():
         Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=5, n_threads=1,
     )
     assert int(stats[1]) > 0, "oracle-seeded bond kernel pruned zero documents"
+
+    # The token-level kernel on the same corpus must prune tokens (stats[2])
+    # and remain exact (checked by the agreement gate above).
+    _, _, stats_tok = run_fused_panel_bond(
+        LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+        Q_eff, ord_, Qcum, shrink=1.0, tau_seed=tau, K=5, n_threads=1,
+        level="token",
+    )
+    assert int(stats_tok[2]) > 0, "token-level bond kernel pruned zero tokens"
+    assert int(stats_tok[0]) <= int(stats[0]), (
+        "token-level kernel should scan no more cells than doc-level "
+        "(dead panels are skipped)"
+    )
 
 
 def test_thread_invariance():

@@ -304,6 +304,107 @@ so exact-safety is unaffected. Thread count from `OMP_NUM_THREADS` so
 experiments can pin 1-thread and n-thread arms explicitly; every
 `ResultRecord` for wall-clock arms must now record the thread count.
 
+### 5.7 The fused BOND kernel is a DIFFERENT ALGORITHM, not a re-instrumented one
+
+Stated explicitly (added 2026-07-03, after review): the fused BOND kernel and
+the wide-block kernel share only the Stage 1 bound MATH. As algorithms they
+differ in every scheduling dimension, and the fused kernel is architecturally
+a return to the per-document granularity that Stage 1 §5 demoted as
+"Option B":
+
+| | wide-block kernel (Stage 2) | fused panel BOND (Stage 3b) |
+|---|---|---|
+| scan schedule | breadth-first: ALL ~4096 group tokens advance through each dim block in lockstep | depth-first: one DOCUMENT at a time, scanned to completion before the next |
+| pruning unit | individual tokens (domination test, §2.4) + documents | whole documents only |
+| bound cadence | every fetch boundary (8 per query at D=128) | sparse checkpoints ({32, 64}) |
+| live-set state | compacted positions array across the group | none |
+| τ dynamics (self_bound) | staged finalization: τ = -inf until the first group completes (the problem that made seeding first-class, Stage 1 §4.4) | continuous: τ rises after every finalized document |
+| fidelity to PDX-BOND | faithful (PDXearch pattern) | not PDX-BOND-like; closer to doc-at-a-time scanning with early termination |
+
+The switch was deliberate and is justified by evidence, not convenience:
+
+1. **Token pruning does not pay at wall-clock.** The old wide THROUGHPUT
+   kernel ran SLOWER than its own dense scan (356–384 vs 290 ms/q, e03 first
+   run) — the domination-test bookkeeping exceeded the ≤16% cells it saved.
+2. **Token pruning fires as late as document pruning.** e02 (oracle,
+   scifact): token survival at dim 64 is 98–100%, dropping only at 96+ —
+   the finer granularity buys nothing before the scan is mostly paid for.
+3. **Depth-first is cache-better under segmented scanning.** A document's
+   ~220-token working set stays L2-resident across the checkpoint segments;
+   the breadth-first group (2 MB) would re-stream from DRAM once per segment.
+4. **Depth-first fixes the mid-pass τ problem.** Continuous per-document
+   finalization gives self_bound a live threshold from document k+1 onward —
+   the staged-finalization weakness that originally motivated seeding.
+
+Consequences for the research narrative (recorded in the plan doc):
+
+- The contribution can no longer be described as "MaxSim extension of
+  PDX-BOND over a wide token block" *for the wall-clock artifact* — that
+  description now applies only to the ANALYSIS instrument (the accounting
+  kernel, which measures the mechanism's upper envelope with full token-level
+  per-boundary pruning).
+- Stage 3b's measurements partially supersede Stage 1 §5's architectural
+  argument: the PDX layout's benefit in the MaxSim regime comes from the
+  packed micro-panel structure (GEMM packing amortization, §3.1), NOT from
+  wide synchronized column scans. The wide block was the right instrument
+  for studying the mechanism and the wrong shape for executing it.
+- Exact-safety of the fused algorithm is covered by Stage 1 §10 (Lemma A:
+  document-level bound over all tokens is looser, hence safe; Lemma D:
+  continuous shared τ is safe).
+
+### 5.8 Token-level variant and the PDX-sigmod contrast (added 2026-07-03)
+
+Review demanded a comparison that changes exactly ONE thing at a time —
+"you are changing many different things which means the negative means
+absolutely nothing." The three-arm design answers it: the SAME microkernel,
+layout, checkpoints, threading, and τ machinery run in three configurations
+that differ only in the pruning mechanism:
+
+1. `fused_panel_maxsim_brute` — no pruning (dense).
+2. `fused_panel_maxsim_bond` — + document-level bound test.
+3. `fused_panel_maxsim_bond_token` — + the Stage 1 §2.4 token-level
+   domination test on top: per-panel 16-lane live masks (`__mmask16` matches
+   PT exactly), dominated lanes leave the L_i / UB / score maxima (bound
+   tightening), and a panel whose 16 lanes are all dead is skipped for its
+   remaining dimension segments (the compute saving — token pruning realizes
+   FMA savings at panel granularity because lanes are SIMD rows).
+
+Any wall-clock difference between the arms is attributable to the mechanism
+alone; any difference between arm 3 and PDX-sigmod's behavior needs an
+explanation in the MATH, not the engineering. That explanation is in the
+PDX-sigmod source (`extern/PDX-sigmod/include/pdx/pdxearch.hpp` @ `fdc62f2`):
+
+- **PDX-BOND's pruning predicate for L2 is one comparison with zero slack.**
+  `EvaluatePruningPredicate*` is literally
+  `pruning_distances[v] >= pruning_threshold`: the partial L2 distance
+  accumulates non-negative per-dimension terms, so it is itself a monotone
+  LOWER bound on the final distance. No residual term exists anywhere in
+  their code. A vector whose partial distance already exceeds the k-th best
+  is gone — exactly, cheaply, and often after very few dimensions (their
+  BOND dimension order maximizes early distance accumulation).
+- **MaxSim/inner-product has no such monotonicity.** A partial dot product
+  says nothing about the final score without the Cauchy-Schwarz envelope
+  `± resq_i·resd_j`, whose magnitude is `√((1-Σq²)(1-Σd²))` — for
+  unit-norm vectors with evenly spread energy this is ≈ 0.75 at a quarter of
+  the scan and ≈ 0.5 at half, while ColBERT score gaps between documents are
+  typically a few hundredths. e01's bound-slack trajectories measure exactly
+  this; e02's survival curves show the consequence (98–100% of documents and
+  98–100% of tokens still unprunable at dim 64 under an ORACLE threshold).
+- **On top of the slack, the MaxSim bound is expensive.** L2-BOND pays one
+  compare per vector per boundary; BOND-MaxSim pays O(live_tokens × m) for
+  L_i, the domination test, and UB per document per checkpoint.
+- **PDX-BOND also enjoys IVF ordering**: probing the most promising bucket
+  first makes the heap threshold near-final immediately. Our oracle policy
+  GRANTS the best possible threshold and pruning still cannot fire early —
+  demonstrating the limiter is the slack, not the threshold.
+
+So the falsifiable claim for the three-arm experiment: if BOND-MaxSim
+underperforms dense on the identical kernel while PDX-BOND thrives on L2,
+the cause is the residual slack of the inner-product bound (plus the m-fold
+bound-evaluation cost), and the arms + e01/e02 quantify it. If the token arm
+instead wins, the doc-level arm was leaving the mechanism's value on the
+table and the narrative changes. Either way the result is attributable.
+
 ## 6. Implementation And Integration Plan
 
 Work items, in order (each lands with tests green before the next):
@@ -337,34 +438,52 @@ Integration rules:
   work is layout- and codegen-independent); no re-runs needed there.
 - Stage 4/5 inherit the fused kernels as the production wall-clock path.
 
-### 6.1 K4 outcome (measured 2026-07-02, scifact, oracle policy, shrink = 1)
+### 6.1 Three-arm outcome (measured 2026-07-03, scifact, oracle policy, shrink = 1)
 
-All arms recall 1.000. Wall-clock (50 queries, best-of-5):
+All arms recall 1.000. Wall-clock (50 queries, best-of-5), identical
+microkernel across all fused arms (§5.8 isolation design):
 
-| arm | 1 thread | all cores |
-|---|---|---|
-| BOND fused (natural / bond / pca order) | 81.0 / 89.1 / 81.6 ms/q | 16.7 / 17.1 / 16.4 ms/q |
-| dense fused | 54.9 ms/q | 13.1 ms/q |
-| dense NumPy/BLAS | 121.5 ms/q | 42.5 ms/q |
+| arm | 1 thread | all cores | docs pruned | tokens pruned |
+|---|---|---|---|---|
+| dense fused (no pruning) | **54.6** | **13.9** | — | — |
+| BOND doc-level, natural / bond / pca | 82.3 / 90.6 / 80.8 | 16.5 / 16.9 / 17.3 | 0.0–2.0% | — |
+| BOND token-level, natural / bond / pca | 84.1 / 94.5 / 84.0 | 17.1 / 18.6 / 17.8 | 0.0–2.0% | **0.00%** |
+| dense NumPy/BLAS | 120.2 | 42.1 | — | — |
 
-The instruments now agree with each other and the mechanism question gets a
-clean answer on scifact: **exact-safe document-level pruning at the {32, 64}
-checkpoints fires almost never** (0.0–2.0% of documents, vs the accounting
-kernel's 99.8% "pruned before scan end") — the bounds are too loose mid-scan,
-exactly as e01's bound-slack trajectories and e02's survival curves showed:
-documents only become prunable late in the dimension scan, where most of
-their bytes are already read. The BOND arms therefore pay the segment
-spill/reload + bound-evaluation overhead (~1.3–1.6x over dense fused) and
-prune nothing back. Note the accounting kernel's 84–92% cells-scanned had
-already bounded the best case: even perfect pruning could save at most ~16%
-of dense work on scifact at shrink = 1.
+The isolation experiment gives the mechanism question a clean, attributable
+answer on scifact:
 
-Decision-gate implication: on scifact, no exact-safe arm beats the dense
-fused baseline; the exact-safe wall-clock win, if it exists, must come from
-datasets/orders with earlier bound collapse or from the approximate regime
-(shrink < 1, e05 — smaller residual scaling brings checkpoints forward).
-This is now a *defensible* negative signal because both sides run the same
-microkernel — the remaining e03 datasets and e05 decide the gate.
+1. **Token-level domination pruning fires on 0.00% of tokens** at the
+   {32, 64} checkpoints under the ORACLE threshold — the §2.4 test cannot
+   drop a single token that early. This is measured on the identical kernel
+   as the dense arm, so nothing but the mechanism explains it.
+2. Document-level pruning fires on 0.0–2.0% of documents (best case: bond
+   order).
+3. Both pruning arms pay ~50% overhead over dense at 1 thread (segment
+   spill/reload + bound evaluation); the token arm adds a further 2–4%
+   (mask bookkeeping) and buys nothing back.
+4. All of this is PREDICTED by the RQ1 instruments: e02's survival curves
+   show 98–100% of documents AND tokens unprunable at dim 64; the accounting
+   kernel's 84–92% cells bound the exact-safe ceiling at ≤16% even with
+   per-boundary checks.
+
+Why this differs from PDX-sigmod BOND, where the same idea works "very very
+well" (§5.8 has the source-level contrast): their L2 pruning predicate is
+`partial_distance >= threshold` — one comparison, zero slack, because
+partial L2 accumulates non-negative terms and is itself a monotone lower
+bound. MaxSim's inner product has no monotonicity; the Cauchy-Schwarz
+residual envelope (≈0.5 per query token at half-scan on unit vectors) dwarfs
+ColBERT's inter-document score gaps (a few hundredths) until ~75% of the
+dimensions are paid for, and evaluating the bound costs O(live_tokens × m)
+instead of one compare. The mechanism transfer fails in the MATH of the
+bound, not in the engineering — which is exactly what the three-arm design
+was built to distinguish.
+
+Decision-gate implication: on scifact, no exact-safe arm (either
+granularity) beats the dense fused baseline. The exact-safe win, if it
+exists anywhere, needs datasets/embeddings with earlier bound collapse or
+the approximate regime (shrink < 1, e05 — smaller residual scaling brings
+the collapse forward). Remaining e03 datasets + e05 decide the gate.
 
 Risks / open points:
 

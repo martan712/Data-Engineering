@@ -23,6 +23,11 @@ ABI:
       const uint32_t* order, const float* Qcum,   // [D], [m, D+1]
       float shrink, float tau_seed, size_t K, int n_threads,
       uint32_t* topk_id, float* topk_score, uint64_t* stats)  // stats: u64[2]
+
+  uint64 fused_panel_maxsim_bond_token(
+      ... identical signature to fused_panel_maxsim_bond ...)   // stats: u64[3]
+      — adds the Stage 1 §2.4 token-level domination test (lane masks,
+      dead-panel skip); the three-arm comparison instrument.
 """
 
 from __future__ import annotations
@@ -62,7 +67,7 @@ def load_fused_panel_kernel() -> ctypes.CDLL:
     ]
     lib.fused_panel_maxsim_brute.restype = ctypes.c_uint64
 
-    lib.fused_panel_maxsim_bond.argtypes = [
+    _bond_argtypes = [
         f32p,                       # panel_data
         u64p, csz,                  # group_offsets, n_groups
         u64p,                       # doc_offsets (padded)
@@ -72,7 +77,10 @@ def load_fused_panel_kernel() -> ctypes.CDLL:
         ctypes.c_float, ctypes.c_float, csz, ctypes.c_int,  # shrink, tau_seed, K, n_threads
         u32p, f32p, u64p,           # topk_id, topk_score, stats
     ]
-    lib.fused_panel_maxsim_bond.restype = ctypes.c_uint64
+    for fname in ("fused_panel_maxsim_bond", "fused_panel_maxsim_bond_token"):
+        fn = getattr(lib, fname)
+        fn.argtypes = _bond_argtypes
+        fn.restype  = ctypes.c_uint64
 
     return lib
 
@@ -143,9 +151,18 @@ def run_fused_panel_bond(
     tau_seed: float,
     K: int,
     n_threads: int = 1,
+    level: str = "doc",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Call fused_panel_maxsim_bond — fused MaxSim with document bound
+    """Call fused_panel_maxsim_bond (level="doc") or
+    fused_panel_maxsim_bond_token (level="token") — fused MaxSim with bound
     checkpoints at dims {32, 64} (Stage 3b §5.5).
+
+    level="doc"   : document-level pruning only.
+    level="token" : additionally applies the Stage 1 §2.4 token-level
+                    domination test at each checkpoint (lane masks; a panel
+                    whose 16 lanes all die is skipped for the remaining
+                    dimension segments).  Same kernel in every other respect —
+                    the three-arm comparison isolates the mechanism.
 
     Parameters
     ----------
@@ -164,9 +181,12 @@ def run_fused_panel_bond(
     -------
     ids    : uint32 [K]
     scores : float32 [K]
-    stats  : uint64 [2] — [cells_scanned (padded-token wall-clock convention),
-             docs_pruned]
+    stats  : uint64 [3] — [cells_scanned (padded-token wall-clock convention),
+             docs_pruned, tokens_pruned (0 for level="doc")]
     """
+    if level not in ("doc", "token"):
+        raise ValueError(f"Unknown bond level: {level!r}. Expected 'doc' or 'token'.")
+
     panel_data       = np.ascontiguousarray(panel_data,       dtype=np.float32)
     group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
     doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
@@ -181,9 +201,11 @@ def run_fused_panel_bond(
 
     ids    = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
-    stats  = np.zeros(2, dtype=np.uint64)
+    stats  = np.zeros(3, dtype=np.uint64)
 
-    lib.fused_panel_maxsim_bond(
+    fn = (lib.fused_panel_maxsim_bond if level == "doc"
+          else lib.fused_panel_maxsim_bond_token)
+    fn(
         fp(panel_data),
         lp(group_offsets), csz(n_groups),
         lp(doc_offsets),

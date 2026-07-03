@@ -129,11 +129,14 @@ def run_fused_bond_mode(
     n_threads: int = 1,
     n_repeats: int = 5,
     exact_ids_list: list[np.ndarray] | None = None,
+    level: str = "doc",
 ) -> ResultRecord:
-    """Fused panel BOND: dimension-incremental scan with per-document bound
-    checkpoints at dims {32, 64} on the register-tiled microkernel
-    (Stage 3b §5.5).  The wall-clock BOND instrument — compare against
-    run_fused_brute_mode at the SAME n_threads.
+    """Fused panel BOND: dimension-incremental scan with bound checkpoints at
+    dims {32, 64} on the register-tiled microkernel (Stage 3b §5.5).
+    level="doc" prunes documents only; level="token" additionally applies the
+    Stage 1 §2.4 token domination test (three-arm isolation instrument).
+    The wall-clock BOND instrument — compare against run_fused_brute_mode at
+    the SAME n_threads.
 
     Order/policy semantics match the wide-block kernel: dimension_order via
     dispatch_order_panel (natural/bond share the natural packing, pca uses
@@ -167,6 +170,7 @@ def run_fused_bond_mode(
                 lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
                 Q_eff, order, Qcum,
                 shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
+                level=level,
             )
 
     # Warmup.
@@ -189,23 +193,29 @@ def run_fused_bond_mode(
         ]
     recall_list: list[float] = []
     docs_pruned_total = 0
+    tokens_pruned_total = 0
+    total_tokens_padded = int(prepared[0][2][-1]) if prepared else 0  # doc_offsets[-1]
     for prep, exact_ids in zip(prepared, exact_ids_list):
         panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau = prep
         ids, _, stats = run_fused_panel_bond(
             lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
             Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
+            level=level,
         )
         recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
         docs_pruned_total += int(stats[1])
+        tokens_pruned_total += int(stats[2])
 
     pruned_docs_pct = 100.0 * docs_pruned_total / (n_docs * nq) if n_docs * nq else 0.0
+    tokens_pruned_pct = (100.0 * tokens_pruned_total / (total_tokens_padded * nq)
+                         if level == "token" and total_tokens_padded * nq else None)
 
     return ResultRecord(
         dataset               = config.dataset,
         num_docs              = n_docs,
         num_queries           = nq,
-        method                = "fused_panel_bond",
+        method                = f"fused_panel_bond_{level}",
         candidate_budget      = config.candidate_budget,
         dimension_order       = config.dimension_order,
         threshold_policy      = config.threshold_policy,
@@ -223,6 +233,7 @@ def run_fused_bond_mode(
         os                    = config.os,
         thread_count          = n_threads if n_threads > 0 else None,
         shrink                = config.shrink,
-        tokens_pruned_pct     = None,
-        notes                 = f"fused panel BOND (doc checkpoints 32/64), n_threads={n_threads}",
+        tokens_pruned_pct     = tokens_pruned_pct,
+        notes                 = (f"fused panel BOND level={level} (checkpoints 32/64), "
+                                 f"n_threads={n_threads}"),
     )
