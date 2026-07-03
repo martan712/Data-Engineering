@@ -2,7 +2,11 @@
 
 Single responsibility: compare the three threshold policies on cells_scanned_pct,
 pruned_docs_pct, tokens_pruned_pct, and recall_vs_exact@10, with fixed dimension
-order (natural) and shrink=1.0 (exact-safe arm).
+order (natural) and shrink=1.0 (exact-safe arm).  Policy choice is a mechanism
+question, so the comparison runs on the wide-block ACCOUNTING kernel; the
+winning policy (lowest cells%) then gets ONE fused doc-level wall-clock
+confirmation arm (1T + all cores) — R6: wall-clock confirmation needs one
+arm, not nine.
 
   self_bound — threshold derived from the document's own running BOND upper-bound;
                available without any prior information; tends to give a weak
@@ -58,6 +62,7 @@ ORDER     = "natural"
 K_TOP     = 10
 N_QUERIES = 50
 QUERY_SEED = 42
+N_REPEATS = 5   # wall-clock repeats (best-of), fused confirmation arm
 
 RESULTS_JSON = REPO_ROOT / "results" / "json"
 RESULTS_FIG  = REPO_ROOT / "results" / "figures" / "stage3_mechanism"
@@ -126,6 +131,44 @@ def run_dataset(dataset: str) -> None:
                 f"policy={policy!r} recall={rec.recall_vs_exact_at_10}"
             )
 
+    # Fused wall-clock confirmation arm for the winning policy only (R6).
+    winner = min(arms, key=lambda a: a["cells_scanned_pct"])["threshold_policy"]
+    cfg_fused = RunConfig(
+        dataset=dataset,
+        method="fused_panel_maxsim_bond",
+        dimension_order=ORDER,
+        threshold_policy=winner,
+        k=K_TOP,
+        shrink=1.0,
+    )
+    rec_1t = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=1)
+    rec_mt = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=0)
+    cfg_brute = RunConfig(dataset=dataset, method="fused_panel_maxsim_bond",
+                          dimension_order="natural", threshold_policy="none",
+                          k=K_TOP, shrink=1.0)
+    rec_dense = runner.brute_force_mode(cfg_brute, kind="fused",
+                                        n_repeats=N_REPEATS, n_threads=0)
+    fused_arm = {
+        "threshold_policy": winner,
+        "dimension_order": ORDER,
+        "recall_vs_exact_at_10": min(rec_1t.recall_vs_exact_at_10,
+                                     rec_mt.recall_vs_exact_at_10),
+        "ms_per_query_1t": rec_1t.ms_per_query,
+        "ms_per_query_mt": rec_mt.ms_per_query,
+        "pruned_docs_pct_fused": rec_mt.pruned_docs_pct,
+        "dense_fused_ms_per_query_mt": rec_dense.ms_per_query,
+    }
+    print(f"  fused[{winner}]  recall={fused_arm['recall_vs_exact_at_10']:.3f}  "
+          f"ms/q 1T={fused_arm['ms_per_query_1t']:.2f} "
+          f"MT={fused_arm['ms_per_query_mt']:.2f}  "
+          f"prune={fused_arm['pruned_docs_pct_fused']:.2f}%  "
+          f"(dense MT={fused_arm['dense_fused_ms_per_query_mt']:.2f})")
+    if fused_arm["recall_vs_exact_at_10"] < 1.0:
+        raise RuntimeError(
+            f"Exact-agreement failed at shrink=1 on the fused kernel: "
+            f"policy={winner!r} recall={fused_arm['recall_vs_exact_at_10']}"
+        )
+
     # Write JSON.
     RESULTS_JSON.mkdir(parents=True, exist_ok=True)
     json_path = (
@@ -143,7 +186,9 @@ def run_dataset(dataset: str) -> None:
         "shrink": 1.0,
         "order": ORDER,
         "policies": POLICIES,
+        "n_repeats_throughput": N_REPEATS,
         "arms": arms,
+        "fused_confirmation_arm": fused_arm,
     }
     json_path.write_text(json.dumps(payload, indent=2))
     print(f"  JSON: {json_path}")

@@ -13,12 +13,14 @@ confound).  Throughput mode is also run so that both work reduction (cells%)
 and wall-clock (ms/q) are measured at each size.
 
 Wall-clock instruments are the Stage 3b fused panel kernels
-(docs/stage3b_fused_panel_maxsim_kernel.md): the BOND arm runs
-fused_panel_maxsim_bond (all cores) and two dense baselines are run at each
-corpus size for the speedup ratio — dense_fused (fused panel brute, all
-cores; the decision-gate baseline) and dense_numpy (row-major NumPy/BLAS,
-all cores).  Algorithmic work (cells%) still comes from the wide-block
-accounting kernel.
+(docs/stage3b_fused_panel_maxsim_kernel.md, revised 2026-07-03): the BOND arm
+runs fused_panel_maxsim_bond at 1 thread AND all cores (post-revision the
+all-cores arm sits at the dense DRAM floor, so 1T is the sensitive lens for
+checkpoint overhead) and two dense baselines are run at each corpus size for
+the speedup ratio — dense_fused (fused panel brute; the decision-gate
+baseline, also 1T + all cores) and dense_numpy (row-major NumPy/BLAS, all
+cores).  The fused kernel's own docs-pruned rate is recorded alongside the
+wide-block accounting cells% (they answer different questions — plan R2).
 
 Datasets  : scifact, nfcorpus, arguana, scidocs
 Sizes     : 250, 500, 1000, 2000, full (dataset-dependent; capped at n_docs)
@@ -138,9 +140,10 @@ def run_dataset(dataset: str) -> None:
         )
         t1 = time.perf_counter()
         rec_thr = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=0)
+        rec_thr_1t = runner.throughput_mode(cfg_fused, n_repeats=N_REPEATS, n_threads=1)
         t_thr = time.perf_counter() - t1
 
-        # Dense baselines at this corpus size (all cores, like the BOND arm).
+        # Dense baselines at this corpus size.
         cfg_brute = RunConfig(
             dataset=dataset,
             method="fused_panel_maxsim_bond",
@@ -152,6 +155,8 @@ def run_dataset(dataset: str) -> None:
         )
         rec_brute_fused = runner.brute_force_mode(cfg_brute, kind="fused", n_repeats=N_REPEATS,
                                                   n_threads=0)
+        rec_brute_fused_1t = runner.brute_force_mode(cfg_brute, kind="fused", n_repeats=N_REPEATS,
+                                                     n_threads=1)
         rec_brute_numpy = runner.brute_force_mode(cfg_brute, kind="numpy", n_repeats=N_REPEATS,
                                                   n_threads=0)
 
@@ -162,8 +167,11 @@ def run_dataset(dataset: str) -> None:
             "cells_scanned_pct": rec_acc.cells_scanned_pct,
             "pruned_docs_pct": rec_acc.pruned_docs_pct,
             "tokens_pruned_pct": rec_acc.tokens_pruned_pct,
+            "pruned_docs_pct_fused": rec_thr.pruned_docs_pct,
             "ms_per_query_bond": rec_thr.ms_per_query,
+            "ms_per_query_bond_1t": rec_thr_1t.ms_per_query,
             "ms_per_query_brute_fused": rec_brute_fused.ms_per_query,
+            "ms_per_query_brute_fused_1t": rec_brute_fused_1t.ms_per_query,
             "ms_per_query_brute_numpy": rec_brute_numpy.ms_per_query,
             "speedup_vs_fused": rec_brute_fused.ms_per_query / rec_thr.ms_per_query
                                 if rec_thr.ms_per_query > 0 else None,
@@ -175,8 +183,10 @@ def run_dataset(dataset: str) -> None:
         print(f"  n_docs={n_docs:>5}  "
               f"recall={arm['recall_vs_exact_at_10']:.3f}  "
               f"cells={arm['cells_scanned_pct']:.2f}%  "
-              f"bond={arm['ms_per_query_bond']:.3f}ms  "
-              f"dense_fused={arm['ms_per_query_brute_fused']:.3f}ms  "
+              f"fused_prune={arm['pruned_docs_pct_fused']:.2f}%  "
+              f"bond={arm['ms_per_query_bond']:.3f}ms (1T={arm['ms_per_query_bond_1t']:.2f})  "
+              f"dense_fused={arm['ms_per_query_brute_fused']:.3f}ms "
+              f"(1T={arm['ms_per_query_brute_fused_1t']:.2f})  "
               f"dense_numpy={arm['ms_per_query_brute_numpy']:.3f}ms  "
               f"[acc={t_acc:.1f}s thr={t_thr:.1f}s]")
 
@@ -192,7 +202,8 @@ def run_dataset(dataset: str) -> None:
     payload = {
         "experiment": "e04_exact_safe_pruning",
         "dataset": dataset,
-        "method": "wide_block_maxsim_bond",
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond",
         "full_n_docs": full_n_docs,
         "n_queries": len(queries),
         "query_seed": QUERY_SEED,
@@ -245,7 +256,8 @@ def _save_figure(arms: list[dict], dataset: str, out_path: Path) -> None:
 
     fig.suptitle(
         f"e04 exact-safe sweep — {dataset}  "
-        f"(wide kernel, oracle policy, natural order, shrink=1, {N_QUERIES} queries)",
+        f"(accounting: wide kernel; wall-clock: fused kernels; "
+        f"oracle policy, natural order, shrink=1, {N_QUERIES} queries)",
         fontsize=10,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.92))

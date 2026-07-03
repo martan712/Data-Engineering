@@ -18,6 +18,9 @@ class RunConfig:
     k: int = 10
     shrink: float = 1.0
     """Recall knob: 1.0 = exact-safe (shrink=1), <1.0 = approximate."""
+    checkpoints: Optional[tuple[int, ...]] = None
+    """Fused-BOND bound-checkpoint dims (R3 e08 ablation); None = kernel
+    default {32, 64}.  Ignored by the wide-block and oracle kernels."""
     candidate_budget: Optional[int] = None
     thread_count: int = 1
     machine: str = field(default_factory=platform.node)
