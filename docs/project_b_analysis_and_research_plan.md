@@ -634,8 +634,15 @@ organized as a research argument.
 
 ## Status And Research Plan (Revised)
 
-Last updated 2026-07-03 (second pass: after the fused-kernel overhead
-revision — stage3b doc §6.1.1: fused sumsq, register-folded final segment,
+Last updated 2026-07-03 (third pass: e07 (scifact/nfcorpus/arguana), e08
+(all 4 datasets), and e09 (all 4 datasets) runs landed. Headline: e08 shows
+LATE checkpoints (C={96}/{112}) prune 88–98% of documents exact-safe and
+beat the fused dense baseline on 3 of 4 datasets — the RQ3 verdict is no
+longer uniformly negative; see RQ3 below. Also: tie-aware exact-agreement
+fix in the fused testbed path (a rank-10 score tie on nfcorpus tripped the
+shrink=1 gate; boundary ties are now accepted given oracle scores, as the
+wide-block path already did). Second pass: fused-kernel overhead revision —
+stage3b doc §6.1.1: fused sumsq, register-folded final segment,
 next-panel prefetch — plus the R2 checkpoint simulator, the R3 checkpoint
 parameterization + e08 driver, and the R5/R6 driver upgrades. First pass
 same day: fused panel kernels replaced the wall-clock instruments, Stage 1
@@ -656,7 +663,10 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   nfcorpus**: documents survive until late in the scan — under the oracle
   threshold on scifact, 98–100% of documents are still alive at dim 64 of
   128; total avoidable work (cells) is only 8–16% even with token-level
-  pruning and per-boundary checks.
+  pruning and per-boundary checks. e08 (2026-07-03) confirmed the flip
+  side: checkpoints placed AFTER the survival cliff (dims 96–112) do
+  prune 88–98% of documents — the cells ceiling stays modest, but the
+  wall-clock effect is larger than cells predict (R12b).
 - **RQ2 (engineering)**: what is the strongest honest dense baseline, and
   does the PDX layout matter in the MaxSim regime?
   → Stage 3b. **Answered**: MaxSim (m≈21) is GEMM-shaped, so the layout wins
@@ -665,16 +675,24 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   42.5 ms/q for 12-thread OpenBLAS — this is the decision-gate baseline.
 - **RQ3 (exact-safe gate)**: does `shrink = 1` BOND pruning beat the fused
   dense baseline in wall-clock?
-  → e03/e04/e08. **First data point (scifact): NO** — at feasible
-  checkpoints {32, 64} pruning fires on <2% of documents (consistent with
-  RQ1's survival curves). After the 2026-07-03 kernel revision (stage3b
-  §6.1.1) the checkpoint overhead is no longer the story: at all cores the
-  BOND arms sit AT the dense DRAM floor (13.6–16.3 vs 13.9 ms/q) and at 1T
-  the overhead is 15–49% (was 54–78%) — yet BOND still does not win, because
-  pruning fires on ~0–2% of documents. The verdict is now cleanly
-  attributable to the bound math, not engineering. RQ1 bounds the ceiling at
-  ≤16% even with perfect late checkpoints. The remaining datasets (R4) + the
-  checkpoint ablation (e08, instruments ready) close this gate.
+  → e03/e04/e08. **Split verdict (e08, all 4 datasets, 2026-07-03): the
+  checkpoint SET decides.** At the default early checkpoints {32, 64}
+  pruning fires on <2% of documents (consistent with RQ1's survival curves)
+  and BOND never beats dense — the scifact e03 finding generalizes. But at
+  LATE checkpoints (C={96}/{112}/supersets) the same exact-safe kernel
+  prunes 88–98% of documents (recall 1.0 on all 16 arms × 4 datasets) and
+  BEATS the all-cores dense baseline on arguana (29.1 vs 36.1 ms/q, −19%),
+  scidocs (56.8 vs 61.9, −8%), nfcorpus (9.9 vs 10.2, −3%), and ties
+  scifact (15.9 vs 15.8); at 1T arguana saves 29% (126.6 vs 179.6 ms/q).
+  Natural order wins everywhere — bond order prunes slightly more but its
+  permuted access costs more than the extra pruning saves. Two open
+  mechanism questions: (a) wall-clock savings EXCEED the simulator's
+  cells-saved prediction (arguana 1T −29% wall-clock vs −12% cells) — the
+  pruned final segment is disproportionately expensive (epilogue max-fold +
+  top-k?); (b) e09 compared bounds only at {32, 64} where nothing prunes —
+  the tight-vs-cheap question must be re-asked at the winning late
+  checkpoints (see R12). G1 now has a positive signal on ≥2 datasets;
+  e03/e04 on the remaining datasets (R4) complete the record.
 - **RQ4 (approximate frontier)**: does `shrink < 1` buy wall-clock at
   acceptable recall? Smaller residual scaling collapses the bounds earlier,
   which is the most plausible positive-result region.
@@ -712,7 +730,7 @@ doc-at-a-time. Roles after the Stage 3b revision:
 | wide-block dense scan ("brute_pdx") | — | **removed** (superseded) |
 | fused panel BRUTE (`cpp/fused_panel_maxsim/`) | dense wall-clock baseline (decision gate) | active |
 | fused panel BOND (doc + token levels) | wall-clock mechanism instrument; checkpoint set C parameterized (R3); revised 2026-07-03 for overhead (§6.1.1) | active |
-| fused panel BOND cheap bound (`_bond_cheap`) | doc-level arm with the query-only H_q-analog bound (BOND SIGMOD-2002 lesson; `docs/bond2002_bound_cost_analysis.md`) — bookkeeping-vs-tightness ablation | active (R11/e09, run pending) |
+| fused panel BOND cheap bound (`_bond_cheap`) | doc-level arm with the query-only H_q-analog bound (BOND SIGMOD-2002 lesson; `docs/bond2002_bound_cost_analysis.md`) — bookkeeping-vs-tightness ablation | active (R11/e09 run 2026-07-03; re-test at late checkpoints = R12) |
 | NumPy checkpoint simulator (`oracle/checkpoint_sim.py`) | instrument-aligned accounting: docs pruned + cells% under the FUSED doc-checkpoint policy at fixed tau — PREDICTS fused wall-clock savings | active (R2, validated vs kernel stats in `tests/test_checkpoint_sim.py`) |
 | NumPy/BLAS dense (1T + all cores) | external reference baseline | active |
 
@@ -779,6 +797,32 @@ used by e08.
       fused confirmation arm for the winning policy; e04 gained the 1T lens +
       fused prune stats; e07's prep/kernel decomposition fixed (Runner times
       kernel-only; total = kernel + prep).
+- [x] e07 run (2026-07-03) on scifact/nfcorpus/arguana (scidocs still
+      pending, see R4): per-query reorder cost is negligible
+      (reorder_fraction ≈ 0.1% of total; prep is µs-scale vs ms-scale
+      kernels); one-time corpus prep is sub-second on all three (packing
+      0.12–0.25 s, PCA fit ~1 ms, rotated packing 0.28–0.51 s). The order
+      penalty lives IN the kernel: bond order runs 5–25% slower than natural
+      at equal (non-)pruning — the permuted-access cost from stage3b §6.1.1.
+- [x] e08 run (2026-07-03) on all 4 datasets, 16 arms each, recall 1.0
+      everywhere. Headline: LATE checkpoints win — C={112} (or supersets)
+      prunes 88–98% of docs and beats the all-cores dense baseline on
+      arguana/scidocs/nfcorpus, ties scifact; the default {32,64} prunes
+      <2% everywhere. Details in RQ3 above; follow-ups in R12.
+- [x] e09 run (2026-07-03) on all 4 datasets, recall 1.0 everywhere (after
+      the tie-aware fix below). At C={32,64} NEITHER bound prunes
+      meaningfully (cheap 0.00% everywhere; tight ≤5.3%, bond order only)
+      and both lose to dense — the bond2002 doc's third outcome
+      ("completeness argument") at those checkpoints. Cheap is marginally
+      faster where nothing prunes (its bookkeeping is cheaper); tight wins
+      only where it prunes (nfcorpus bond order). Decision deferred to R12:
+      the comparison that matters is at e08's winning late checkpoints.
+- [x] Tie-aware exact-agreement fix (2026-07-03): nfcorpus query 181 has an
+      EXACT score tie (7.0799808556, identical in float64) at rank 10; the
+      fused kernel picked the other tied doc and tripped the shrink=1 gate
+      (recall 0.9995). `run_fused_bond_mode`/`run_fused_brute_mode` now pass
+      oracle scores to `exact_agreement` (boundary ties accepted), as the
+      wide-block accounting path already did. 61 gate tests green.
 
 ### Required next (R-items, in order)
 
@@ -791,22 +835,24 @@ used by e08.
       unpadded cells conventions), validated against the fused kernel's
       stats[1] across three checkpoint sets in `tests/test_checkpoint_sim.py`.
       self_bound (order-dependent rising τ) deliberately out of scope.
-- [ ] **R3 — e08 checkpoint ablation**: instruments DONE 2026-07-03 (kernel
-      checkpoint-set ABI parameter + exactness gate + e08 driver sweeping 8
-      sets ⊆ {32, 48, 64, 96, 112} × {natural, bond} with simulator-predicted
-      cells% alongside measured wall-clock). **Run pending**
-      (`run_pending_experiments.sh`). Expected on scifact: even optimal C
-      saves ≤16% (RQ1 ceiling) — this closes RQ3 with numbers instead of a
-      guess.
-- [ ] **R4 — e03/e04/e07 on remaining datasets** (nfcorpus, arguana,
-      scidocs; e03 scifact already refreshed on the revised kernel) with the
-      upgraded drivers; then record the RQ3 gate verdict in this document.
+- [x] **R3 — e08 checkpoint ablation**: DONE 2026-07-03 (all 4 datasets, 8
+      sets ⊆ {32, 48, 64, 96, 112} × {natural, bond}, recall 1.0 on every
+      arm). The expectation was WRONG in an informative way: the "≤16%
+      ceiling" was a scifact cells number, and scifact indeed only ties
+      dense — but on arguana/scidocs/nfcorpus late checkpoints
+      (C={96}/{112}) prune 88–98% of docs and beat dense (arguana −19% MT /
+      −29% 1T). RQ3 verdict recorded above; follow-ups split into R12.
+- [ ] **R4 — e03/e04 on remaining datasets + e07 on scidocs** (e03 scifact
+      already refreshed on the revised kernel; e07 ran 2026-07-03 on
+      scifact/nfcorpus/arguana — scidocs was dropped from that run and is
+      still owed); then the RQ3 record is complete across datasets.
       **Run pending.**
 - [ ] **R5 — e05 approximate frontier on the fused kernel**: driver DONE
       2026-07-03 (fused doc-level all-cores arm per order × shrink, dense
       baseline reference, wall-clock frontier panel in the figure; accounting
       frontier kept). **Run pending — this is the RQ4 / gate-G2 decision
-      experiment and the main open question.**
+      experiment.** After e08, run it at the winning late checkpoint set
+      (R12c), not only the default {32,64}.
 - [ ] **R6 — e06 threshold policies**: driver DONE 2026-07-03 (accounting
       comparison kept; one fused wall-clock confirmation arm for the
       cells%-winning policy). **Run pending.**
@@ -826,19 +872,27 @@ used by e08.
       GEMM-shaped; vertical layout wins via packing amortization + epilogue
       fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
       independent of the RQ3 verdict.
-- [ ] **R11 — e09 bound-tightness ablation**: instruments DONE 2026-07-03
-      (`fused_panel_maxsim_bond_cheap` — the BOND-2002 H_q-analog query-only
-      bound `UB = Σ_i max_j P_ij + Σ_i resq_i` on the identical templated
-      doc-level body; gates green incl. the `cells_cheap ≥ cells_tight`
-      invariant; e09 driver sweeping bound × {natural, bond, pca}, oracle
-      policy, dense baseline). **Run pending**
-      (`run_pending_experiments.sh`). Rationale, 2002-paper reading, and
-      decision criteria: `docs/bond2002_bound_cost_analysis.md` — the 2002
-      paper found tight per-vector bounds lose to cheap query-only bounds at
-      wall-clock; our tight Cauchy-Schwarz arm is the analog of the bound
-      family they rejected, so e09 tests whether e07's checkpoint overhead
-      is E_v's price or MaxSim's price. If cheap wins: adopt as doc-level
-      default and rerun e05/e08 on it.
+- [x] **R11 — e09 bound-tightness ablation**: DONE 2026-07-03 (all 4
+      datasets, tight vs cheap × {natural, bond, pca}, oracle policy,
+      recall 1.0 everywhere). Outcome at the default C={32,64}: the third
+      bullet of `docs/bond2002_bound_cost_analysis.md` §6 — BOTH bounds
+      lose to dense because neither prunes there (cheap 0.00% everywhere,
+      tight ≤5.3% under bond order only). Cheap is marginally faster when
+      nothing prunes; tight wins only where its pruning fires. So e07's
+      checkpoint overhead is mostly MaxSim's price, not E_v's — but the
+      adopt-a-default decision is deferred to R12, because e08 moved the
+      interesting regime to late checkpoints that e09 did not test.
+- [ ] **R12 — late-checkpoint follow-ups (NEW, from the e08 finding)**:
+      (a) rerun the e09 tight-vs-cheap comparison at the e08-winning sets
+      (C={112}, {64,112}, {32,64,96,112}) — that is where pruning fires, so
+      that is where the bound choice actually matters; adopt the winner as
+      the doc-level default per the bond2002 §6 criteria. (b) Explain why
+      wall-clock savings exceed the simulator's cells-saved prediction
+      (arguana 1T: −29% wall-clock vs −12% padded cells at C={112}) — the
+      pruned final segment is disproportionately expensive; candidates: the
+      register-folded max/epilogue cost, top-k insertion, last-panel memory
+      traffic. (c) Fold the winning C into e05 (R5) so the RQ4 frontier
+      starts from the strongest exact-safe operating point.
 - [x] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details —
       DONE 2026-07-03: A. P. de Vries, N. Mamoulis, N. Nes, M. Kersten,
       "Efficient k-NN Search on Vertically Decomposed Data", ACM SIGMOD
@@ -860,10 +914,14 @@ used by e08.
 
 - **G1 (exact-safe, RQ3)**: an arm with recall 1.0 beating the fused dense
   all-cores baseline by a repeatable margin on ≥2 datasets. Current
-  evidence: negative on scifact; ceiling analysis says ≤16% is available.
-  If G1 fails everywhere: report the negative result WITH the RQ1
-  explanation and the RQ2 baseline contribution — do not soften the
-  baseline to manufacture a win.
+  evidence (e08, 2026-07-03): MET at late checkpoints on arguana (−19%)
+  and scidocs (−8%), with nfcorpus marginal (−3%) and scifact a tie —
+  provided the margins repeat (single-machine best-of-N so far; R12b's
+  mechanism explanation should accompany the claim). At the default
+  {32,64} checkpoints G1 remains negative everywhere. If the win does not
+  survive scrutiny: report the negative result WITH the RQ1 explanation
+  and the RQ2 baseline contribution — do not soften the baseline to
+  manufacture a win.
 - **G2 (approximate, RQ4)**: a `shrink < 1` frontier point dominating the
   dense baseline (lower latency, recall ≥ 0.99) or a clearly better
   latency-recall curve than dimension-truncation at equal recall. Open.

@@ -24,9 +24,12 @@ See **`docs/project_structure.md`** for the canonical map and conventions. In sh
 
 ## Status
 
-Stages 0 (references) and 1 (BOND-MaxSim formalization + exact-safe proof) are
-complete in `docs/`. Stage 2 (mechanism testbed) is under construction. See the
-status table in `docs/project_structure.md`.
+Stages 0 (references), 1 (BOND-MaxSim formalization + exact-safe proof), 2
+(mechanism testbed), and 3b (fused panel kernels) are complete; Stage 3
+mechanism experiments are in progress (e01–e03 and e07–e09 run; headline so
+far: exact-safe BOND with late checkpoints beats the fused dense baseline on
+3 of 4 small corpora). See the status table in `docs/project_structure.md`
+and the plan in `docs/project_b_analysis_and_research_plan.md`.
 
 ## Getting Started
 

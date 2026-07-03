@@ -159,10 +159,10 @@ run as a package measurement, not a foregone conclusion.
   at shrink = 1 across orders × policies × threads for the cheap arm;
   cheap-arm pruning > 0 on the energy-concentrated fixture; the invariant
   `cells_cheap ≥ cells_tight` under fixed oracle τ.
-- **e09** (`e09_bound_tightness_ablation.py`, in
-  `run_pending_experiments.sh`, NOT yet run): tight vs cheap × {natural,
-  bond, pca}, oracle policy, shrink = 1, all queries, best-of-10, all cores,
-  dense fused baseline. Reports ms/query, docs pruned %, recall gate at 1.0.
+- **e09** (`e09_bound_tightness_ablation.py`, run 2026-07-03 on all four
+  datasets): tight vs cheap × {natural, bond, pca}, oracle policy,
+  shrink = 1, all queries, best-of-10, all cores, dense fused baseline.
+  Reports ms/query, docs pruned %, recall gate at 1.0 (tie-aware).
 
 ## 6. Decision criteria and follow-ups
 
@@ -178,6 +178,21 @@ run as a package measurement, not a foregone conclusion.
   result gains a completeness argument: neither the cheap nor the tight end
   of the bound-cost spectrum rescues exact-safe BOND-MaxSim, with e01/e02
   slack instruments explaining why.
+
+**Verdict (e09 run 2026-07-03, all four datasets, recall 1.0 everywhere)**:
+at the default checkpoints C = {32, 64} the THIRD outcome holds — both
+bounds lose to the dense baseline because neither prunes there: the cheap
+bound prunes 0.00% of documents on every dataset × order; the tight bound
+prunes at most 5.3% (scidocs, bond order; 4.6% nfcorpus, 2.6% arguana,
+1.6% scifact — bond order only). Where nothing prunes, cheap is marginally
+faster (nfcorpus natural 9.0 vs 10.2 ms/q — the bookkeeping gap this doc
+predicted); where tight's pruning fires it wins narrowly (nfcorpus bond
+9.6 vs 10.5). So at early checkpoints the overhead is MaxSim's price, not
+E_v's. HOWEVER, e08 (same day) showed late checkpoints (C = {96}/{112})
+prune 88–98% of documents and beat dense on 3 of 4 datasets — the regime
+where the bound choice actually matters was not covered by e09's
+checkpoint set. The adopt-a-default decision is therefore deferred to the
+plan doc's R12a: rerun this comparison at the e08-winning checkpoint sets.
 
 Explicitly NOT pursued, with reasons: a token-only kernel (the domination
 test needs the same shared state plus lane masks and an m-per-lane test —
