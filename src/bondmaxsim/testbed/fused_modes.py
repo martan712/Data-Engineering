@@ -84,15 +84,20 @@ def run_fused_brute_mode(
     ms_per_query = best_s / nq * 1e3
     qps          = nq / best_s if best_s > 0.0 else float("inf")
 
-    # Recall check on one pass (dense scan = exact; recall must be 1.0).
+    # Recall check on one pass (dense scan = exact; recall must be 1.0 up to
+    # rank-K boundary ties, which exact_agreement accepts given the scores).
     recall_list: list[float] = []
     for Q in Qs:
-        exact_ids, _ = exact_maxsim_topk(Q, packing.flat_tokens, packing.doc_starts, k=K)
+        exact_ids, exact_scores = exact_maxsim_topk(
+            Q, packing.flat_tokens, packing.doc_starts, k=K
+        )
         ids, _ = run_fused_panel_brute(
             lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
             Q, K, n_threads=n_threads,
         )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        recall_list.append(
+            exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
+        )
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -129,6 +134,7 @@ def run_fused_bond_mode(
     n_threads: int = 1,
     n_repeats: int = 5,
     exact_ids_list: list[np.ndarray] | None = None,
+    exact_scores_list: list[np.ndarray] | None = None,
     level: str = "doc",
     bound: str = "tight",
 ) -> ResultRecord:
@@ -190,17 +196,23 @@ def run_fused_bond_mode(
     ms_per_query = best_s / nq * 1e3
     qps          = nq / best_s if best_s > 0.0 else float("inf")
 
-    # Recall + pruning stats on one pass.
+    # Recall + pruning stats on one pass.  Rank-K boundary ties are accepted
+    # via exact_scores (see exact_agreement) — the kernel's tie-break choice
+    # is equally valid at shrink=1.
     if exact_ids_list is None:
-        exact_ids_list = [
-            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+        exact_pairs = [
+            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)
             for q in queries
         ]
+        exact_ids_list = [ids for ids, _ in exact_pairs]
+        exact_scores_list = [scores for _, scores in exact_pairs]
+    if exact_scores_list is None:
+        exact_scores_list = [None] * len(queries)
     recall_list: list[float] = []
     docs_pruned_total = 0
     tokens_pruned_total = 0
     total_tokens_padded = int(prepared[0][2][-1]) if prepared else 0  # doc_offsets[-1]
-    for prep, exact_ids in zip(prepared, exact_ids_list):
+    for prep, exact_ids, exact_scores in zip(prepared, exact_ids_list, exact_scores_list):
         panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau = prep
         ids, _, stats = run_fused_panel_bond(
             lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
@@ -208,7 +220,9 @@ def run_fused_bond_mode(
             shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
             level=level, checkpoints=cps, bound=bound,
         )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        recall_list.append(
+            exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
+        )
         docs_pruned_total += int(stats[1])
         tokens_pruned_total += int(stats[2])
 

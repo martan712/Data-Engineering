@@ -301,6 +301,7 @@ class Runner:
                 self._get_fused_lib(), self._packing, self._queries, config,
                 n_threads=n_threads, n_repeats=n_repeats,
                 exact_ids_list=self._get_exact_ids(config.k),
+                exact_scores_list=self._get_exact_scores(config.k),
                 level=level, bound=bound,
             )
 
