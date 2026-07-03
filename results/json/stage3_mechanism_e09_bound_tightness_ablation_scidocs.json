@@ -1,0 +1,78 @@
+{
+  "experiment": "e09_bound_tightness_ablation",
+  "dataset": "scidocs",
+  "methods": {
+    "tight": "fused_panel_maxsim_bond",
+    "cheap": "fused_panel_maxsim_bond_cheap"
+  },
+  "n_docs": 25657,
+  "total_tokens": 4531496,
+  "n_queries": 200,
+  "k": 10,
+  "policy": "oracle",
+  "shrink": 1.0,
+  "n_repeats": 10,
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "arms": [
+    {
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 62.30366542000411,
+      "qps": 16.05042003963583,
+      "pruned_docs_pct": 0.0019487859063803251,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 61.825923759988655,
+      "qps": 16.174444944519557,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 69.05316307000248,
+      "qps": 14.481595853708429,
+      "pruned_docs_pct": 5.295630821997896,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 68.53498252499776,
+      "qps": 14.591088567583066,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 62.33311853999112,
+      "qps": 16.042836030390955,
+      "pruned_docs_pct": 0.0014615894297852438,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 61.68744411001171,
+      "qps": 16.210754302230892,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    }
+  ],
+  "dense_arm": {
+    "bound": "none",
+    "dimension_order": "dense_fused",
+    "ms_per_query": 60.16719868001019,
+    "qps": 16.620351652373632,
+    "pruned_docs_pct": 0.0,
+    "recall_vs_exact_at_10": 1.0
+  }
+}
