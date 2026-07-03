@@ -632,129 +632,165 @@ organized as a research argument.
 - CoRECT, PDX, BOND, ADSampling, ColBERT MaxSim, PLAID, FAISS-IVF, and custom
   kernels all appear in the final methodology.
 
-## Status And Checklist
+## Status And Research Plan (Revised)
 
-Last updated 2026-07-02. This section is the working to-do list for future
+Last updated 2026-07-03 (full revision after Stage 3b: the fused panel
+kernels replaced the wall-clock instruments, the Stage 1 proof was extended
+to them, and the exact-safe decision gate got its first — negative — data
+point on scifact). This section is the working plan for future
 sessions/agents. Keep it and the status table in `docs/project_structure.md`
-in sync when a stage advances. Conventions (uv toolchain, thin drivers, shared
-schema, exact/approx separation) are in `docs/project_structure.md` — read it
-before adding files.
+in sync. Conventions (uv toolchain, thin drivers, shared schema,
+exact/approx separation) are in `docs/project_structure.md`.
 
-### Done
+### Research question and decomposition
 
-- [x] Repository restructured as a self-contained research branch
-      (`final-research-implementation`): `docs/`, `src/bondmaxsim/`, `cpp/`,
-      `experiments/`, `results/`, `archive/`, pinned submodules in `extern/`
-      (PDX @ `93531b9`, PDX-sigmod @ `fdc62f2`, CoRECT @ `fedf8bb2`).
-- [x] Toolchain standardized on uv (`./setup.sh`, `uv run pytest`); packaging
-      via `pyproject.toml`, NumPy-only core with `[retrieval]`/`[faiss]`/`[dev]`
-      extras.
-- [x] Stage 0: `docs/stage0_references_and_baselines.md` — terminology table,
-      source pins, baseline matrix; external ZEN5 BOND/BSA/ADSampling results
-      preserved under `results/external_baselines/`.
-- [x] Stage 1: `docs/stage1_bond_maxsim_formalization.md` — `shrink = 1`
-      exact-safety proof (unit-norm precondition, token-pruning survival
-      invariant, set-equality top-k), `shrink < 1` separation, per-document
-      "Option B" demoted to exact-safe oracle, wide-token-block PDX-BOND named
-      as the Stage 2 deliverable, seeded threshold promoted to first-class.
-- [x] Stage 2 complete: wide-block MaxSim BOND kernel implemented in
-      `cpp/wide_block_maxsim_bond/` (C++, Makefile, `.so`); ctypes bindings in
-      `src/bondmaxsim/kernels/wide_block.py` (accounting + throughput entry
-      points); exact-agreement gate passing on all four datasets (scifact,
-      nfcorpus, arguana, scidocs); package scaffold with `config`, `schema`
-      (`ResultRecord`), `data`, `oracle`, `ordering`, `kernels`, `testbed`,
-      `threshold` all implemented.
-- [x] Per-document oracle kernel ported and building
-      (`cpp/per_document_oracle/`, exp-09 accounting + exp-10 throughput).
-- [x] Debug-scale data exported: `data/embeddings/{scifact,nfcorpus,arguana,scidocs}.npz`
-      (GTE-ModernColBERT-v1, D=128, unit-norm verified, 200 queries each).
-- [x] Test suite green: 68 tests including the two Stage 2 blocking checks
-      (unit-norm guard; `shrink = 1` exact-agreement gate on the oracle kernel).
-- [x] Schema extensions: `shrink` and `tokens_pruned_pct` added to
-      `ResultRecord`; the testbed runner surfaces the accounting kernel's
-      `tokens_pruned` stat (stats[2]) as `tokens_pruned_pct`.
-- [x] Threshold policies implemented (`src/bondmaxsim/threshold/policies.py`:
-      self_bound / oracle / seed) with safety tests
-      (`tests/test_threshold_policies.py`).
-- [x] Stage 2 smoke drivers (`experiments/stage2_testbed/`): s01 normalization
-      guard, s02 exact-agreement gate (all four datasets), s03 two-mode smoke;
-      run with `ResultRecord` JSON committed under `results/json/`.
-- [x] Stage 3 e01 (bound slack): `bondmaxsim.oracle.bound_trajectory` +
-      `experiments/stage3_mechanism/e01_bound_slack.py` + tests committed;
-      run on scifact and nfcorpus (50 queries, natural/bond/pca) with JSON +
-      figures committed under `results/`; e02 spec extended to two-level
-      (document and token) survival curves in
-      `experiments/stage3_mechanism/README.md`.
-- [x] Stage 3 e02 (pruning-rate survival curves): two-level document and token
-      survival curves from the wide-block kernel across all threshold policies
-      (self_bound / oracle / seed) and dimension orders (natural / bond / pca);
-      run on scifact and nfcorpus; JSON + figures committed under `results/`.
-- [x] Stage 3 e03 first run (scifact) + wall-clock baseline forensics: the
-      8.2x `brute_pdx` vs `brute_numpy` gap decomposed into 4.06x OpenBLAS
-      threading + 2.0x runtime-`m` inner-loop codegen; BOND throughput slower
-      than its own dense baseline (bound bookkeeping > 16.3% cells saved).
-      Full analysis, theory, and kernel redesign in
-      `docs/stage3b_fused_panel_maxsim_kernel.md`.
+Can BOND-style dimension-incremental pruning on the PDX columnar layout
+accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
+(`shrink = 1`) or on a recall/latency frontier (`shrink < 1`)?
 
-### In Progress / Next
+- **RQ1 (mechanism)**: how much algorithmic work can the bounds save, and
+  WHERE in the dimension scan does pruning become possible?
+  → e01 (bound slack), e02 (survival curves). **Answered for scifact +
+  nfcorpus**: documents survive until late in the scan — under the oracle
+  threshold on scifact, 98–100% of documents are still alive at dim 64 of
+  128; total avoidable work (cells) is only 8–16% even with token-level
+  pruning and per-boundary checks.
+- **RQ2 (engineering)**: what is the strongest honest dense baseline, and
+  does the PDX layout matter in the MaxSim regime?
+  → Stage 3b. **Answered**: MaxSim (m≈21) is GEMM-shaped, so the layout wins
+  through packing amortization + fused epilogue, not the paper's m=1
+  argument; the fused dense kernel runs 13.1 ms/q on scifact (all cores) vs
+  42.5 ms/q for 12-thread OpenBLAS — this is the decision-gate baseline.
+- **RQ3 (exact-safe gate)**: does `shrink = 1` BOND pruning beat the fused
+  dense baseline in wall-clock?
+  → e03/e04/e08. **First data point (scifact): NO** — at feasible
+  checkpoints {32, 64} pruning fires on <2% of documents (consistent with
+  RQ1's survival curves), and the BOND arm pays ~1.3x overhead over dense.
+  RQ1 bounds the ceiling at ≤16% even with perfect late checkpoints. The
+  remaining datasets + the checkpoint ablation (e08) close this gate.
+- **RQ4 (approximate frontier)**: does `shrink < 1` buy wall-clock at
+  acceptable recall? Smaller residual scaling collapses the bounds earlier,
+  which is the most plausible positive-result region.
+  → e05, which must be ported to the fused kernel (currently
+  accounting-only). **Open — this is now the main open question.**
+- **RQ5 (system context)**: candidate-set seeding (IVF/PLAID) interplay and
+  IR-quality metrics at fixed candidate sets. → Stages 4–5. Open.
 
-- [ ] **Stage 3b — fused panel MaxSim kernel** (unplanned interlude; design
-      and rationale in `docs/stage3b_fused_panel_maxsim_kernel.md`). The
-      wall-clock instruments are rebuilt before e03–e07 are run, because the
-      current dense baseline comparison is not thread- or codegen-fair and
-      the decision gate would be evaluated against the wrong baseline.
-      Prototype evidence: fused register-tiled kernel on panel-major PDX
-      layout = 50.4 ms/q single-threaded vs 147.7 ms single-thread OpenBLAS
-      (2.9x) on scifact. Work items (doc §6):
-      - [x] K1: `pack_corpus_panels` (16-token panel-major, duplicate-last-token
-            doc padding) + layout/padding-invariance tests (2026-07-02).
-      - [x] K2: `cpp/fused_panel_maxsim/` brute kernel (register-tiled M∈{8,16,24}
-            query tiles, fused per-doc max epilogue) + ctypes bindings +
-            exact-agreement gate tests (synthetic incl. multi-tile m>24 and
-            negative-max padding trap; recall 1.0 on scifact in e03).
-      - [x] K3: OpenMP over groups; 1T/8T result invariance test green.
-            Measured on scifact: 54.5 ms/q 1T → 15.8 ms/q all-cores
-            (vs numpy 43.5 ms/q 12T, 121.8 ms/q pinned 1T) — 2.8x over
-            12-thread OpenBLAS, at the predicted DRAM-floor scale.
-      - [ ] K4: `fused_panel_maxsim_bond` with panel-granularity bounds at
-            fetch-boundary checkpoints; shrink=1 exact-agreement gate re-run.
-      - [x] K5 (partial): Runner `brute_force_mode` kinds pdx/numpy/fused with
-            `n_threads` (threadpoolctl BLAS pinning for numpy); e03 refreshed
-            on scifact with all five baselines (results committed).
-            Remaining: `bond_fused` arm (needs K4) + e03 on nfcorpus /
-            arguana / scidocs.
-      The accounting kernel and e01/e02 results are unaffected and stay.
-- [ ] **Stage 3 experiments e03–e07** per
-      `experiments/stage3_mechanism/README.md`, run against the Stage 3b
-      wall-clock instruments: dimension-order ablation (e03 refresh),
-      exact-safe cells/latency sweep (e04), approximate recall frontier (e05),
-      threshold-policy ablation (e06), cache/layout penalty (e07).
-- [ ] **Stage 3 decision gate**: record explicitly in this document whether any
-      exact-safe arm yields a repeatable wall-clock win over brute force — the
-      gate baseline is the **multithreaded fused dense kernel** (strongest
-      defensible baseline), not NumPy; record the regime finding
-      (m≈21 MaxSim is GEMM-shaped; doc §2) alongside the outcome. If no win,
-      pivot to the documented negative-result path.
+A negative RQ3 with a defensible baseline plus a quantified mechanism
+explanation (RQ1) and a mapped RQ4 frontier is a sound, publishable result.
 
-### To Do (Stages 3–5)
-- [ ] Scale dataset: obtain one 100k–1M document corpus (prefer CoRECT pools;
-      requires the `[retrieval]` extra to embed) and export it to the packed
-      token format.
-- [ ] Qrels: export qrels for the four debug datasets and the scale corpus so
-      nDCG@10 / recall@100 / MRR@10 can be computed (Stage 3 onward);
-      implement `src/bondmaxsim/eval/qrels.py` (currently stubs).
-- [ ] Stage 4: implement `src/bondmaxsim/baselines/` (faiss_ivf, pdx_ivf,
-      plaid — all currently stubs) and the fixed-candidate-set comparison
-      drivers in `experiments/stage4_integration/`.
-- [ ] Stage 4: retune and rerun PLAID at appropriate scale (small CPU runs are
-      off-design and non-decisive).
-- [ ] Stage 5: implement the CoRECT adapter (`src/bondmaxsim/eval/corect.py`,
-      currently a stub) with a ColBERT/MaxSim wrapper; run RC metrics and the
-      matched-quality frontier under the fairness controls (one machine, one
-      OS, fixed threads, repeated runs with confidence intervals).
-- [ ] Stage 0 loose end: verify the BOND SIGMOD-2002 bibliographic details
-      against the paper before final writing (flagged in the Stage 0 doc).
-- [ ] Paper: write up following the Final Paper Structure section; every claim
-      passes the Validation Checklist above.
-- [ ] Optional, only after a positive Stage 3/4 result: assess the PDX-in-DuckDB
-      integration path as future work (from the project description).
+### Instruments (single mechanism, three measurement roles)
+
+The bound math is ONE mechanism (Stage 1 §2, extended §10); the kernels are
+instruments measuring different quantities of it. Their roles, after the
+Stage 3b revision:
+
+| instrument | role | status |
+|---|---|---|
+| NumPy exact oracle (`oracle/exact_maxsim.py`) | ground truth for recall gates | active |
+| per-document oracle kernel (`cpp/per_document_oracle/`) | exact-safe reference implementation of the bound rule | active (tests) |
+| wide-block ACCOUNTING kernel (`cpp/wide_block_maxsim_bond/`) | mechanism microscope: true cells, token+doc pruning at EVERY fetch boundary — the upper envelope of what any policy could prune | active (e01/e02/e05/e06 accounting arms) |
+| wide-block THROUGHPUT kernel | — | **retired** (its wall-clock numbers measured runtime-`m` codegen artifacts, Stage 3b §1; kept in-tree only for the Stage 2 record + gate tests) |
+| wide-block dense scan ("brute_pdx") | — | **removed** (superseded) |
+| fused panel BRUTE (`cpp/fused_panel_maxsim/`) | dense wall-clock baseline (decision gate) | active |
+| fused panel BOND | wall-clock mechanism instrument (doc-granularity checkpoints) | active |
+| NumPy/BLAS dense (1T + all cores) | external reference baseline | active |
+
+Known instrument-alignment gap (to fix, R2 below): the accounting kernel
+measures the per-boundary token+document policy while the fused kernel
+implements sparse document-level checkpoints, so accounting `pruned_docs_pct`
+(99.8%) and fused `pruned_docs_pct` (<2%) answer different questions. Both
+are correct; e02's survival curves reconcile them. For gate-quality
+predictions we need accounting numbers computed under the FUSED kernel's own
+policy.
+
+### Done (condensed history)
+
+- [x] Repo restructure, uv toolchain, pinned submodules (PDX @ `93531b9`,
+      PDX-sigmod @ `fdc62f2`, CoRECT @ `fedf8bb2`).
+- [x] Stage 0: references, terminology, baseline matrix, external ZEN5 runs.
+- [x] Stage 1: `shrink = 1` exact-safety proof + §10 addendum (2026-07-03)
+      transferring it to the fused panel kernel (coarser-granularity, padding,
+      query-tile, shared-threshold lemmas; checkpoint set is a free
+      performance parameter).
+- [x] Stage 2 (instruments v1): wide-block accounting+throughput kernels,
+      per-document oracle, packing, orders, threshold policies, schema,
+      Runner; blocking checks green (unit-norm guard, `shrink = 1`
+      exact-agreement on all four datasets); s01–s03 smoke results committed.
+- [x] Stage 3 e01 (bound slack) + e02 (two-level survival curves) run on
+      scifact + nfcorpus; results committed. These are the RQ1 evidence.
+- [x] Stage 3b (instruments v2 — fused panel kernels), design + theory in
+      `docs/stage3b_fused_panel_maxsim_kernel.md`:
+      - K1 `pack_corpus_panels` (16-token panel-major; duplicate-last-token
+        padding, proven max-invariant).
+      - K2/K3 fused BRUTE kernel (AVX-512 register tile, fused per-doc max,
+        OpenMP; 54.9 ms/q 1T / 13.1 ms/q all-cores on scifact).
+      - K4 fused BOND kernel (doc checkpoints {32,64}, shared rising τ;
+        exact-agreement gate green across orders × policies × threads).
+      - K5 testbed integration; `brute_pdx` and wide-throughput retired from
+        all experiment surfaces; e03 rebuilt with clean arms and re-run on
+        scifact (§6.1 of the Stage 3b doc has the numbers).
+- [x] e03 scifact finding recorded: exact-safe BOND does not beat the fused
+      dense baseline (16.4–17.1 vs 13.1 ms/q all-cores; <2% docs pruned),
+      consistent with e02 survival — the honest RQ3 first data point.
+
+### Required next (R-items, in order)
+
+- [ ] **R1 — Stage 1 hygiene**: none outstanding (§10 addendum written
+      2026-07-03). Re-audit only if the fused kernel's policy changes shape
+      (e.g. panel-level pruning inside documents).
+- [ ] **R2 — instrument alignment**: NumPy "checkpoint accounting" simulator
+      (exact partial scores at each checkpoint via cumulative matmul) that
+      computes, under the FUSED kernel's document-checkpoint policy: docs
+      pruned per checkpoint and bytes/cells actually skipped. Cheap, exact,
+      and gives cells% that PREDICTS fused wall-clock savings. Validate its
+      doc-pruned counts against the fused kernel's stats[1] (1-thread run:
+      deterministic τ evolution under oracle policy).
+- [ ] **R3 — e08 checkpoint ablation (new)**: parameterize the fused BOND
+      kernel's checkpoint set (C as an argument instead of the hard-coded
+      {32, 64}); sweep C ⊆ {32, 48, 64, 96, 112} chosen from e02 survival
+      curves; measure overhead-vs-pruning and find the wall-clock-optimal C
+      per dataset. Expected on scifact: even optimal C saves ≤16% (RQ1
+      ceiling) — this experiment closes RQ3 with numbers instead of a guess.
+- [ ] **R4 — e03/e04/e07 on remaining datasets** (nfcorpus, arguana,
+      scidocs) with the rebuilt drivers; then record the RQ3 gate verdict in
+      this document.
+- [ ] **R5 — e05 approximate frontier on the fused kernel**: add the
+      `shrink < 1` sweep to `run_fused_bond_mode` arms (kernel already takes
+      shrink); report recall@10-vs-latency frontier against the fused dense
+      baseline, per dataset. Keep the existing accounting version as the
+      work-based frontier. This is the RQ4 decision experiment.
+- [ ] **R6 — e06 threshold policies**: keep accounting comparison; add fused
+      wall-clock arms for the winning policy only (policy choice is a
+      mechanism question; wall-clock confirmation needs one arm, not nine).
+- [ ] **R7 — scale check**: one 100k–1M doc corpus (CoRECT pools,
+      `[retrieval]` extra) exported to the packed format; re-run e03/e05
+      there — both the DRAM-floor argument and pruning behavior may shift
+      with corpus size (e04 gives the small-scale trend).
+- [ ] **R8 — Stage 4**: baselines (`faiss_ivf`, `plaid` stubs) + fixed
+      candidate-set comparisons; PLAID retuned at appropriate scale. The
+      fused kernels are the production path; candidate seeding feeds
+      τ_seed (Stage 1 §4.4) — measure how much a realistic seed recovers
+      vs the oracle policy.
+- [ ] **R9 — Stage 5**: CoRECT adapter, RC metrics, matched-quality frontier
+      under fairness controls (one machine, fixed threads, CIs).
+- [ ] **R10 — paper**: write up per the Final Paper Structure; every claim
+      through the Validation Checklist. The RQ2 finding (MaxSim is
+      GEMM-shaped; vertical layout wins via packing amortization + epilogue
+      fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
+      independent of the RQ3 verdict.
+- [ ] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details.
+- [ ] Optional (only after a positive RQ3/RQ4): PDX-in-DuckDB integration
+      as future work.
+
+### Decision gates (explicit criteria)
+
+- **G1 (exact-safe, RQ3)**: an arm with recall 1.0 beating the fused dense
+  all-cores baseline by a repeatable margin on ≥2 datasets. Current
+  evidence: negative on scifact; ceiling analysis says ≤16% is available.
+  If G1 fails everywhere: report the negative result WITH the RQ1
+  explanation and the RQ2 baseline contribution — do not soften the
+  baseline to manufacture a win.
+- **G2 (approximate, RQ4)**: a `shrink < 1` frontier point dominating the
+  dense baseline (lower latency, recall ≥ 0.99) or a clearly better
+  latency-recall curve than dimension-truncation at equal recall. Open.

@@ -575,3 +575,81 @@ guard is in the testbed, keep the "preliminary" qualifier. Note that "BOND-MaxSi
 names the *bound and pruning rule*, which is what the wide-block PDX
 implementation inherits; the per-document prototype is one (oracle) instantiation
 of it, not the method itself.
+
+## 10. Addendum (2026-07-03): Proof Transfer To The Fused Panel Kernel
+
+Stage 3b (docs/stage3b_fused_panel_maxsim_kernel.md) replaced the wall-clock
+instruments with the fused panel kernels (`cpp/fused_panel_maxsim/`). The
+fused BOND variant differs from the wide-block kernel audited above in five
+ways: (i) it prunes at DOCUMENT granularity only (no token-level domination
+pruning), (ii) it evaluates the bound at a sparse checkpoint set
+`C ⊂ {1..D}` (currently {32, 64}) instead of every fetch boundary, (iii) the
+corpus is padded per document to a multiple of 16 tokens by duplicating the
+document's last token, (iv) queries are zero-padded per register tile to
+M ∈ {8, 16, 24} rows, and (v) it runs threaded with a shared, monotonically
+rising pruning threshold. This section shows the Section 2 exact-safety
+proof transfers to that variant at `shrink = 1` with four small lemmas and
+no modification to the core argument. All Section 4 preconditions (A1 unit
+normalization, exact arithmetic vs float32 empiricism, set-equality top-k)
+carry over verbatim.
+
+**Lemma A (coarser candidate set loosens the bound — still safe).** For any
+token subset `S ⊇ live(d)` of document `d`,
+`UB_S(d) = Σ_i max_{j∈S} (P_ij + resq_i·resd_j) ≥ UB_live(d) ≥ score(q, d)`
+because a max over a superset dominates the max over the subset, and every
+added token's term is itself an upper bound on that token's remaining
+contribution (§2.3). The fused kernel uses `S =` all (padded) tokens of `d`,
+so its document bound is looser than the wide-block kernel's live-set bound
+but remains an upper bound; pruning `d` when `UB_S(d) < τ ≤` final k-th
+score is therefore safe. (This also explains, mechanically, why the fused
+kernel prunes no more — typically less — than the accounting kernel at the
+same scan depth.)
+
+**Lemma B (duplicate-token padding is score- and bound-invariant).**
+`max_j` over a multiset is invariant under duplicating an element, so both
+`score(q, d)` and `UB_S(d)` computed over the padded token multiset equal
+their unpadded values exactly (the duplicated token contributes an identical
+term to every max). Duplicated tokens are copies of unit-norm tokens, so
+precondition A1 is preserved. Zero-vector padding would violate this lemma:
+`<q_i, 0> = 0` can strictly exceed a document's true (negative) maximum —
+the regression test `test_negative_similarity_docs_not_clamped` guards it.
+
+**Lemma C (query zero-padding is inert).** Tile rows beyond the real `m`
+query tokens are all-zero, accumulate `P_ij ≡ 0`, and are excluded from both
+the score sum and the UB sum (the kernel iterates `i < m_real` per tile).
+Their residual `resq` is never evaluated, so A1 (which zero rows would
+violate, `||0|| ≠ 1`) is never invoked for them.
+
+**Lemma D (shared rising threshold under threading is safe).** The §2.3
+pruning test is safe for any `τ` that is a lower bound on the FINAL k-th
+best score. A thread's local top-K threshold is the k-th best over the
+subset of documents that thread has finalized so far — every finalized score
+is exact (§2.5), and a k-th best over a subset never exceeds the k-th best
+over the full set. Hence each published value, and the running atomic max
+of all published values, and any STALE read of it (staleness only lowers
+the value), is ≤ the final k-th score. `τ = max(τ_seed, shared_τ)` with a
+valid `τ_seed` (§4.4) therefore prunes safely regardless of thread
+interleaving. Determinism caveat: the top-k SET is exact-safe, but which
+documents get pruned (the stats counters) may vary across runs/thread
+counts; only the returned set and scores are invariant.
+
+**Checkpoint placement is free.** Safety is a property of each individual
+test (Lemmas A, D), so ANY checkpoint set `C` — sparse, dense, adaptive —
+yields an exact-safe kernel at `shrink = 1`. `C` only trades bound-
+evaluation overhead against pruning opportunity; it is a pure performance
+parameter (Stage 3b §6.1 measured that `C = {32, 64}` fires on <2% of
+scifact documents, consistent with e02's survival curves showing 98-100%
+document survival at dim 64 under the oracle threshold).
+
+**What does not transfer.** The token-pruning survival invariant (§2.4) is
+simply unused (the fused kernel never drops individual tokens); the cost
+model (§6) is superseded by Stage 3b §3; float32 exactness remains empirical
+(§4.2) — the segment spill/reload changes summation order relative to both
+the oracle and the wide-block kernel, and is covered by the same
+exact-agreement gate (tests/test_fused_panel_gate.py) plus the `UB_EPSILON`
+and `τ_seed` safety margins.
+
+**Verdict.** The `shrink = 1` fused panel BOND kernel is exact-safe under
+the same preconditions as Section 2; the proof needed extension lemmas, not
+modification. The `shrink < 1` fused variant inherits Section 3's status
+unchanged: approximate, frontier-only reporting.

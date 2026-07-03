@@ -149,14 +149,14 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 | Stage | Artifact | Status |
 |---|---|---|
 | 0 References & baselines | `docs/stage0_references_and_baselines.md` | Done |
-| 1 BOND-MaxSim formalization | `docs/stage1_bond_maxsim_formalization.md` | Done |
+| 1 BOND-MaxSim formalization | `docs/stage1_bond_maxsim_formalization.md` | Done (incl. §10 addendum, 2026-07-03: proof transfer to the fused panel kernel) |
 | Structure & self-containment | this file + scaffold + submodules | In progress |
-| 2 Mechanism testbed | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | Done (wide-block MaxSim BOND kernel + smoke drivers s01–s03 + threshold policies; exact-agreement gate green on all four datasets) |
-| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress (e01 + e02 run with committed results; e03 first run exposed the wall-clock baseline problem → Stage 3b; e03–e07 to run on the new instruments) |
-| 3b Fused panel kernel | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | In progress (design doc done; K1–K5 pending) |
+| 2 Mechanism testbed (instruments v1) | `src/bondmaxsim/`, `cpp/`, `experiments/stage2_testbed/` | Done. Post-3b instrument roles: wide-block ACCOUNTING kernel = algorithmic-work microscope (active); wide-block THROUGHPUT kernel = retired from experiments (Stage 2 record + gate tests only); wide-block dense scan = removed |
+| 3b Fused panel kernels (instruments v2) | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | Done (K1–K5; brute = decision-gate dense baseline, bond = wall-clock mechanism instrument; gates green; scifact measured) |
+| 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress. e01+e02 (RQ1) done on scifact+nfcorpus; e03 rebuilt on v2 instruments and run on scifact (exact-safe gate: negative there); remaining: R2 alignment, e08 checkpoint ablation, other datasets, e05 fused port (see plan doc "Status And Research Plan") |
 | 4 Candidate-kernel integration | `experiments/stage4_integration/` | Not started |
 | 5 CoRECT IR evaluation | `experiments/stage5_corect/` | Not started |
 
-The detailed done/next/todo checklist lives in
-`docs/project_b_analysis_and_research_plan.md` ("Status And Checklist").
-Update both when a stage advances.
+The working plan (research questions RQ1–RQ5, instrument table, R-items,
+decision gates G1/G2) lives in `docs/project_b_analysis_and_research_plan.md`
+("Status And Research Plan"). Update both when a stage advances.
