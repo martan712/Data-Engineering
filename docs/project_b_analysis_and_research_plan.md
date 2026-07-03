@@ -824,9 +824,16 @@ used by e08.
       oracle scores to `exact_agreement` (boundary ties accepted), as the
       wide-block accounting path already did. 61 gate tests green.
 
-### Required next (R-items, in order)
+### Required next (R-items, in EXECUTION order)
 
-- [ ] **R1 — Stage 1 hygiene**: none outstanding (§10 addendum written
+Items are listed in the order they should be executed. R-numbers are
+assignment order, NOT execution order — they stay stable because other
+documents reference them (`docs/bond2002_bound_cost_analysis.md` §6 →
+R12a; RQ1/RQ3/G1 above → R12b/c). Completed items first, then the queue.
+
+Completed:
+
+- [x] **R1 — Stage 1 hygiene**: none outstanding (§10 addendum written
       2026-07-03). Re-audit only if the fused kernel's policy changes shape
       (e.g. panel-level pruning inside documents).
 - [x] **R2 — instrument alignment**: DONE 2026-07-03 —
@@ -842,17 +849,51 @@ used by e08.
       dense — but on arguana/scidocs/nfcorpus late checkpoints
       (C={96}/{112}) prune 88–98% of docs and beat dense (arguana −19% MT /
       −29% 1T). RQ3 verdict recorded above; follow-ups split into R12.
+- [x] **R11 — e09 bound-tightness ablation**: DONE 2026-07-03 (all 4
+      datasets, tight vs cheap × {natural, bond, pca}, oracle policy,
+      recall 1.0 everywhere). Outcome at the default C={32,64}: the third
+      bullet of `docs/bond2002_bound_cost_analysis.md` §6 — BOTH bounds
+      lose to dense because neither prunes there (cheap 0.00% everywhere,
+      tight ≤5.3% under bond order only). Cheap is marginally faster when
+      nothing prunes; tight wins only where its pruning fires. So e07's
+      checkpoint overhead is mostly MaxSim's price, not E_v's — but the
+      adopt-a-default decision is deferred to R12, because e08 moved the
+      interesting regime to late checkpoints that e09 did not test.
+- [x] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details —
+      DONE 2026-07-03: A. P. de Vries, N. Mamoulis, N. Nes, M. Kersten,
+      "Efficient k-NN Search on Vertically Decomposed Data", ACM SIGMOD
+      2002 (June 4-6, Madison, WI), pp. 322-333 (paper read; lessons in
+      `docs/bond2002_bound_cost_analysis.md`).
+
+Queue (execute top to bottom):
+
+- [ ] **R12 — late-checkpoint follow-ups (NEW, from the e08 finding)**.
+      First in the queue: (a) is the cheapest run and its outcome — the
+      doc-level bound default AND the winning checkpoint set — is an input
+      to R5's expensive decision experiment; (b) must accompany the G1
+      claim.
+      (a) rerun the e09 tight-vs-cheap comparison at the e08-winning sets
+      (C={112}, {64,112}, {32,64,96,112}) — that is where pruning fires, so
+      that is where the bound choice actually matters; adopt the winner as
+      the doc-level default per the bond2002 §6 criteria. (b) Explain why
+      wall-clock savings exceed the simulator's cells-saved prediction
+      (arguana 1T: −29% wall-clock vs −12% padded cells at C={112}) — the
+      pruned final segment is disproportionately expensive; candidates: the
+      register-folded max/epilogue cost, top-k insertion, last-panel memory
+      traffic. (c) Fold the winning C into e05 (R5) so the RQ4 frontier
+      starts from the strongest exact-safe operating point.
 - [ ] **R4 — e03/e04 on remaining datasets + e07 on scidocs** (e03 scifact
       already refreshed on the revised kernel; e07 ran 2026-07-03 on
       scifact/nfcorpus/arguana — scidocs was dropped from that run and is
       still owed); then the RQ3 record is complete across datasets.
-      **Run pending.**
+      Independent of R12 (record-completion at the documented defaults) —
+      can run alongside it. **Run pending.**
 - [ ] **R5 — e05 approximate frontier on the fused kernel**: driver DONE
       2026-07-03 (fused doc-level all-cores arm per order × shrink, dense
       baseline reference, wall-clock frontier panel in the figure; accounting
       frontier kept). **Run pending — this is the RQ4 / gate-G2 decision
-      experiment.** After e08, run it at the winning late checkpoint set
-      (R12c), not only the default {32,64}.
+      experiment.** Depends on R12a/c: run it at the winning bound + late
+      checkpoint set, not only the default {32,64}.
 - [ ] **R6 — e06 threshold policies**: driver DONE 2026-07-03 (accounting
       comparison kept; one fused wall-clock confirmation arm for the
       cells%-winning policy). **Run pending.**
@@ -872,36 +913,16 @@ used by e08.
       GEMM-shaped; vertical layout wins via packing amortization + epilogue
       fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
       independent of the RQ3 verdict.
-- [x] **R11 — e09 bound-tightness ablation**: DONE 2026-07-03 (all 4
-      datasets, tight vs cheap × {natural, bond, pca}, oracle policy,
-      recall 1.0 everywhere). Outcome at the default C={32,64}: the third
-      bullet of `docs/bond2002_bound_cost_analysis.md` §6 — BOTH bounds
-      lose to dense because neither prunes there (cheap 0.00% everywhere,
-      tight ≤5.3% under bond order only). Cheap is marginally faster when
-      nothing prunes; tight wins only where its pruning fires. So e07's
-      checkpoint overhead is mostly MaxSim's price, not E_v's — but the
-      adopt-a-default decision is deferred to R12, because e08 moved the
-      interesting regime to late checkpoints that e09 did not test.
-- [ ] **R12 — late-checkpoint follow-ups (NEW, from the e08 finding)**:
-      (a) rerun the e09 tight-vs-cheap comparison at the e08-winning sets
-      (C={112}, {64,112}, {32,64,96,112}) — that is where pruning fires, so
-      that is where the bound choice actually matters; adopt the winner as
-      the doc-level default per the bond2002 §6 criteria. (b) Explain why
-      wall-clock savings exceed the simulator's cells-saved prediction
-      (arguana 1T: −29% wall-clock vs −12% padded cells at C={112}) — the
-      pruned final segment is disproportionately expensive; candidates: the
-      register-folded max/epilogue cost, top-k insertion, last-panel memory
-      traffic. (c) Fold the winning C into e05 (R5) so the RQ4 frontier
-      starts from the strongest exact-safe operating point.
-- [x] Stage 0 loose end: verify BOND SIGMOD-2002 bibliographic details —
-      DONE 2026-07-03: A. P. de Vries, N. Mamoulis, N. Nes, M. Kersten,
-      "Efficient k-NN Search on Vertically Decomposed Data", ACM SIGMOD
-      2002 (June 4-6, Madison, WI), pp. 322-333 (paper read; lessons in
-      `docs/bond2002_bound_cost_analysis.md`).
+
+Optional (not in the queue; triggered by outcomes above):
+
 - [ ] Optional (only after a positive RQ3/RQ4): PDX-in-DuckDB integration
       as future work.
-- [ ] Optional (post-e08, only if bond order wins on pruning but loses on
-      wall-clock): pack-time static dimension order. The bond order's 1T
+- [ ] Optional — trigger condition MET by e08 (2026-07-03): bond order DID
+      prune more than natural at C={112} on every dataset (e.g. arguana
+      98.1% vs 97.1%) yet lost wall-clock everywhere — so pack-time static
+      dimension order is now a live candidate (after R12, if its margin
+      would matter). The bond order's 1T
       penalty is the permuted access pattern itself (one scattered 64 B line
       per dim; PDX-sigmod pays the same via its `indices_dimensions`
       translation index — our `order[t]` is the faithful equivalent, incl.
