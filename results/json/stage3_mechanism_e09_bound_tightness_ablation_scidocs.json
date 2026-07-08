@@ -17,52 +17,317 @@
     "bond",
     "pca"
   ],
+  "checkpoint_sets": [
+    [
+      32,
+      64
+    ],
+    [
+      112
+    ],
+    [
+      64,
+      112
+    ],
+    [
+      32,
+      64,
+      96,
+      112
+    ]
+  ],
   "arms": [
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "natural",
-      "ms_per_query": 62.30366542000411,
-      "qps": 16.05042003963583,
+      "ms_per_query": 64.2142429749947,
+      "qps": 15.572869096804649,
       "pruned_docs_pct": 0.0019487859063803251,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "natural",
-      "ms_per_query": 61.825923759988655,
-      "qps": 16.174444944519557,
+      "ms_per_query": 64.25746265500493,
+      "qps": 15.562394758239202,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "bond",
-      "ms_per_query": 69.05316307000248,
-      "qps": 14.481595853708429,
+      "ms_per_query": 71.30889676500374,
+      "qps": 14.023495599651037,
       "pruned_docs_pct": 5.295630821997896,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "bond",
-      "ms_per_query": 68.53498252499776,
-      "qps": 14.591088567583066,
+      "ms_per_query": 75.77916476497194,
+      "qps": 13.196239403027027,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "pca",
-      "ms_per_query": 62.33311853999112,
-      "qps": 16.042836030390955,
+      "ms_per_query": 65.32009673497669,
+      "qps": 15.309224113021468,
       "pruned_docs_pct": 0.0014615894297852438,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "pca",
-      "ms_per_query": 61.68744411001171,
-      "qps": 16.210754302230892,
+      "ms_per_query": 64.83353534000344,
+      "qps": 15.424116466204525,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 62.715277019997295,
+      "qps": 15.94507825710698,
+      "pruned_docs_pct": 98.0193319561913,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 61.55688590999489,
+      "qps": 16.24513627057329,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 60.680390344969055,
+      "qps": 16.479788516767655,
+      "pruned_docs_pct": 99.398292863546,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 61.82375101998332,
+      "qps": 16.175013380808444,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 58.99790589501208,
+      "qps": 16.949754145164395,
+      "pruned_docs_pct": 97.86834002416495,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 60.20136611001362,
+      "qps": 16.61091873185357,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 59.182024494984944,
+      "qps": 16.897022508662904,
+      "pruned_docs_pct": 98.0193319561913,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 61.526546250024694,
+      "qps": 16.25314699018391,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 62.883232364983996,
+      "qps": 15.902490415820953,
+      "pruned_docs_pct": 99.398292863546,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 66.97034007498587,
+      "qps": 14.931983306047307,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 60.36263718498958,
+      "qps": 16.566539280504973,
+      "pruned_docs_pct": 97.86834002416495,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 62.52135440998245,
+      "qps": 15.994535138226874,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 58.15783455000201,
+      "qps": 17.194587930199432,
+      "pruned_docs_pct": 98.0193319561913,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 63.23938878998887,
+      "qps": 15.812929554409374,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 63.14094608500455,
+      "qps": 15.837583406712554,
+      "pruned_docs_pct": 99.398292863546,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 70.09055634000106,
+      "qps": 14.267257277130422,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 59.29651897997246,
+      "qps": 16.86439637945277,
+      "pruned_docs_pct": 97.86834002416495,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 64.0335436550231,
+      "qps": 15.616814921058257,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     }
@@ -70,8 +335,8 @@
   "dense_arm": {
     "bound": "none",
     "dimension_order": "dense_fused",
-    "ms_per_query": 60.16719868001019,
-    "qps": 16.620351652373632,
+    "ms_per_query": 61.1749891600266,
+    "qps": 16.346549688535575,
     "pruned_docs_pct": 0.0,
     "recall_vs_exact_at_10": 1.0
   }

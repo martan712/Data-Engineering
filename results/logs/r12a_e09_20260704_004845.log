@@ -1,0 +1,145 @@
+=== R12a overnight run -> logging to results/logs/r12a_e09_20260704_004845.log ===
+Sat Jul  4 12:48:45 AM CEST 2026
+
+=== Rebuild kernels ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/wide_block_maxsim_bond'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/wide_block_maxsim_bond'
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+warning: `VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+..........................................                               [100%]
+42 passed in 0.98s
+
+=== Stage 3 e09 (R12a): bound-tightness ablation at late checkpoints ===
+warning: `VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+
+=== e09 bound-tightness ablation: scifact ===
+  corpus: 5183 docs, 1141434 tokens, 200 queries (all)
+  C={32,64}          order=natural bound=tight  ms/q=15.9719  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=natural bound=cheap  ms/q=13.6004  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=bond    bound=tight  ms/q=15.8590  prune_docs=1.57%  recall=1.000
+  C={32,64}          order=bond    bound=cheap  ms/q=15.5080  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=tight  ms/q=15.2811  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=cheap  ms/q=15.3522  prune_docs=0.00%  recall=1.000
+  C={112}            order=natural bound=tight  ms/q=15.0026  prune_docs=86.67%  recall=1.000
+  C={112}            order=natural bound=cheap  ms/q=15.6238  prune_docs=0.00%  recall=1.000
+  C={112}            order=bond    bound=tight  ms/q=15.3439  prune_docs=94.55%  recall=1.000
+  C={112}            order=bond    bound=cheap  ms/q=16.1475  prune_docs=0.00%  recall=1.000
+  C={112}            order=pca     bound=tight  ms/q=15.2888  prune_docs=87.78%  recall=1.000
+  C={112}            order=pca     bound=cheap  ms/q=16.0092  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=natural bound=tight  ms/q=15.6681  prune_docs=86.67%  recall=1.000
+  C={64,112}         order=natural bound=cheap  ms/q=16.1343  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=bond    bound=tight  ms/q=17.2979  prune_docs=94.55%  recall=1.000
+  C={64,112}         order=bond    bound=cheap  ms/q=18.1220  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=pca     bound=tight  ms/q=16.0057  prune_docs=87.78%  recall=1.000
+  C={64,112}         order=pca     bound=cheap  ms/q=16.7318  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=natural bound=tight  ms/q=16.1688  prune_docs=86.67%  recall=1.000
+  C={32,64,96,112}   order=natural bound=cheap  ms/q=17.0519  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=tight  ms/q=17.5861  prune_docs=94.55%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=cheap  ms/q=20.1745  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=tight  ms/q=17.4425  prune_docs=87.78%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=cheap  ms/q=18.1869  prune_docs=0.00%  recall=1.000
+  dense_fused             ms/q=17.2997  (baseline)
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage3_mechanism_e09_bound_tightness_ablation_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage3_mechanism/e09_bound_tightness_ablation_scifact.png
+  Done in 1306.7s
+
+=== e09 bound-tightness ablation: nfcorpus ===
+  corpus: 3633 docs, 838305 tokens, 200 queries (all)
+  C={32,64}          order=natural bound=tight  ms/q=12.6195  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=natural bound=cheap  ms/q=12.4685  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=bond    bound=tight  ms/q=14.1207  prune_docs=4.57%  recall=1.000
+  C={32,64}          order=bond    bound=cheap  ms/q=13.2840  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=tight  ms/q=13.4655  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=cheap  ms/q=13.6687  prune_docs=0.00%  recall=1.000
+  C={112}            order=natural bound=tight  ms/q=13.3267  prune_docs=90.89%  recall=1.000
+  C={112}            order=natural bound=cheap  ms/q=12.8560  prune_docs=0.00%  recall=1.000
+  C={112}            order=bond    bound=tight  ms/q=12.9445  prune_docs=96.70%  recall=1.000
+  C={112}            order=bond    bound=cheap  ms/q=12.6838  prune_docs=0.00%  recall=1.000
+  C={112}            order=pca     bound=tight  ms/q=13.3411  prune_docs=88.78%  recall=1.000
+  C={112}            order=pca     bound=cheap  ms/q=12.4328  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=natural bound=tight  ms/q=12.2404  prune_docs=90.89%  recall=1.000
+  C={64,112}         order=natural bound=cheap  ms/q=13.0210  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=bond    bound=tight  ms/q=12.9416  prune_docs=96.70%  recall=1.000
+  C={64,112}         order=bond    bound=cheap  ms/q=13.1808  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=pca     bound=tight  ms/q=12.6573  prune_docs=88.78%  recall=1.000
+  C={64,112}         order=pca     bound=cheap  ms/q=12.6061  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=natural bound=tight  ms/q=11.8215  prune_docs=90.89%  recall=1.000
+  C={32,64,96,112}   order=natural bound=cheap  ms/q=12.8654  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=tight  ms/q=12.6467  prune_docs=96.70%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=cheap  ms/q=13.2291  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=tight  ms/q=11.8050  prune_docs=88.78%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=cheap  ms/q=12.6332  prune_docs=0.00%  recall=1.000
+  dense_fused             ms/q=12.7218  (baseline)
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage3_mechanism/e09_bound_tightness_ablation_nfcorpus.png
+  Done in 978.7s
+
+=== e09 bound-tightness ablation: arguana ===
+  corpus: 8674 docs, 1513840 tokens, 200 queries (all)
+  C={32,64}          order=natural bound=tight  ms/q=40.8930  prune_docs=0.51%  recall=1.000
+  C={32,64}          order=natural bound=cheap  ms/q=40.1136  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=bond    bound=tight  ms/q=42.8347  prune_docs=2.61%  recall=1.000
+  C={32,64}          order=bond    bound=cheap  ms/q=41.9661  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=tight  ms/q=40.8226  prune_docs=0.56%  recall=1.000
+  C={32,64}          order=pca     bound=cheap  ms/q=40.1369  prune_docs=0.00%  recall=1.000
+  C={112}            order=natural bound=tight  ms/q=36.5813  prune_docs=97.52%  recall=1.000
+  C={112}            order=natural bound=cheap  ms/q=39.9765  prune_docs=0.00%  recall=1.000
+  C={112}            order=bond    bound=tight  ms/q=36.9160  prune_docs=98.48%  recall=1.000
+  C={112}            order=bond    bound=cheap  ms/q=40.0121  prune_docs=0.00%  recall=1.000
+  C={112}            order=pca     bound=tight  ms/q=36.2793  prune_docs=97.20%  recall=1.000
+  C={112}            order=pca     bound=cheap  ms/q=39.9596  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=natural bound=tight  ms/q=37.1811  prune_docs=97.52%  recall=1.000
+  C={64,112}         order=natural bound=cheap  ms/q=39.9384  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=bond    bound=tight  ms/q=38.7636  prune_docs=98.48%  recall=1.000
+  C={64,112}         order=bond    bound=cheap  ms/q=41.3459  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=pca     bound=tight  ms/q=36.9189  prune_docs=97.20%  recall=1.000
+  C={64,112}         order=pca     bound=cheap  ms/q=38.3065  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=natural bound=tight  ms/q=36.4039  prune_docs=97.52%  recall=1.000
+  C={32,64,96,112}   order=natural bound=cheap  ms/q=42.2495  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=tight  ms/q=37.9334  prune_docs=98.48%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=cheap  ms/q=43.6986  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=tight  ms/q=36.8882  prune_docs=97.20%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=cheap  ms/q=41.8149  prune_docs=0.00%  recall=1.000
+  dense_fused             ms/q=39.7671  (baseline)
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage3_mechanism_e09_bound_tightness_ablation_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage3_mechanism/e09_bound_tightness_ablation_arguana.png
+  Done in 3153.1s
+
+=== e09 bound-tightness ablation: scidocs ===
+  corpus: 25657 docs, 4531496 tokens, 200 queries (all)
+  C={32,64}          order=natural bound=tight  ms/q=64.2142  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=natural bound=cheap  ms/q=64.2575  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=bond    bound=tight  ms/q=71.3089  prune_docs=5.30%  recall=1.000
+  C={32,64}          order=bond    bound=cheap  ms/q=75.7792  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=tight  ms/q=65.3201  prune_docs=0.00%  recall=1.000
+  C={32,64}          order=pca     bound=cheap  ms/q=64.8335  prune_docs=0.00%  recall=1.000
+  C={112}            order=natural bound=tight  ms/q=62.7153  prune_docs=98.02%  recall=1.000
+  C={112}            order=natural bound=cheap  ms/q=61.5569  prune_docs=0.00%  recall=1.000
+  C={112}            order=bond    bound=tight  ms/q=60.6804  prune_docs=99.40%  recall=1.000
+  C={112}            order=bond    bound=cheap  ms/q=61.8238  prune_docs=0.00%  recall=1.000
+  C={112}            order=pca     bound=tight  ms/q=58.9979  prune_docs=97.87%  recall=1.000
+  C={112}            order=pca     bound=cheap  ms/q=60.2014  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=natural bound=tight  ms/q=59.1820  prune_docs=98.02%  recall=1.000
+  C={64,112}         order=natural bound=cheap  ms/q=61.5265  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=bond    bound=tight  ms/q=62.8832  prune_docs=99.40%  recall=1.000
+  C={64,112}         order=bond    bound=cheap  ms/q=66.9703  prune_docs=0.00%  recall=1.000
+  C={64,112}         order=pca     bound=tight  ms/q=60.3626  prune_docs=97.87%  recall=1.000
+  C={64,112}         order=pca     bound=cheap  ms/q=62.5214  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=natural bound=tight  ms/q=58.1578  prune_docs=98.02%  recall=1.000
+  C={32,64,96,112}   order=natural bound=cheap  ms/q=63.2394  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=tight  ms/q=63.1409  prune_docs=99.40%  recall=1.000
+  C={32,64,96,112}   order=bond    bound=cheap  ms/q=70.0906  prune_docs=0.00%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=tight  ms/q=59.2965  prune_docs=97.87%  recall=1.000
+  C={32,64,96,112}   order=pca     bound=cheap  ms/q=64.0335  prune_docs=0.00%  recall=1.000
+  dense_fused             ms/q=61.1750  (baseline)
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage3_mechanism_e09_bound_tightness_ablation_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage3_mechanism/e09_bound_tightness_ablation_scidocs.png
+  Done in 4957.2s
+
+=== All done ===
+Sat Jul  4 03:42:02 AM CEST 2026

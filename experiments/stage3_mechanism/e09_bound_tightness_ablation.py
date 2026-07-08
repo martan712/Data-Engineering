@@ -26,9 +26,19 @@ Expectations (either outcome is informative):
 Both arms are exact-safe at shrink=1 (UB_cheap >= UB_tight can only prune
 LESS); the recall gate raises on any violation.
 
+The default checkpoint set {32, 64} answers this at EARLY checkpoints, where
+e02's survival curves say almost nothing is prunable — and indeed (2026-07-03)
+the third outcome held: both bounds lose to dense because neither prunes.
+e08 then showed the interesting regime is LATE checkpoints (C={112} and
+supersets), where the exact-safe kernel prunes 88-98% of documents and beats
+dense on 3 of 4 datasets.  R12a reruns THIS comparison at the e08-winning sets:
+that is where pruning fires, so that is where the bound choice actually decides.
+The winning bound becomes the doc-level default (bond2002 doc §6 criteria).
+
 Datasets  : scifact, nfcorpus, arguana, scidocs
 Bounds    : tight, cheap  (methods fused_panel_maxsim_bond{,_cheap})
 Orders    : natural, bond, pca  (bound slack grows with energy concentration)
+Checkpts  : {32,64} (early, control), {112}, {64,112}, {32,64,96,112} (e08 winners)
 Policy    : oracle (fixed tau — isolates the bound; shared-tau noise absent)
 Shrink    : 1.0
 Queries   : all queries (tight timing statistics, as e07)
@@ -68,6 +78,15 @@ DATASETS    = ["scifact", "nfcorpus", "arguana", "scidocs"]
 BOUNDS      = {"tight": "fused_panel_maxsim_bond",
                "cheap": "fused_panel_maxsim_bond_cheap"}
 ORDER_NAMES = ["natural", "bond", "pca"]
+# {32,64} = early control (recorded default; both bounds prune ~nothing).
+# The rest are the e08-winning late sets where pruning fires and the bound
+# choice actually decides (R12a).
+CHECKPOINT_SETS = [
+    (32, 64),
+    (112,),
+    (64, 112),
+    (32, 64, 96, 112),
+]
 POLICY      = "oracle"
 K_TOP       = 10
 N_REPEATS   = 10
@@ -76,6 +95,14 @@ RESULTS_JSON = REPO_ROOT / "results" / "json"
 RESULTS_FIG  = REPO_ROOT / "results" / "figures" / "stage3_mechanism"
 
 BOUND_COLORS = {"tight": "#2a78d6", "cheap": "#eb6834"}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _cps_label(cps: tuple[int, ...]) -> str:
+    return "{" + ",".join(str(c) for c in cps) + "}"
 
 
 # ---------------------------------------------------------------------------
@@ -93,37 +120,41 @@ def run_dataset(dataset: str) -> None:
     runner = Runner(flat_tokens, doc_starts, queries)
     arms: list[dict] = []
 
-    for order in ORDER_NAMES:
-        for bound, method in BOUNDS.items():
-            cfg = RunConfig(
-                dataset=dataset,
-                method=method,
-                dimension_order=order,
-                threshold_policy=POLICY,
-                k=K_TOP,
-                shrink=1.0,
-            )
-            rec = runner.throughput_mode(cfg, n_repeats=N_REPEATS, n_threads=0)
-
-            arm = {
-                "bound": bound,
-                "dimension_order": order,
-                "ms_per_query": rec.ms_per_query,
-                "qps": rec.qps,
-                "pruned_docs_pct": rec.pruned_docs_pct,
-                "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
-            }
-            arms.append(arm)
-            print(f"  order={order:<7} bound={bound:<5}  "
-                  f"ms/q={rec.ms_per_query:.4f}  "
-                  f"prune_docs={rec.pruned_docs_pct:.2f}%  "
-                  f"recall={rec.recall_vs_exact_at_10:.3f}")
-
-            if rec.recall_vs_exact_at_10 < 1.0:
-                raise RuntimeError(
-                    f"Exact-agreement failed at shrink=1: bound={bound!r} "
-                    f"order={order!r} recall={rec.recall_vs_exact_at_10}"
+    for cps in CHECKPOINT_SETS:
+        for order in ORDER_NAMES:
+            for bound, method in BOUNDS.items():
+                cfg = RunConfig(
+                    dataset=dataset,
+                    method=method,
+                    dimension_order=order,
+                    threshold_policy=POLICY,
+                    k=K_TOP,
+                    shrink=1.0,
+                    checkpoints=cps,
                 )
+                rec = runner.throughput_mode(cfg, n_repeats=N_REPEATS, n_threads=0)
+
+                arm = {
+                    "checkpoints": list(cps),
+                    "bound": bound,
+                    "dimension_order": order,
+                    "ms_per_query": rec.ms_per_query,
+                    "qps": rec.qps,
+                    "pruned_docs_pct": rec.pruned_docs_pct,
+                    "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+                }
+                arms.append(arm)
+                print(f"  C={_cps_label(cps):<16} order={order:<7} bound={bound:<5}  "
+                      f"ms/q={rec.ms_per_query:.4f}  "
+                      f"prune_docs={rec.pruned_docs_pct:.2f}%  "
+                      f"recall={rec.recall_vs_exact_at_10:.3f}")
+
+                if rec.recall_vs_exact_at_10 < 1.0:
+                    raise RuntimeError(
+                        f"Exact-agreement failed at shrink=1: bound={bound!r} "
+                        f"order={order!r} checkpoints={cps} "
+                        f"recall={rec.recall_vs_exact_at_10}"
+                    )
 
     # Dense baseline (no checkpoints, no bound) at the same thread count.
     cfg_brute = RunConfig(
@@ -163,6 +194,7 @@ def run_dataset(dataset: str) -> None:
         "shrink": 1.0,
         "n_repeats": N_REPEATS,
         "orders": ORDER_NAMES,
+        "checkpoint_sets": [list(c) for c in CHECKPOINT_SETS],
         "arms": arms,
         "dense_arm": dense_arm,
     }
@@ -180,45 +212,50 @@ def run_dataset(dataset: str) -> None:
 def _save_figure(arms: list[dict], dense_arm: dict, dataset: str, out_path: Path) -> None:
     x = np.arange(len(ORDER_NAMES))
     width = 0.35
+    ncol = len(CHECKPOINT_SETS)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+    fig, axes = plt.subplots(2, ncol, figsize=(3.2 * ncol + 1, 7),
+                             squeeze=False)
 
-    for k, bound in enumerate(BOUNDS):
-        sel = [a for a in arms if a["bound"] == bound]
-        sel = sorted(sel, key=lambda a: ORDER_NAMES.index(a["dimension_order"]))
-        ms    = [a["ms_per_query"]    for a in sel]
-        prune = [a["pruned_docs_pct"] for a in sel]
-        off = (k - 0.5) * width
-        ax1.bar(x + off, ms, width=width, label=bound, color=BOUND_COLORS[bound])
-        ax2.bar(x + off, prune, width=width, label=bound, color=BOUND_COLORS[bound])
-        for xi, v in zip(x + off, ms):
-            ax1.text(xi, v * 1.01, f"{v:.2f}", ha="center", fontsize=7)
-        for xi, v in zip(x + off, prune):
-            ax2.text(xi, v + 1, f"{v:.1f}", ha="center", fontsize=7)
+    for ci, cps in enumerate(CHECKPOINT_SETS):
+        ax1, ax2 = axes[0][ci], axes[1][ci]
+        cps_list = list(cps)
+        for k, bound in enumerate(BOUNDS):
+            sel = [a for a in arms
+                   if a["bound"] == bound and a["checkpoints"] == cps_list]
+            sel = sorted(sel, key=lambda a: ORDER_NAMES.index(a["dimension_order"]))
+            ms    = [a["ms_per_query"]    for a in sel]
+            prune = [a["pruned_docs_pct"] for a in sel]
+            off = (k - 0.5) * width
+            ax1.bar(x + off, ms, width=width, label=bound, color=BOUND_COLORS[bound])
+            ax2.bar(x + off, prune, width=width, label=bound, color=BOUND_COLORS[bound])
+            for xi, v in zip(x + off, ms):
+                ax1.text(xi, v * 1.01, f"{v:.1f}", ha="center", fontsize=6)
+            for xi, v in zip(x + off, prune):
+                ax2.text(xi, v + 1, f"{v:.0f}", ha="center", fontsize=6)
 
-    ax1.axhline(dense_arm["ms_per_query"], color="#5c4a9e", linestyle="--",
-                linewidth=1.2, label="dense_fused")
-    ax1.set_xticks(x); ax1.set_xticklabels(ORDER_NAMES)
-    ax1.set_ylabel(f"ms / query (best-of-{N_REPEATS}, kernel-only)")
-    ax1.set_title("Wall-clock: tight vs cheap bound")
-    ax1.legend(fontsize=8)
-    ax1.grid(axis="y", color="#e9e8e2", linewidth=0.6)
-    ax1.spines[["top", "right"]].set_visible(False)
-
-    ax2.set_xticks(x); ax2.set_xticklabels(ORDER_NAMES)
-    ax2.set_ylabel("pruned docs %")
-    ax2.set_title("Pruning lost to the looser bound")
-    ax2.set_ylim(0, 105)
-    ax2.legend(fontsize=8)
-    ax2.grid(axis="y", color="#e9e8e2", linewidth=0.6)
-    ax2.spines[["top", "right"]].set_visible(False)
+        ax1.axhline(dense_arm["ms_per_query"], color="#5c4a9e", linestyle="--",
+                    linewidth=1.2, label="dense_fused")
+        ax1.set_xticks(x); ax1.set_xticklabels(ORDER_NAMES, fontsize=7)
+        ax1.set_title(f"C={_cps_label(cps)}", fontsize=9)
+        ax2.set_xticks(x); ax2.set_xticklabels(ORDER_NAMES, fontsize=7)
+        ax2.set_ylim(0, 105)
+        for ax in (ax1, ax2):
+            ax.grid(axis="y", color="#e9e8e2", linewidth=0.6)
+            ax.spines[["top", "right"]].set_visible(False)
+        if ci == 0:
+            ax1.set_ylabel(f"ms / query (best-of-{N_REPEATS})")
+            ax2.set_ylabel("pruned docs %")
+            ax1.legend(fontsize=7)
 
     fig.suptitle(
         f"e09 bound-tightness ablation — {dataset}  "
-        f"(fused doc-level BOND, oracle policy, shrink=1, all cores)",
+        f"(fused doc-level BOND, oracle policy, shrink=1, all cores)\n"
+        f"top: wall-clock (tight vs cheap; dashed = dense);  "
+        f"bottom: pruned docs %",
         fontsize=10,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
     print(f"  Figure: {out_path}")

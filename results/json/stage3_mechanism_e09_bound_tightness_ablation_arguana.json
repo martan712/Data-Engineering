@@ -17,52 +17,317 @@
     "bond",
     "pca"
   ],
+  "checkpoint_sets": [
+    [
+      32,
+      64
+    ],
+    [
+      112
+    ],
+    [
+      64,
+      112
+    ],
+    [
+      32,
+      64,
+      96,
+      112
+    ]
+  ],
   "arms": [
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "natural",
-      "ms_per_query": 36.361963385006675,
-      "qps": 27.50126524829887,
+      "ms_per_query": 40.89301666499523,
+      "qps": 24.45405307689145,
       "pruned_docs_pct": 0.5091653216509108,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "natural",
-      "ms_per_query": 36.805015110003296,
-      "qps": 27.170210282788563,
+      "ms_per_query": 40.11361937500624,
+      "qps": 24.92918902808043,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "bond",
-      "ms_per_query": 41.37944687499839,
-      "qps": 24.1665869295175,
-      "pruned_docs_pct": 2.6062946737376067,
+      "ms_per_query": 42.83474331499747,
+      "qps": 23.34553501689541,
+      "pruned_docs_pct": 2.607274613788333,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "bond",
-      "ms_per_query": 41.15502976999778,
-      "qps": 24.29836658091801,
+      "ms_per_query": 41.966110640023544,
+      "qps": 23.828750979040905,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "tight",
       "dimension_order": "pca",
-      "ms_per_query": 40.08194453499527,
-      "qps": 24.948889371545008,
+      "ms_per_query": 40.8226490800007,
+      "qps": 24.496205477510447,
       "pruned_docs_pct": 0.5594881254323265,
       "recall_vs_exact_at_10": 1.0
     },
     {
+      "checkpoints": [
+        32,
+        64
+      ],
       "bound": "cheap",
       "dimension_order": "pca",
-      "ms_per_query": 38.91417446498963,
-      "qps": 25.6975771360557,
+      "ms_per_query": 40.136935004993575,
+      "qps": 24.914707609726218,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 36.58132058499177,
+      "qps": 27.33635593271256,
+      "pruned_docs_pct": 97.5238067788794,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 39.97647484000481,
+      "qps": 25.01471187747878,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 36.91602269002033,
+      "qps": 27.088508651023623,
+      "pruned_docs_pct": 98.47567442932903,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 40.01211733499076,
+      "qps": 24.992428959151727,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 36.27931086000899,
+      "qps": 27.56391938806944,
+      "pruned_docs_pct": 97.19644915840443,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 39.959581264993176,
+      "qps": 25.02528726135716,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 37.18109904497396,
+      "qps": 26.895385711713576,
+      "pruned_docs_pct": 97.5238067788794,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 39.938414265016036,
+      "qps": 25.03855043829188,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 38.76356239001325,
+      "qps": 25.797422588219924,
+      "pruned_docs_pct": 98.47567442932903,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 41.34585943498678,
+      "qps": 24.186218733037197,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 36.918910934982705,
+      "qps": 27.08638945935008,
+      "pruned_docs_pct": 97.19650680193682,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 38.306481649997295,
+      "qps": 26.105242688088808,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 36.40393766498164,
+      "qps": 27.46955588164131,
+      "pruned_docs_pct": 97.5238067788794,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 42.24952628497704,
+      "qps": 23.668904433505496,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 37.93337626502762,
+      "qps": 26.36200882867213,
+      "pruned_docs_pct": 98.47567442932903,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 43.69861943501746,
+      "qps": 22.884018143572284,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 36.88821381001617,
+      "qps": 27.108929837325775,
+      "pruned_docs_pct": 97.19656444546922,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 41.814865000014834,
+      "qps": 23.914940296940937,
       "pruned_docs_pct": 0.0,
       "recall_vs_exact_at_10": 1.0
     }
@@ -70,8 +335,8 @@
   "dense_arm": {
     "bound": "none",
     "dimension_order": "dense_fused",
-    "ms_per_query": 37.25829558999976,
-    "qps": 26.839660380718087,
+    "ms_per_query": 39.76705723500345,
+    "qps": 25.146442043485877,
     "pruned_docs_pct": 0.0,
     "recall_vs_exact_at_10": 1.0
   }
