@@ -555,7 +555,12 @@ pay off"). `fused_panel_maxsim_bond_cheap` adds the H_q-analog —
 the identical templated body, and e09 (bound × order, oracle policy,
 shrink = 1) measures the package trade: bookkeeping shed vs pruning lost.
 Full analysis and decision criteria: `docs/bond2002_bound_cost_analysis.md`.
-Run pending.
+**Outcome (R12a, e09 rerun at the late checkpoint sets, 2026-07-04): adopt
+TIGHT.** The cheap bound prunes 0.00% at every late checkpoint on every
+dataset (too loose to fire even at dim 112); tight prunes 87–98% and wins
+wall-clock in 10/12 natural-order late cases. This REVERSES the 2002 lesson —
+in MaxSim the cheap H_q-analog does not prune at all where it matters, so its
+cheaper bookkeeping buys nothing.
 
 Decision-gate implication: on scifact, no exact-safe arm (either
 granularity) beats the dense fused baseline. The exact-safe win, if it

@@ -191,8 +191,21 @@ predicted); where tight's pruning fires it wins narrowly (nfcorpus bond
 E_v's. HOWEVER, e08 (same day) showed late checkpoints (C = {96}/{112})
 prune 88–98% of documents and beat dense on 3 of 4 datasets — the regime
 where the bound choice actually matters was not covered by e09's
-checkpoint set. The adopt-a-default decision is therefore deferred to the
-plan doc's R12a: rerun this comparison at the e08-winning checkpoint sets.
+checkpoint set. **RESOLVED — R12a (e09 rerun at the late sets, 2026-07-04, all 4 datasets):
+adopt the TIGHT bound.** The cheap query-only bound prunes 0.00% at EVERY
+late checkpoint ({112}, {64,112}, {32,64,96,112}) on EVERY dataset — its
+`resd→1` relaxation is too loose to fire even at dim 112, so it only pays
+checkpoint overhead for zero pruning. Tight prunes 87–98% and is faster in
+10/12 natural-order late-checkpoint cases (exceptions: single C={112} on
+nfcorpus/scidocs, marginally slower; at C={64,112} and the full set tight
+wins on all four). **This REVERSES the 2002 lesson**: de Vries et al. found
+the cheap H_q bound beat the tighter E_v/H_h bounds because H_q still pruned
+enough; in MaxSim the cheap bound does not prune AT ALL at the checkpoints
+that matter, so its cheaper bookkeeping buys nothing — the transfer fails in
+the bound MATH (Cauchy–Schwarz residual, no monotonicity), not the
+engineering. (The standalone-baseline wall-clock margins from e08/e09 are
+inflated — see plan doc R12b/R12c — but the tight-vs-cheap verdict here is a
+same-run RELATIVE comparison and is unaffected.)
 
 Explicitly NOT pursued, with reasons: a token-only kernel (the domination
 test needs the same shared state plus lane masks and an m-per-lane test —
