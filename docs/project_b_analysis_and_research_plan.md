@@ -634,11 +634,36 @@ organized as a research argument.
 
 ## Status And Research Plan (Revised)
 
-Last updated 2026-07-03 (third pass: e07 (scifact/nfcorpus/arguana), e08
+Scope decision (2026-07-08): finalize the paper on the exact-safe arm. RQ4
+(approximate `shrink < 1` frontier) is rescoped OUT; R5, R7 (scale), and R9
+(CoRECT) are deferred to future work. Remaining critical path: R8 (Stage 4
+IVF-seed + fused reranker) and R10 (write-up). Contributions that stand:
+RQ1 (mechanism), RQ2 (fused dense kernel, 3.2x over OpenBLAS), RQ3
+(single-dataset exact-safe win), and R8 (system).
+
+Last updated 2026-07-04 (fifth pass: R12a + R12b + R12c analysis. R12a e09
+rerun landed overnight (all 4 datasets, 24 arms, recall 1.0) → adopt the TIGHT
+doc-level bound (cheap prunes 0% at every late checkpoint — reverses the
+BOND-2002 lesson). R12b: the e08 "wall-clock exceeds cells" finding is a
+MEASUREMENT ARTIFACT of a standalone dense baseline — interleaved, arguana's
+margin corrects from −19% MT to +8.7%. R12c re-measured all 4 datasets
+interleaved at 1T+all-cores (driver `r12c_interleaved_exact_safe.py`):
+corrected all-cores margins are arguana +8.7%, scidocs +0.9%, scifact +2.3%,
+nfcorpus +0.9% — only arguana wins, so **G1 is NOT met at the honest all-cores
+baseline** (single-dataset, not ≥2). All future wall-clock claims must
+interleave the baseline. R12 is now CLOSED (a/b/c all done); the TIGHT+C={112}
+fold into e05 is carried as an R5 dependency.
+Fourth pass, PREP ONLY: extended the e09 driver to
+the e08-winning late checkpoint sets for R12a and wired it into
+`run_pending_experiments.sh` for an overnight user run — no new results yet;
+analysis deferred to a fresh agent. Prior: 2026-07-03 third pass: e07
+(scifact/nfcorpus/arguana), e08
 (all 4 datasets), and e09 (all 4 datasets) runs landed. Headline: e08 shows
 LATE checkpoints (C={96}/{112}) prune 88–98% of documents exact-safe and
 beat the fused dense baseline on 3 of 4 datasets — the RQ3 verdict is no
-longer uniformly negative; see RQ3 below. Also: tie-aware exact-agreement
+longer uniformly negative; see RQ3 below. (CORRECTED by R12c below: that
+"3 of 4" used a standalone dense baseline and was inflated; interleaved,
+only arguana wins at all cores and G1 is NOT met.) Also: tie-aware exact-agreement
 fix in the fused testbed path (a rank-10 score tie on nfcorpus tripped the
 shrink=1 gate; boundary ties are now accepted given oracle scores, as the
 wide-block path already did). Second pass: fused-kernel overhead revision —
@@ -667,8 +692,10 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   128; total avoidable work (cells) is only 8–16% even with token-level
   pruning and per-boundary checks. e08 (2026-07-03) confirmed the flip
   side: checkpoints placed AFTER the survival cliff (dims 96–112) do
-  prune 88–98% of documents — the cells ceiling stays modest, but the
-  wall-clock effect is larger than cells predict (R12b).
+  prune 88–98% of documents — the cells ceiling stays modest, and the
+  wall-clock saving tracks it (~−12%) once the dense baseline is measured
+  interleaved rather than standalone (R12b corrected the earlier "wall-clock
+  exceeds cells" reading to a measurement artifact).
 - **RQ2 (engineering)**: what is the strongest honest dense baseline, and
   does the PDX layout matter in the MaxSim regime?
   → Stage 3b. **Answered**: MaxSim (m≈21) is GEMM-shaped, so the layout wins
@@ -682,35 +709,55 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   pruning fires on <2% of documents (consistent with RQ1's survival curves)
   and BOND never beats dense — the scifact e03 finding generalizes. But at
   LATE checkpoints (C={96}/{112}/supersets) the same exact-safe kernel
-  prunes 88–98% of documents (recall 1.0 on all 16 arms × 4 datasets) and
-  BEATS the all-cores dense baseline on arguana (29.1 vs 36.1 ms/q, −19%),
-  scidocs (56.8 vs 61.9, −8%), nfcorpus (9.9 vs 10.2, −3%), and ties
-  scifact (15.9 vs 15.8); at 1T arguana saves 29% (126.6 vs 179.6 ms/q).
-  Natural order wins everywhere — bond order prunes slightly more but its
-  permuted access costs more than the extra pruning saves. Two open
-  mechanism questions: (a) wall-clock savings EXCEED the simulator's
-  cells-saved prediction (arguana 1T −29% wall-clock vs −12% cells) — the
-  pruned final segment is disproportionately expensive (epilogue max-fold +
-  top-k?); (b) e09 compared bounds only at {32, 64} where nothing prunes —
-  the tight-vs-cheap question must be re-asked at the winning late
-  checkpoints (see R12). G1 now has a positive signal on ≥2 datasets.
+  prunes 88–98% of documents (recall 1.0 on all 16 arms × 4 datasets). The
+  STANDALONE-baseline e08 numbers looked strong — arguana 29.1 vs 36.1 ms/q
+  (−19% MT) and 126.6 vs 179.6 (−29% 1T), scidocs −8%, nfcorpus −3%, scifact
+  tie — but **R12b (2026-07-04) showed those margins are largely a
+  measurement artifact**: e08/e09 time the dense baseline ONCE in isolation,
+  so a thermally unlucky baseline window inflates every pruning arm. Measured
+  INTERLEAVED back-to-back (dense and BOND round-robin, drift cancels) on
+  arguana: the 1T zero-prune offset collapses from +19% to +0.2% (the
+  standalone dense 179.6 ms/q was throttled — interleaved it is 149), and the
+  MT saving at C={112} corrects from −19.6% to **+8.7%**, with a −4.3%
+  zero-prune checkpoint OVERHEAD. Natural order wins everywhere — bond order
+  prunes slightly more but its permuted access costs more than the extra
+  pruning saves. Mechanism questions: (a) **RESOLVED (R12b)** — wall-clock
+  savings do NOT genuinely exceed the cells prediction; the apparent excess
+  was the standalone-baseline artifact, and once the baseline is fair the
+  ~−12% cells prediction holds (arguana MT: +8.7% ≈ 12% cells − ~4% checkpoint
+  overhead). There is no "disproportionately expensive final segment." (b)
+  e09/R12a re-asked the tight-vs-cheap bound at the winning late checkpoints
+  (done — see R12/§R12a below). **Corrected all-cores verdict (R12c, all 4
+  datasets, interleaved): only arguana clears a real exact-safe margin (+8.7%,
+  was +19.6%); scidocs +0.9% (was +5.5%), scifact +2.3%, nfcorpus +0.9% are
+  ties. G1 is NOT met at the honest all-cores baseline — a single-dataset win,
+  not a ≥2-dataset repeatable margin.** (1T: all four positive, +3.3…+14.1% at
+  C={112}, but 1T is not the decision baseline.) Every wall-clock win must be
+  re-measured interleaved before it is headlined.
   e03/e04 ran on all four datasets (2026-07-03) and confirm the default-C
   negative across the board — the RQ3 record is complete (e07 on scidocs
   deferred, memory issue).
-- **RQ4 (approximate frontier)**: does `shrink < 1` buy wall-clock at
-  acceptable recall? Smaller residual scaling collapses the bounds earlier,
-  which is the most plausible positive-result region.
-  → e05. **Partial answer (scifact + nfcorpus, default C={32,64},
-  2026-07-03): NO G2 point there** — shrink=0.8 buys 20–25% latency but
-  only at recall 0.96–0.97; by shrink=0.9 recall is back to 1.0 but pruning
-  has collapsed (≤1.5% docs) and the win is gone. The frontier must be
-  re-mapped from the late-checkpoint operating point (R5 remainder, after
-  R12) — that is now the main open question.
-- **RQ5 (system context)**: candidate-set seeding (IVF/PLAID) interplay and
-  IR-quality metrics at fixed candidate sets. → Stages 4–5. Open.
+- **RQ4 (approximate frontier) — OUT OF SCOPE (rescoped 2026-07-08).** The
+  project is finalized on the exact-safe arm (`shrink = 1`), whose quality
+  guarantee is exact agreement with MaxSim (`recall_vs_exact@10 = 1.0`). The
+  approximate `shrink < 1` frontier is deferred to future work.
+  → e05 preliminary (scifact + nfcorpus, default C={32,64}, 2026-07-03): NO
+  G2 point — shrink=0.8 buys 20–25% latency but only at recall 0.96–0.97; by
+  shrink=0.9 recall is back to 1.0 but pruning has collapsed (≤1.5% docs) and
+  the win is gone. This preliminary negative stands as motivation for the
+  future-work frontier (late-checkpoint operating point); it is no longer a
+  decision question for this paper.
+- **RQ5 (system context)**: candidate-set seeding (IVF/PLAID) interplay at
+  fixed candidate sets — the fused kernel as the reranker in an IVF pipeline.
+  → Stage 4 (R8), in scope. IR-quality metrics under CoRECT (Stage 5 / R9)
+  are deferred to future work; exact agreement is the quality guarantee for
+  the exact-safe arm.
 
-A negative RQ3 with a defensible baseline plus a quantified mechanism
-explanation (RQ1) and a mapped RQ4 frontier is a sound, publishable result.
+A single-dataset RQ3 result with a defensible baseline, a quantified mechanism
+explanation (RQ1), and the standalone RQ2 dense-kernel contribution — landed as
+a working IVF-reranker system in Stage 4 (R8) — is a sound, publishable result.
+The approximate frontier (RQ4), scale (R7), and CoRECT IR-quality (R9) are
+future work.
 
 ### Instruments (shared bound math, two distinct ALGORITHMS)
 
@@ -828,8 +875,9 @@ used by e08.
       and both lose to dense — the bond2002 doc's third outcome
       ("completeness argument") at those checkpoints. Cheap is marginally
       faster where nothing prunes (its bookkeeping is cheaper); tight wins
-      only where it prunes (nfcorpus bond order). Decision deferred to R12:
-      the comparison that matters is at e08's winning late checkpoints.
+      only where it prunes (nfcorpus bond order). Decision deferred to R12 —
+      RESOLVED in R12a (2026-07-04): at e08's winning late checkpoints cheap
+      prunes 0% everywhere, so **adopt TIGHT** (see R12(a) below).
 - [x] Tie-aware exact-agreement fix (2026-07-03): nfcorpus query 181 has an
       EXACT score tie (7.0799808556, identical in float64) at rank 10; the
       fused kernel picked the other tied doc and tripped the shrink=1 gate
@@ -899,43 +947,101 @@ Completed:
 
 Queue (execute top to bottom):
 
-- [ ] **R12 — late-checkpoint follow-ups (NEW, from the e08 finding)**.
-      First in the queue: (a) is the cheapest run and its outcome — the
-      doc-level bound default AND the winning checkpoint set — is an input
-      to R5's expensive decision experiment; (b) must accompany the G1
-      claim.
-      (a) rerun the e09 tight-vs-cheap comparison at the e08-winning sets
-      (C={112}, {64,112}, {32,64,96,112}) — that is where pruning fires, so
-      that is where the bound choice actually matters; adopt the winner as
-      the doc-level default per the bond2002 §6 criteria. (b) Explain why
-      wall-clock savings exceed the simulator's cells-saved prediction
-      (arguana 1T: −29% wall-clock vs −12% padded cells at C={112}) — the
-      pruned final segment is disproportionately expensive; candidates: the
-      register-folded max/epilogue cost, top-k insertion, last-panel memory
-      traffic. (c) Fold the winning C into e05 (R5) so the RQ4 frontier
-      starts from the strongest exact-safe operating point.
-- [ ] **R5 — e05 approximate frontier, remainder**: PARTIALLY DONE
-      2026-07-03 — ran on scifact + nfcorpus at the default C={32,64}
-      (fused wall-clock frontier + accounting frontier, self_bound policy).
-      Result so far: NO G2 point — wall-clock wins only below the recall
-      bar (shrink=0.8: 11.7 vs 15.6 ms/q scifact / 8.6 vs 10.8 nfcorpus at
-      recall 0.96–0.97); at shrink ≥0.9 recall is 1.0 but pruning collapses
-      (≤1.5% docs) and the win vanishes. Remaining — and this is the RQ4 /
-      gate-G2 decision experiment: arguana + scidocs, and rerun ALL four at
-      the R12a-winning bound + late checkpoint set, where the exact-safe
-      arm already prunes 88–98% and shrink<1 starts from a winning
-      position. Depends on R12a/c.
-- [ ] **R7 — scale check**: one 100k–1M doc corpus (CoRECT pools,
-      `[retrieval]` extra) exported to the packed format; re-run e03/e05
-      there — both the DRAM-floor argument and pruning behavior may shift
-      with corpus size (e04 gives the small-scale trend).
+- [x] **R12 — late-checkpoint follow-ups (NEW, from the e08 finding)**. DONE
+      2026-07-04 — all three deliverables complete: (a) tight bound adopted,
+      (b) cells-vs-wall gap resolved as a measurement artifact, (c) corrected
+      G1 margins on all 4 datasets. The one carry-over — folding the winning
+      config (TIGHT, C={112}) into e05 — is R5's experiment and is already
+      listed as an R5 dependency below, so R12 itself is closed.
+      **(a) — bound default, DONE 2026-07-04** (e09 rerun, overnight log
+      `results/logs/r12a_e09_20260704_004845.log`, 4957 s, all 4 datasets,
+      24 arms each, recall 1.0). e09 now sweeps `{32,64}` (early control) +
+      `{112}`, `{64,112}`, `{32,64,96,112}` (e08 winners) ×
+      {natural,bond,pca} × {tight,cheap}, best-of-10, all cores. **Verdict:
+      adopt the TIGHT bound as the doc-level default.** The CHEAP query-only
+      bound (`Σ_i max_j P_ij + Σ_i resq_i`, resd→1) prunes 0.00% at EVERY late
+      checkpoint on EVERY dataset — too loose to fire even at dim 112 — so it
+      only pays checkpoint overhead. Tight prunes 87–98% and is faster in
+      10/12 (natural-order) late-checkpoint cases; the two exceptions are the
+      single C={112} on nfcorpus/scidocs where tight is marginally slower, but
+      at C={64,112} and {32,64,96,112} tight wins on all four datasets. This
+      REVERSES the BOND-2002 lesson (their cheap H_q beat the tight bounds):
+      in MaxSim the cheap bound does not prune at all, so its "cheaper
+      bookkeeping" buys nothing. bond2002 §6 criteria → tight.
+      **(b) — cells-vs-wall gap, DONE 2026-07-04 (RESOLVED as a measurement
+      artifact).** The premise ("wall-clock savings EXCEED the cells
+      prediction; the pruned final segment is disproportionately expensive")
+      is WRONG. The −29%/−12% gap is arguana-only (scifact/nfcorpus/scidocs
+      save LESS wall-clock than cells predict, amp 0.2–0.3× at 1T), and it is
+      driven by e08/e09 timing the dense baseline STANDALONE (once, in
+      isolation) rather than interleaved with the arms. Interleaved back-to-
+      back probes (`experiments/stage3_mechanism/r12b_interleaved_baseline_probe.py`,
+      natural order, all/1 thread):
+        - arguana 1T zero-prune (C={32}, 0% pruned): standalone offset +19%
+          COLLAPSES to +0.2%; the standalone dense 179.6 ms/q was throttled
+          (interleaved 149).
+        - arguana MT C={112}: e08 standalone −19.6% corrects to **+8.7%**
+          (dense 35.28 → 32.20), matching the e09 run's independent +8.0%
+          (dense 39.77 → tight 36.58) — with a −4.3% zero-prune checkpoint
+          OVERHEAD. C={112} arguana MT ranged 29–37 ms/q across three runs:
+          the standalone across-window spread is the whole "amplification."
+      Conclusion: wall-clock tracks the ~−12% cells prediction once the
+      baseline is fair; there is NO disproportionately-expensive final
+      segment. Methodology fix for all future wall-clock claims: interleave
+      the dense baseline with the arms (round-robin, best-of-N per arm), never
+      time it standalone. This directly downgrades G1 (see gate below).
+      **(c) — corrected G1 margins, DONE 2026-07-04** (e05-fold carried by R5).
+      Driver `experiments/stage3_mechanism/r12c_interleaved_exact_safe.py`
+      (tight bound, natural order, same 50-query seed-42 subsample as e08,
+      interleaved dense, best-of-8; JSON
+      `results/json/stage3_mechanism_r12c_interleaved_exact_safe_{mt,1t}.json`).
+      Corrected margin vs dense (best late set), interleaved [e08 standalone] (cells):
+
+      | dataset | m | ALL-CORES (G1) | 1T |
+      |---|---|---|---|
+      | scifact  | 21 | +2.3% {64,112} [−0.3%] | +5.8% {112} [+3.8%] |
+      | nfcorpus | 12 | +0.9% {64,112} [+2.8%] | +3.3% {112} [+2.1%] |
+      | arguana  | 48 | **+8.7%** {112} [+19.6%] | **+14.1%** {112} [+29.5%] |
+      | scidocs  | 17 | +0.9% {64,112} [+5.5%] | +5.6% {112} [+4.0%] |
+
+      Zero-prune C={32} overhead (interleaved): MT −2 to −6%, 1T −6 to −10%
+      (arguana 1T ≈ 0). Every dataset's cells-saved ≈ +12%; the corrected wall
+      margin ≈ cells − checkpoint-overhead, NO amplification. **Verdict: at all
+      cores only arguana (large m=48 → high arithmetic intensity, low relative
+      overhead) clears a real margin (+8.7%); the other three are +0.9–2.3%
+      ties. G1 is NOT met at the honest all-cores baseline** (needs ≥2 datasets;
+      arguana alone). At 1T all four are positive (+3.3…+14.1% at C={112}) but
+      1T is not the decision baseline (RQ2 dense is all-cores). MT margins are
+      smaller than 1T because at all cores the kernels are more memory-bound, so
+      the arithmetic cells saved translate poorly to wall-clock. **Carry-over
+      to R5:** fold the winning config (TIGHT, C={112}) into e05 — tracked as
+      an R5 dependency, not a reopened R12 item.
+- [~] **R5 — e05 approximate frontier, remainder**: DEFERRED TO FUTURE WORK
+      (2026-07-08, RQ4 rescoped out). Preliminary record retained: ran on
+      scifact + nfcorpus at the default C={32,64} (fused wall-clock frontier +
+      accounting frontier, self_bound policy). NO G2 point — wall-clock wins
+      only below the recall bar (shrink=0.8: 11.7 vs 15.6 ms/q scifact / 8.6 vs
+      10.8 nfcorpus at recall 0.96–0.97); at shrink ≥0.9 recall is 1.0 but
+      pruning collapses (≤1.5% docs) and the win vanishes. Future work: the
+      late-checkpoint operating point (R12a-winning bound), where the exact-safe
+      arm already prunes 88–98% and shrink<1 starts from a winning position.
+- [~] **R7 — scale check**: DEFERRED TO FUTURE WORK (2026-07-08; does not fit
+      this machine). One 100k–1M doc corpus (CoRECT pools, `[retrieval]` extra)
+      exported to the packed format; re-run e03/e05 there. Safe to defer: the
+      mechanism verdict rests on the bound looseness of L2-normalized d=128
+      embeddings, which is corpus-size-independent (e04 gives the small-scale
+      trend); the DRAM-floor argument is expected to hold at scale.
 - [ ] **R8 — Stage 4**: baselines (`faiss_ivf`, `plaid` stubs) + fixed
       candidate-set comparisons; PLAID retuned at appropriate scale. The
       fused kernels are the production path; candidate seeding feeds
       τ_seed (Stage 1 §4.4) — measure how much a realistic seed recovers
       vs the oracle policy.
-- [ ] **R9 — Stage 5**: CoRECT adapter, RC metrics, matched-quality frontier
-      under fairness controls (one machine, fixed threads, CIs).
+- [~] **R9 — Stage 5**: DEFERRED TO FUTURE WORK (2026-07-08). CoRECT adapter,
+      RC metrics, matched-quality frontier under fairness controls (one machine,
+      fixed threads, CIs). Coupled to R5: with the paper scoped exact-safe,
+      exact agreement (recall_vs_exact@10 = 1.0) is the quality guarantee and
+      BEIR qrels recall the proxy, so CoRECT RC metrics are not on the
+      critical path.
 - [ ] **R10 — paper**: write up per the Final Paper Structure; every claim
       through the Validation Checklist. The RQ2 finding (MaxSim is
       GEMM-shaped; vertical layout wins via packing amortization + epilogue
@@ -948,7 +1054,7 @@ Queue (execute top to bottom):
 
 Optional (not in the queue; triggered by outcomes above):
 
-- [ ] Optional (only after a positive RQ3/RQ4): PDX-in-DuckDB integration
+- [ ] Optional (only after a positive RQ3): PDX-in-DuckDB integration
       as future work.
 - [ ] Optional — trigger condition MET by e08 (2026-07-03): bond order DID
       prune more than natural at C={112} on every dataset (e.g. arguana
@@ -966,19 +1072,29 @@ Optional (not in the queue; triggered by outcomes above):
 ### Decision gates (explicit criteria)
 
 - **G1 (exact-safe, RQ3)**: an arm with recall 1.0 beating the fused dense
-  all-cores baseline by a repeatable margin on ≥2 datasets. Current
-  evidence (e08, 2026-07-03): MET at late checkpoints on arguana (−19%)
-  and scidocs (−8%), with nfcorpus marginal (−3%) and scifact a tie —
-  provided the margins repeat (single-machine best-of-N so far; R12b's
-  mechanism explanation should accompany the claim). At the default
-  {32,64} checkpoints G1 remains negative everywhere. If the win does not
-  survive scrutiny: report the negative result WITH the RQ1 explanation
-  and the RQ2 baseline contribution — do not soften the baseline to
-  manufacture a win.
-- **G2 (approximate, RQ4)**: a `shrink < 1` frontier point dominating the
-  dense baseline (lower latency, recall ≥ 0.99) or a clearly better
-  latency-recall curve than dimension-truncation at equal recall. Current
-  evidence (e05 scifact + nfcorpus at C={32,64}, 2026-07-03): NOT met —
-  the best sub-baseline latencies sit at recall 0.96–0.97, and recall
-  recovers to 1.0 only where pruning (and the win) has collapsed. Open at
-  the late-checkpoint operating point (R5 remainder, after R12).
+  all-cores baseline by a repeatable margin on ≥2 datasets. **Status: NOT MET
+  at the all-cores baseline (R12c, 2026-07-04, corrected).** The e08 evidence
+  (arguana −19% MT, scidocs −8%, nfcorpus −3%, scifact tie) came from a
+  STANDALONE dense baseline; R12b/R12c re-measured with the baseline
+  INTERLEAVED (tight bound, natural order, same 50-query seed-42 subsample,
+  best-of-8). Corrected all-cores margins at the best late checkpoint:
+  **arguana +8.7%** (was +19.6%), scidocs +0.9% (was +5.5%), scifact +2.3%,
+  nfcorpus +0.9% — i.e. only ONE dataset (arguana, the large-m=48, high
+  arithmetic-intensity case) clears a real margin; the other three are
+  within ±2% (ties). The checkpoint kernel carries a −2…−6% zero-prune
+  overhead that, minus the ~+12% cells saving, leaves ≈0 on the datasets that
+  are memory-bound at all cores. So the honest verdict is a SINGLE-dataset
+  exact-safe win, not the ≥2-dataset repeatable margin G1 requires. (At 1T all
+  four are positive, +3.3…+14.1% at C={112}, but 1T is not the honest
+  baseline — RQ2 dense is all-cores.) At the default {32,64} checkpoints G1
+  remains negative everywhere. Report this as the negative/single-dataset
+  result WITH the RQ1 explanation and the RQ2 baseline contribution — do not
+  soften the baseline to manufacture a win, and (the R12b lesson) do not let a
+  throttled standalone baseline manufacture one either.
+- **G2 (approximate, RQ4) — OUT OF SCOPE (rescoped 2026-07-08).** Deferred to
+  future work with RQ4. Preliminary evidence retained: `shrink < 1` frontier
+  dominating the dense baseline (lower latency, recall ≥ 0.99) was NOT found
+  on e05 (scifact + nfcorpus at C={32,64}, 2026-07-03) — best sub-baseline
+  latencies sit at recall 0.96–0.97, and recall recovers to 1.0 only where
+  pruning (and the win) has collapsed. The late-checkpoint operating point is
+  future work, not a gate for this paper.
