@@ -1,7 +1,7 @@
 \documentclass[10pt,twocolumn]{article}
 
 \usepackage[a4paper,margin=2cm,columnsep=0.7cm]{geometry}
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{microtype}
@@ -14,6 +14,8 @@
 
 % Draft helper; remove before submission.
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\newtheorem{theorem}{Theorem}
 
 \title{\textbf{Accelerating ColBERT MaxSim with BOND-Style Dimension Pruning on a PDX Layout}}
 \author{Martan van der Straaten\\Radboud University\\\texttt{martanvanderstraaten@gmail.com}}
@@ -131,7 +133,8 @@ The contributions of this paper are the following:
 
 The remainder of this paper is structured as follows. Section~\ref{sec:background}
 covers the background: late interaction, BOND, and the PDX layout.
-Section~\ref{sec:design} presents our formalization and kernel designs.
+Section~\ref{sec:bound} formalizes the bound and proves it exact-safe;
+Section~\ref{sec:kernels} presents the kernels built on it.
 Section~\ref{sec:method} describes the experimental setup and how each
 experiment answers a research question. Section~\ref{sec:results} presents
 the results, and Section~\ref{sec:discussion} discusses and concludes.
@@ -174,7 +177,7 @@ later candidates are pruned earlier; the risk is that the bound is loose, in
 which case nothing is pruned and the bookkeeping is pure overhead. Notably,
 the original paper reports that for Euclidean search a \emph{cheap}
 query-side bound beat their tighter bound at wall-clock, because the tighter
-bound's bookkeeping did not pay off. Section~\ref{sec:design:bond} revisits
+bound's bookkeeping did not pay off. Section~\ref{sec:kernels:bond} revisits
 this trade-off for MaxSim, where the outcome is the opposite.
 
 \subsection{The PDX layout}
@@ -213,17 +216,15 @@ candidates are probed. In our comparisons, all such methods are evaluated at
 a \emph{fixed candidate budget}, so a candidate-generation speedup can never
 masquerade as a scoring speedup (Section~\ref{sec:method:protocol}).
 
-\section{BOND-MaxSim: bound and kernels}
-\label{sec:design}
+\section{The BOND-MaxSim bound}
+\label{sec:bound}
 
-This section presents our own work: the MaxSim bound and its safety
-proof (\ref{sec:design:bound}), the fused dense kernel that serves as the
-honest baseline (\ref{sec:design:dense}), the pruned variants built on it
-(\ref{sec:design:bond}), and the accounting instruments that let us separate
-the mechanism from the implementation (\ref{sec:design:instruments}).
+This section derives the MaxSim analogue of the BOND bound, states the
+pruning rules it supports, and proves them exact-safe.
+Section~\ref{sec:kernels} covers the kernels that implement them.
 
-\subsection{The bound, and when pruning is safe}
-\label{sec:design:bound}
+\subsection{Bound and pruning rules}
+\label{sec:bound:rules}
 
 Let $S$ be the set of dimensions scanned so far (a prefix of a chosen scan
 order), and let $P_{ij}(S) = \sum_{z \in S} q_{iz} d_{jz}$ be the partial
@@ -245,24 +246,56 @@ document-level upper bound
 \end{equation}
 and the BOND pruning rule carries over: if $\mathrm{UB}_d(S) < \tau_k$, the
 $k$-th best exact score so far, document $d$ can be discarded. The same
-intervals support a \emph{token-level} test inside one document: a document
-token can be dropped once it is dominated, for every query token, by some
-other token's lower bound. We prove that this never drops any query token's
-true argmax (the \emph{survival invariant}), so finalized scores are exact
-and, by induction, the returned top-$k$ equals the exact top-$k$. The proof
-needs three preconditions: unit-norm tokens, exact arithmetic, and top-$k$
-by set equality. Unit normalization deserves emphasis: it is a
-\emph{safety} precondition, not a convenience. If a stored norm exceeds~1,
-the residual is underestimated and exactness silently breaks, so our
-pipeline verifies norms at export time.
+intervals support a \emph{token-level} test inside one document. Write
+$U_{ij} = P_{ij} + R_{ij}$ and $L_{ij} = P_{ij} - R_{ij}$, and for each
+query token $i$ let $L_i = \max_{j \in \mathrm{Live}} L_{ij}$ over the
+document's still-live tokens: a token $j$ is dropped once $U_{ij} < L_i$ for
+every query token $i$.
+
+\subsection{Exact safety}
+\label{sec:bound:safety}
+
+The document test and the token test together preserve exactness.
+
+\begin{theorem}[exact safety]
+\label{thm:safety}
+Under unit-norm token embeddings, exact arithmetic, and top-$k$ by set
+equality, the pruned scan at $\mathrm{shrink} = 1$ returns the exact top-$k$
+of Equation~\ref{eq:maxsim}.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The key step is a \emph{survival invariant}: no query token's true best
+match $j^*(i) = \arg\max_j \langle q_i, d_j\rangle$ is ever dropped. Fix
+$i$ and suppose $j^*(i)$ is live. Every live token $j'$ satisfies
+$L_{ij'} \le \langle q_i, d_{j'}\rangle \le \langle q_i, d_{j^*(i)}\rangle
+\le U_{ij^*(i)}$; taking the maximum over $j'$ gives $L_i \le U_{ij^*(i)}$,
+so the domination test never fires for $j^*(i)$, and by induction over
+pruning rounds it stays live. Consequently, a document that survives to
+full scan depth, where all residuals are zero, finalizes with
+$\sum_i \max_{j \in \mathrm{Live}} P_{ij}$ equal to its exact score. The
+threshold $\tau_k$ is therefore always the $k$-th best \emph{exact} score
+among finalized documents, and a document discarded by
+$\mathrm{UB}_d(S) < \tau_k$ satisfies
+$\mathrm{score}(q,d) \le \mathrm{UB}_d(S) < \tau_k$, so it cannot belong to
+the final top-$k$.
+\end{proof}
+
+The unit-norm precondition deserves emphasis: it is a \emph{safety}
+precondition, not a convenience. If a stored norm exceeds~1, the residual is
+underestimated and exactness silently breaks, so our pipeline verifies norms
+at export time.
 
 The bound also admits an approximate mode that scales the residual down by a
 factor $\mathrm{shrink} < 1$, trading recall for pruning. No recall guarantee
 survives this, so we treat it as a separate regime and exclude it from this
 paper's claims; everything below runs at $\mathrm{shrink} = 1$.
 
+\subsection{Transfer to a blocked kernel}
+\label{sec:bound:transfer}
+
 Two further lemmas transfer the proof from the per-document formulation to
-the blocked kernel of Section~\ref{sec:design:bond}: a coarser (checkpointed,
+the blocked kernel of Section~\ref{sec:kernels:bond}: a coarser (checkpointed,
 document-level) bound is looser than the per-dimension one and therefore
 still safe, and padding documents to a fixed token multiple is harmless if
 the padding \emph{duplicates a real token}. Zero-padding would not be: a
@@ -271,8 +304,11 @@ maxima are negative. On the query side the situation is reversed and
 zero-padding is exact. Finally, a threshold shared by all threads only ever
 rises toward the true $\tau_k$ from below, so parallel execution stays safe.
 
+\section{Kernel designs}
+\label{sec:kernels}
+
 \subsection{A fused dense kernel}
-\label{sec:design:dense}
+\label{sec:kernels:dense}
 
 The validity of every pruning claim depends on the strength of the dense
 baseline it is measured against: a pruned kernel that beats a weak scan
@@ -296,7 +332,7 @@ that matrix from memory. Our kernel removes all three. The corpus is packed
 once, at build time, into panel-major PDX blocks: panels of 16 document
 tokens stored dimension-major, with documents padded to a panel multiple by
 duplicating their last token (exact by the padding lemma of
-Section~\ref{sec:design:bound}). At query time, an AVX-512 register tile
+Section~\ref{sec:bound:transfer}). At query time, an AVX-512 register tile
 accumulates all $m$ query tokens against one panel across the full dimension
 range, and the per-document maximum is folded in registers as each
 document's last panel completes, so the score matrix is never written. The
@@ -309,7 +345,7 @@ reduction, a mechanism distinct from the memory-bound argument of the
 $m = 1$ literature.
 
 \subsection{Fused BOND kernels}
-\label{sec:design:bond}
+\label{sec:kernels:bond}
 
 The pruned variant keeps the identical microkernel and adds pruning at a
 small set of \emph{checkpoints} $C \subseteq \{1,\dots,D\}$: it processes one
@@ -322,7 +358,7 @@ attributable to the mechanism, not to implementation drift; the two arms
 produce bit-identical scores for unpruned documents, which our test suite
 verifies on every dataset. Three variants exist: a document-level arm, a
 token-level arm that additionally applies the domination test of
-Section~\ref{sec:design:bound} with lane masking, and a \emph{cheap-bound}
+Section~\ref{sec:bound:rules} with lane masking, and a \emph{cheap-bound}
 arm that relaxes the document-side residual to 1, mirroring the query-only
 bound of the original BOND paper. The checkpoint set $C$ and the threshold
 policy (self-seeded, externally seeded, or an oracle threshold for
@@ -349,7 +385,7 @@ above it can miss true top-$k$ documents, so it is reported strictly as a
 recall--latency frontier.
 
 \subsection{Measurement instruments}
-\label{sec:design:instruments}
+\label{sec:kernels:instruments}
 
 Wall-clock alone cannot answer RQ1, because a kernel conflates what the
 bound \emph{could} prune with what its schedule manages to capture. Three
