@@ -309,79 +309,73 @@ paper runs at $\mathrm{shrink} = 1$.
 \subsection{A fused dense kernel}
 \label{sec:kernels:dense}
 
-The validity of every pruning claim depends on the strength of the dense
-baseline it is measured against: a pruned kernel that beats a weak scan
-demonstrates nothing about pruning. Because MaxSim is GEMM-shaped
-(Section~\ref{sec:background}), the appropriate dense reference is not a
-columnar scan but the matrix formulation of Equation~\ref{eq:maxsim}: with
-query tokens stacked as $Q \in \mathbb{R}^{m \times D}$ and corpus tokens as
-$X \in \mathbb{R}^{N \times D}$, all pair similarities are one product
-$Q X^\top$, followed by a per-document segmented maximum. Executed through a
-multithreaded Basic Linear Algebra Subprograms (BLAS) library, this
-formulation outperforms a straightforward columnar scan by nearly an order
-of magnitude on our hardware, and it is the baseline any MaxSim method must
-be held to.
+A pruned kernel that beats a weak scan demonstrates nothing about pruning,
+so the dense baseline must be as strong as possible. Because MaxSim is
+GEMM-shaped (Section~\ref{sec:background}), that baseline is the matrix
+formulation of Equation~\ref{eq:maxsim}: stacking query tokens as
+$Q \in \mathbb{R}^{m \times D}$ and corpus tokens as
+$X \in \mathbb{R}^{N \times D}$, one product $Q X^\top$ followed by a
+per-document maximum. Through a multithreaded Basic Linear Algebra
+Subprograms (BLAS) library, this outperforms a columnar scan by nearly an
+order of magnitude on our hardware.
 
-This formulation can itself be improved, because a general-purpose BLAS
-performs three steps that MaxSim does not require. It packs the corpus
-operand into cache-friendly tiles on every call, although the corpus is
-static; it materializes the full $m \times N$ score matrix, although only
-one maximum per document survives; and the segmented maximum then re-reads
-that matrix from memory. Our kernel removes all three. The corpus is packed
-once, at build time, into panel-major PDX blocks: panels of 16 document
-tokens stored dimension-major, with documents padded to a panel multiple by
-duplicating their last token (exact by the padding lemma of
-Section~\ref{sec:bound:safety}). At query time, an AVX-512 register tile
-accumulates all $m$ query tokens against one panel across the full dimension
-range, and the per-document maximum is folded in registers as each
-document's last panel completes, so the score matrix is never written. The
-resulting kernel computes identical exact scores at roughly $3\times$ the
-throughput of the 12-thread OpenBLAS formulation, and roughly $2\times$
-single-threaded. It serves as the dense baseline for all pruning
-experiments, and constitutes a contribution independent of pruning: the PDX
-layout pays off for MaxSim through packing amortization and a fused
-reduction, a mechanism distinct from the memory-bound argument of the
-$m = 1$ literature.
+Even so, a general-purpose BLAS performs three steps MaxSim does not need:
+it re-packs the static corpus into cache tiles on every call, it
+materializes the full $m \times N$ score matrix although only one maximum
+per document survives, and the reduction then re-reads that matrix from
+memory.
+
+Our kernel removes all three. The corpus is packed once, at build time,
+into panel-major PDX blocks: panels of 16 document tokens stored
+dimension-major, documents padded to a panel multiple by duplicating their
+last token (exact by Section~\ref{sec:bound:safety}). At query time, an
+AVX-512 register tile accumulates all $m$ query tokens against one panel,
+and the per-document maximum folds in registers as each document's last
+panel completes; the score matrix is never written.
+
+The result computes identical exact scores at roughly $3\times$ the
+throughput of the 12-thread OpenBLAS formulation ($2\times$
+single-threaded). Beyond serving as the baseline for every pruning
+experiment, this is a contribution on its own: the PDX layout pays off for
+MaxSim through packing amortization and a fused reduction, not through the
+memory-bound argument of the $m = 1$ literature.
 
 \subsection{Fused BOND kernels}
 \label{sec:kernels:bond}
 
-The pruned variant keeps the identical microkernel and adds pruning at a
-small set of \emph{checkpoints} $C \subseteq \{1,\dots,D\}$: it processes one
-document at a time depth-first across dimension segments, and at each
-checkpoint evaluates the document upper bound $\mathrm{UB}_d$ of
-Equation~\ref{eq:ubd} against a shared, rising threshold $\tau$. If the document survives all checkpoints, the final
-segment folds its exact score as in the dense kernel. Because pruning is the
-only difference to the dense arm, any wall-clock gap between the two is
-attributable to the mechanism, not to implementation drift; the two arms
-produce bit-identical scores for unpruned documents, which our test suite
-verifies on every dataset. Three variants exist: a document-level arm, a
-token-level arm that additionally applies the domination test of
-Section~\ref{sec:bound:rules} with lane masking, and a \emph{cheap-bound}
-arm that relaxes the document-side residual to 1, mirroring the query-only
-bound of the original BOND paper. The checkpoint set $C$ and the threshold
-policy (self-seeded, externally seeded, or an oracle threshold for
-accounting) are parameters throughout.
+The pruned kernel keeps the identical microkernel and adds pruning at a
+small set of \emph{checkpoints} $C \subseteq \{1,\dots,D\}$. Documents are
+processed one at a time, depth-first across dimension segments; at each
+checkpoint the bound $\mathrm{UB}_d$ of Equation~\ref{eq:ubd} is tested
+against a shared, rising threshold $\tau$, and a surviving document
+finalizes exactly as in the dense kernel. Since pruning is the only
+difference between the two arms, any wall-clock gap is attributable to the
+mechanism; both arms produce bit-identical scores for unpruned documents,
+verified on every dataset.
+
+Three variants are measured: a document-level arm; a token-level arm that
+additionally applies the domination test of Section~\ref{sec:bound:rules}
+with lane masking; and a \emph{cheap-bound} arm that relaxes the
+document-side residual to 1, the query-only bound of the original BOND
+paper. The checkpoint set and the threshold policy (self-seeded, externally
+seeded, or oracle) are parameters throughout.
 
 The cheap-bound arm deserves a note in advance. For Euclidean search, the
-original BOND study concluded that the cheap bound wins at wall-clock: its
-looseness costs little pruning and its bookkeeping is far cheaper. For
-MaxSim we find the opposite (Section~\ref{sec:results}): the cheap bound
-prunes nothing at any checkpoint where pruning is possible at all, so the
-tight bound is the better choice despite its higher evaluation cost. The
-tightness a Euclidean partial distance provides for free must, for an inner
-product, be bought with the full Cauchy--Schwarz residual.
+original BOND study concluded that the cheap bound wins at wall-clock: it
+costs little pruning and its bookkeeping is far cheaper. For MaxSim we find
+the opposite (Section~\ref{sec:results}): the cheap bound prunes nothing at
+any checkpoint where pruning is possible at all. The tightness a Euclidean
+partial distance provides for free must, for an inner product, be bought
+with the full Cauchy--Schwarz residual.
 
-The threshold can also be \emph{seeded}: any lower bound on the true
-$\tau_k$ is safe, and a better starting threshold means earlier pruning. Our
-seeded arm obtains candidates from a small IVF probe and scores a handful of
-them exactly before the scan starts. On top of this we build one approximate
-system arm, the \emph{partitioned fused scan}: documents are clustered at
-build time, each cluster is packed in panel layout, and a query probes only
-its nearest clusters with the fused kernel as the in-cluster scanner. This
-is the PDX-IVF architecture with our kernel inside; unlike everything else
-above it can miss true top-$k$ documents, so it is reported strictly as a
-recall--latency frontier.
+Finally, the threshold can be \emph{seeded}: any lower bound on the true
+$\tau_k$ is safe, and a higher starting threshold means earlier pruning.
+The seeded arm scores a handful of IVF-probed candidates exactly before the
+scan starts. One approximate system arm builds on this, the
+\emph{partitioned fused scan}: documents are clustered at build time, each
+cluster is packed in panel layout, and a query scans only its nearest
+clusters with the fused kernel. This arm can miss true top-$k$ documents
+and is therefore reported strictly as a recall--latency frontier.
 
 \subsection{Measurement instruments}
 \label{sec:kernels:instruments}
