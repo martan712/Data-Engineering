@@ -4,18 +4,45 @@ Single responsibility: given ranked results and BEIR-format qrels, compute
 standard IR metrics and populate the quality fields of ResultRecord.
 
 Ported artifact: metric plumbing from
-  research/colbert/02b_corect_bruteforce.py and research/colbert/03_beir_comparison.py
+  archive/colbert_scripts/02b_corect_bruteforce.py and 03_beir_comparison.py
   (BEIR-style qrels metric computation); uses ranx for metric computation.
 Stage 1 reference: docs/project_b_analysis_and_research_plan.md Stage 5 section
   (fairness controls: same machine, OS, thread count, repeated runs; nDCG@10,
   recall@100, MRR@10 are the primary qrels metrics).
+
+recall_vs_exact@10 is NOT computed here — it needs doc indices, not qrels; use
+bondmaxsim.oracle.agreement.recall_at_k against the dense_fused ranking.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
+from bondmaxsim.data.beir_ids import load_qrels_tsv
+
+
+def _evaluate(
+    run: dict[str, dict[str, float]],
+    qrels: dict[str, dict[str, int]],
+    metrics: list[str],
+) -> dict[str, float]:
+    """Evaluate a run against qrels with ranx, restricted to judged queries.
+
+    Queries in the run without judgments are dropped (BEIR convention);
+    raises ValueError if no run query has judgments at all.
+    """
+    from ranx import Qrels, Run, evaluate  # [retrieval] extra
+
+    judged = {qid: docs for qid, docs in run.items() if qid in qrels}
+    if not judged:
+        raise ValueError(
+            "No overlap between run queries and qrels — check the ID sidecar "
+            "(bondmaxsim.data.beir_ids) and test-query encoding."
+        )
+    out = evaluate(Qrels(dict(qrels)), Run(judged), metrics)
+    if isinstance(out, float):  # single-metric convenience form
+        return {metrics[0]: out}
+    return out
 
 
 def ndcg_at_10(
@@ -31,9 +58,9 @@ def ndcg_at_10(
 
     Returns
     -------
-    mean nDCG@10 across queries
+    mean nDCG@10 across judged queries
     """
-    raise NotImplementedError
+    return float(_evaluate(run, qrels, ["ndcg@10"])["ndcg@10"])
 
 
 def recall_at_100(
@@ -48,9 +75,9 @@ def recall_at_100(
 
     Returns
     -------
-    mean recall@100 across queries
+    mean recall@100 across judged queries
     """
-    raise NotImplementedError
+    return float(_evaluate(run, qrels, ["recall@100"])["recall@100"])
 
 
 def mrr_at_10(
@@ -65,16 +92,38 @@ def mrr_at_10(
 
     Returns
     -------
-    mean MRR@10 across queries
+    mean MRR@10 across judged queries
     """
-    raise NotImplementedError
+    return float(_evaluate(run, qrels, ["mrr@10"])["mrr@10"])
+
+
+def compute_quality_metrics(
+    run: dict[str, dict[str, float]],
+    qrels: dict[str, dict[str, int]],
+) -> dict[str, float]:
+    """Compute all ResultRecord qrels-quality fields in one ranx pass.
+
+    Returns
+    -------
+    {"nDCG_at_10": ..., "recall_at_100": ..., "MRR_at_10": ...}
+    (keys spelled as the ResultRecord fields)
+    """
+    out = _evaluate(run, qrels, ["ndcg@10", "recall@100", "mrr@10"])
+    return {
+        "nDCG_at_10": float(out["ndcg@10"]),
+        "recall_at_100": float(out["recall@100"]),
+        "MRR_at_10": float(out["mrr@10"]),
+    }
 
 
 def load_qrels(path: Path) -> dict[str, dict[str, int]]:
     """Load BEIR-format qrels TSV (query_id, doc_id, relevance).
 
+    Thin re-export of bondmaxsim.data.beir_ids.load_qrels_tsv (the data layer
+    owns the TSV format; eval callers import from here).
+
     Returns
     -------
     {query_id: {doc_id: relevance_int}}
     """
-    raise NotImplementedError
+    return load_qrels_tsv(Path(path))

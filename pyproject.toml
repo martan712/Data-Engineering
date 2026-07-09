@@ -22,6 +22,8 @@ retrieval = [
     "torch>=2.0",
     "pylate>=0.1",
     "ranx>=0.3",
+    # CoRECT RC metrics (extern/CoRECT evaluate_results is pytrec_eval-based).
+    "pytrec-eval-terrier>=0.5",
 ]
 faiss = [
     "faiss-cpu>=1.7",
