@@ -3,9 +3,9 @@
 Single responsibility: provide uniform interfaces to external baseline retrieval
 methods so experiment drivers can time them per query (FAISS: topk; PLAID:
 batch search) and assemble results on the shared schema.  Implemented: faiss_ivf
-(candidate generation + exact MaxSim rerank at a FIXED budget) and plaid
-(PyLate FastPlaid).  pdx_ivf remains a stub — deferred with R7 (see
-experiments/stage4_integration/README.md).
+(candidate generation + exact MaxSim rerank at a FIXED budget), plaid
+(PyLate FastPlaid), and pdx_ivf (the Mikel-branch flat PDX-IVF; needs the
+optional pdxearch package — e01 skips the arm if it is missing).
 
 Ported artifact: baseline wrappers from
   research/colbert/02_corect_quick.py (PLAID baseline),
