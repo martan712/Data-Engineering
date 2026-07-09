@@ -28,7 +28,7 @@ analysis:
 
 ## 2. What we currently do (the tight arm)
 
-`fused_panel_maxsim_bond` (`cpp/fused_panel_maxsim/fused_panel_maxsim.cpp`)
+`fused_panel_maxsim_bond` (`cpp/fused_panel_maxsim/bond_doc.cpp`)
 evaluates, at each non-final checkpoint `c` (dims scanned = `cur`), the
 Cauchy–Schwarz document upper bound
 
@@ -147,7 +147,7 @@ run as a package measurement, not a foregone conclusion.
 
 - **Kernel**: `fused_panel_maxsim_bond_cheap` — same ABI, same templated
   body as the tight arm (`fused_bond_doc_impl<CHEAP>` in
-  `cpp/fused_panel_maxsim/fused_panel_maxsim.cpp`), differing ONLY in the
+  `cpp/fused_panel_maxsim/bond_doc.cpp`), differing ONLY in the
   bound (the §5.8 one-mechanism-at-a-time discipline). As part of the same
   change, the query-side residuals `resq_i(c)` — query-only in BOTH arms —
   are hoisted out of the document loop and precomputed per checkpoint, so

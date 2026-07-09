@@ -13,7 +13,7 @@ so its cells% predicts fused wall-clock savings.
 Scope: fixed-tau policies only (oracle / seed — tau constant for the whole
 scan).  Under a fixed tau the kernel's pruning decisions are per-document
 independent (the shared rising threshold never exceeds a valid tau_seed, see
-fused_panel_maxsim.cpp::atomic_max_tau), so the simulator is exact up to fp32
+cpp/fused_panel_maxsim/common.hpp::atomic_max_tau), so the simulator is exact up to fp32
 summation-order noise.  self_bound (tau rising from -inf in doc order) is
 deliberately out of scope — its decisions depend on thread scheduling.
 
@@ -35,7 +35,7 @@ from dataclasses import dataclass
 import numpy as np
 
 # Panel width and the float32 guard on the UB < tau test — must mirror
-# cpp/fused_panel_maxsim/fused_panel_maxsim.cpp (PT, UB_EPSILON).
+# cpp/fused_panel_maxsim/common.hpp (PT, UB_EPSILON).
 _PT = 16
 _UB_EPSILON = 1e-4
 
