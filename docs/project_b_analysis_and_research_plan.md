@@ -635,11 +635,14 @@ organized as a research argument.
 ## Status And Research Plan (Revised)
 
 Scope decision (2026-07-08): finalize the paper on the exact-safe arm. RQ4
-(approximate `shrink < 1` frontier) is rescoped OUT; R5, R7 (scale), and R9
-(CoRECT) are deferred to future work. Remaining critical path: R8 (Stage 4
-IVF-seed + fused reranker) and R10 (write-up). Contributions that stand:
-RQ1 (mechanism), RQ2 (fused dense kernel, 3.2x over OpenBLAS), RQ3
-(single-dataset exact-safe win), and R8 (system).
+(approximate `shrink < 1` frontier) is rescoped OUT; R5 and R7 (scale) are
+deferred to future work. AMENDED 2026-07-09: R9 (Stage 5 CoRECT evaluation)
+is rescoped BACK IN as the paper's final section — take the best methods
+from Stages 3–4 and show how they perform in the proper IR evaluation
+framework (qrels metrics + CoRECT RC, fairness controls). Remaining critical
+path: R9 (Stage 5) then R10 (write-up). Contributions that stand: RQ1
+(mechanism), RQ2 (fused dense kernel, 3.2x over OpenBLAS), RQ3
+(single-dataset exact-safe win), R8 (system), and the Stage 5 IR evaluation.
 
 Last updated 2026-07-09 (sixth pass: R8 / Stage 4 landed — e01/e02/e03 on
 all four datasets, MT + 1T, interleaved baseline; methodology + Mikel-chart
@@ -654,7 +657,9 @@ monetizable; self_bound stays the honest free policy. (3) The partitioned
 fused scan is a real approximate frontier (2–5x at recall 0.87–0.95 on
 arguana/scidocs) but its full-probe exact control is SLOWER than the
 monolithic scan and the exact-safe partition bound prunes 0% — approximate
-only. RQ5 answered; R8 closed. Remaining critical path: R10 write-up.
+only. RQ5 answered; R8 closed. Same day: R9 / Stage 5 rescoped BACK IN as
+the paper's final section (see the scope decision above) — remaining
+critical path is R9 then R10.
 Prior: 2026-07-04 (fifth pass: R12a + R12b + R12c analysis. R12a e09
 rerun landed overnight (all 4 datasets, 24 arms, recall 1.0) → adopt the TIGHT
 doc-level bound (cheap prunes 0% at every late checkpoint — reverses the
@@ -773,15 +778,18 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   recovers ~99% of the oracle pruning but never profitably (seed cost >
   kernel saving); the partitioned fused scan gives a genuine approximate
   frontier whose exact control is slower than the monolithic scan.
-  IR-quality metrics under CoRECT (Stage 5 / R9) are deferred to future
-  work; exact agreement is the quality guarantee for the exact-safe arm.
+  IR-quality metrics under CoRECT (Stage 5 / R9) close the loop: rescoped
+  back in 2026-07-09 as the paper's final section (exact agreement remains
+  the quality guarantee for the exact-safe arms; CoRECT shows how the best
+  methods rank as retrieval systems).
 
 A single-dataset RQ3 result with a defensible baseline, a quantified mechanism
 explanation (RQ1), the standalone RQ2 dense-kernel contribution, and the
 Stage 4 system verdict (the RQ2 kernel already removed the fat that candidate
 pipelines are designed to cut — landed 2026-07-09) is a sound, publishable
-result. The approximate frontier (RQ4), scale (R7), and CoRECT IR-quality
-(R9) are future work.
+result; the Stage 5 CoRECT evaluation (R9, rescoped back in) closes the paper
+by showing the best methods in the proper IR framework. The approximate
+frontier (RQ4) and scale (R7) are future work.
 
 ### Instruments (shared bound math, two distinct ALGORITHMS)
 
@@ -1097,12 +1105,33 @@ Queue (execute top to bottom):
       (UB_p = Σ_i⟨q_i,c_p⟩ + m·R_p) prunes 0% of partitions under oracle
       tau. The arm lives strictly on the approximate frontier
       (Convention 4); the brute-vs-bond scanner ablation is a wash (±5%).
-- [~] **R9 — Stage 5**: DEFERRED TO FUTURE WORK (2026-07-08). CoRECT adapter,
-      RC metrics, matched-quality frontier under fairness controls (one machine,
-      fixed threads, CIs). Coupled to R5: with the paper scoped exact-safe,
-      exact agreement (recall_vs_exact@10 = 1.0) is the quality guarantee and
-      BEIR qrels recall the proxy, so CoRECT RC metrics are not on the
-      critical path.
+- [ ] **R9 — Stage 5 (RESCOPED BACK IN 2026-07-09; NEXT UP)**: was deferred
+      2026-07-08; brought back as the paper's FINAL SECTION — take the best
+      methods from Stages 3–4 and show how they perform in the proper IR
+      evaluation framework (Stage 5 spec above: qrels metrics + CoRECT RC,
+      fairness controls, build cost reported separately). Plan:
+      1. Instruments: `src/bondmaxsim/eval/` — qrels metric utilities
+         (nDCG@10, recall@100, MRR@10, recall_vs_exact@10) + the CoRECT
+         adapter (`extern/CoRECT` pinned @ `fedf8bb2`; needs a
+         ColBERT/MaxSim wrapper for the RC metrics).
+      2. Arms — the best method per family from the R8 verdict, all on the
+         same interleaved/one-stack controls as e01:
+         `dense_fused` (the exact production path), exact-safe BOND
+         (TIGHT, natural, C={112}, self_bound — the free policy; recall 1.0
+         by construction, included to show exactness costs nothing in IR
+         quality), the partitioned fused scan at 2–3 operating points from
+         the e03 frontier (e.g. recall≈0.9 and ≈0.95), and tuned
+         `faiss_ivf@B` / `plaid@B` as external references at matched
+         budgets.
+      3. Driver: `experiments/stage5_corect/e01_ir_evaluation.py` on all
+         four BEIR datasets, MT + 1T, repeated runs with CIs; report the
+         quality-latency table/frontier (IR metrics vs ms/q and QPS,
+         memory + index time separate).
+      4. Expected story: the exact arms inherit exact MaxSim's IR quality
+         at the lowest latency (the R8 verdict restated in IR terms); the
+         approximate arms show what the qrels metrics hide vs surface
+         relative to recall_vs_exact (probing loses true top-k docs —
+         does nDCG@10 care?).
 - [ ] **R10 — paper (the remaining critical path)**: write up per the Final
       Paper Structure; every claim through the Validation Checklist. Stage 4
       is now FROZEN (2026-07-09), so the stubbed results/discussion sections
@@ -1113,7 +1142,9 @@ Queue (execute top to bottom):
          met; single-dataset arguana +8.7% win, interleaved), R8 Stage 4
          system verdict (dense scan beats candidate pipelines at matched
          budgets; seeding reachable-but-not-monetizable; partitioned
-         approximate frontier).
+         approximate frontier), and the Stage 5 CoRECT evaluation (R9) as
+         the FINAL SECTION — the best methods in the proper IR framework.
+         R10's final section blocks on R9; the rest can be written now.
       2. Discussion: why the bound math (not engineering) caps exact-safe
          BOND for MaxSim; the interleaved-baseline methodology lesson
          (R12b); the scidocs crossover as the scale boundary of the verdict.
@@ -1122,7 +1153,7 @@ Queue (execute top to bottom):
          Stage 3 e08/R12c evidence.
       4. Future work section: R5 late-checkpoint shrink frontier, R7 scale
          (100k–1M docs — where e01-scidocs says candidate generation starts
-         to pay), R9 CoRECT RC metrics.
+         to pay).
       5. Validation Checklist pass over every headline claim before
          submission.
 - [ ] **e07 on scidocs (deferred to the back)**: the only R4 remainder.
