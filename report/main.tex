@@ -30,14 +30,14 @@ scanning dimensions incrementally and pruning candidates with a partial-score
 bound can skip most of this work. In this paper, we investigate whether that
 idea transfers to ColBERT's MaxSim operator on the modern PDX layout, on a
 single CPU node. We formalize the bound for MaxSim, prove it exact-safe, and
-implement it in a fused vectorized kernel whose dense variant already
-outperforms an OpenBLAS baseline by roughly $3\times$. We find that the
-mechanism transfers only partially: the Cauchy--Schwarz bound stays too loose
-to prune anything until late in the dimension scan, so early pruning never
-pays for its bookkeeping. Pruning at late checkpoints does discard
-88--98\% of documents exactly, but at that point most of the memory
-traffic has already been paid, and the wall-clock win over our own dense
-baseline is decisive on only one of four datasets. \todo{finalize abstract
+implement it in a fused vectorized kernel whose dense variant outperforms an
+OpenBLAS baseline by roughly $3\times$. We find that the mechanism transfers
+only partially: the Cauchy--Schwarz bound stays too loose to prune anything
+until late in the dimension scan, so early pruning never pays for its
+bookkeeping. Pruning at late checkpoints does discard 88--98\% of documents
+exactly, but at that point most of the memory traffic has already been paid,
+and the wall-clock win over the fused dense baseline is decisive on only one
+of four datasets. \todo{finalize abstract
 once Stage 4 results are frozen}
 \end{abstract}
 
@@ -58,20 +58,21 @@ operator is more accurate than single-vector retrieval, but it is also much
 more expensive: a query with $m$ tokens against a corpus of $N$ token vectors
 costs $m \times N$ inner products of dimension $D$. Production systems avoid
 this cost with approximate indexes such as PLAID~\cite{santhanam2022plaid},
-which trade exactness for speed. We are interested in a different lever:
-can we keep the result \emph{exact} and still skip most of the work?
+which trade exactness for speed. This paper studies the complementary
+lever: reducing the scoring work while keeping the result exact.
 
 BOND~\cite{devries2002bond} offers a candidate mechanism. On a vertically
 decomposed (column-per-dimension) layout, it scans dimensions incrementally,
 maintains a partial score per candidate, and discards a candidate as soon as
 an upper bound on its final score falls below the current top-$k$ threshold.
 The recent PDX layout~\cite{kuffo2025pdx} revives this vertical design for
-modern SIMD hardware and shows large speedups for single-vector search. Both
+modern single-instruction-multiple-data (SIMD) hardware and shows large
+speedups for single-vector search. Both
 results are for one query vector and one score per candidate. MaxSim breaks
 both assumptions: there are $m \approx 21$ query tokens, and the score is a
 sum of maxima over a variable-length set of document tokens. Whether
-dimension pruning survives this change is not obvious, and that is the
-question of this paper.
+dimension pruning survives this change is not obvious; this transfer is the
+subject of this paper.
 
 \subsection{Research questions}
 
@@ -95,7 +96,7 @@ We decompose it into four subquestions:
   \item \textbf{RQ3 (exact-safe gate).} Does exact-safe BOND pruning beat
     that dense baseline in wall-clock time?
   \item \textbf{RQ4 (system).} How does the pruned kernel compose with
-    candidate generation (IVF, PLAID), compared fairly at fixed candidate
+    candidate-generation methods, compared fairly at fixed candidate
     budgets?
 \end{itemize}
 
@@ -116,15 +117,16 @@ The contributions of this paper are the following:
     resulting method exact-safe, at both the document and the token level,
     including its transfer to a checkpointed, panel-blocked kernel.
   \item We design a fused MaxSim kernel on the PDX layout that outperforms a
-    multithreaded OpenBLAS dense baseline by roughly $3\times$. This kernel
-    is a standalone contribution, independent of pruning.
+    multithreaded OpenBLAS dense baseline by roughly $3\times$. Beyond
+    serving as the baseline for the pruning experiments, this kernel is a
+    contribution in its own right, independent of pruning.
   \item We explain \emph{why} the BOND mechanism largely fails for MaxSim:
     the Cauchy--Schwarz envelope stays wider than ColBERT's score gaps until
     roughly 75\% of the dimensions are paid for. Late-checkpoint pruning is
     the one operating point where the mechanism fires.
   \item We contribute a measurement methodology, interleaved baseline timing
-    and fixed candidate budgets, that corrected two of our own headline
-    numbers and one circulating external comparison.
+    and fixed candidate budgets, that isolates mechanism effects from
+    measurement artifacts in wall-clock comparisons.
 \end{itemize}
 
 The remainder of this paper is structured as follows. Section~\ref{sec:background}
@@ -170,10 +172,10 @@ makes the method \emph{exact-safe}: it returns exactly the top-$k$ of a full
 scan. The appeal is that the threshold rises as good candidates finish, so
 later candidates are pruned earlier; the risk is that the bound is loose, in
 which case nothing is pruned and the bookkeeping is pure overhead. Notably,
-the original paper reports that for L2 search a \emph{cheap} query-side bound
-beat their tighter bound at wall-clock, because the tighter bound's
-bookkeeping did not pay off. We will revisit exactly this trade-off for
-MaxSim.
+the original paper reports that for Euclidean search a \emph{cheap}
+query-side bound beat their tighter bound at wall-clock, because the tighter
+bound's bookkeeping did not pay off. Section~\ref{sec:design:bond} revisits
+this trade-off for MaxSim, where the outcome is the opposite.
 
 \subsection{The PDX layout}
 
@@ -189,16 +191,20 @@ for single-vector queries ($m = 1$): each corpus value is loaded, used in one
 multiply-add, and discarded, so the workload is memory-bound and layout plus
 pruning are the only levers. An important observation for this paper is that
 MaxSim changes this regime: with $m \approx 21$ query tokens, every loaded
-document value is reused $m$ times, which moves the workload from the
-GEMV regime toward GEMM, where register blocking and operand reuse dominate.
-A pruning mechanism therefore has to beat a much stronger dense baseline than
-in the published $m = 1$ setting.
+document value is reused $m$ times. In linear-algebra terms, the workload
+moves from a general matrix--vector multiplication (GEMV), which is
+memory-bound for every implementation, toward a general matrix--matrix
+multiplication (GEMM), where register blocking and operand reuse dominate
+performance. A pruning mechanism
+therefore has to beat a much stronger dense baseline than in the published
+$m = 1$ setting.
 
 \subsection{Candidate generation baselines}
 
 The alternative to scanning the full corpus is generating a small candidate
-set first. IVF indexes cluster the corpus and probe only the nearest
-clusters at query time; we use the FAISS implementation~\cite{douze2024faiss}
+set first. Inverted-file (IVF) indexes cluster the corpus and probe only the
+nearest clusters at query time; we use the FAISS
+implementation~\cite{douze2024faiss}
 with an exact MaxSim rerank on top, aggregating per-token search hits into
 document candidates. PLAID~\cite{santhanam2022plaid} is the ColBERT-native
 pipeline, combining centroid-based candidate generation with compressed
@@ -265,30 +271,42 @@ maxima are negative. On the query side the situation is reversed and
 zero-padding is exact. Finally, a threshold shared by all threads only ever
 rises toward the true $\tau_k$ from below, so parallel execution stays safe.
 
-\subsection{A fused dense kernel: the honest baseline}
+\subsection{A fused dense kernel}
 \label{sec:design:dense}
 
-Our first measurements made clear that the interesting engineering question
-is not the pruner but the baseline. A straightforward NumPy formulation of
-Equation~\ref{eq:maxsim}, one large matrix product $Q X^\top$ followed by a
-segmented maximum, runs on all cores of our machine through OpenBLAS, and it
-beat our initial columnar scan by $8\times$. Any pruning claim measured
-against a weak scan would be meaningless. We therefore built the strongest
-dense kernel we could, and it is this kernel that every pruning result in
-this paper must beat.
+The validity of every pruning claim depends on the strength of the dense
+baseline it is measured against: a pruned kernel that beats a weak scan
+demonstrates nothing about pruning. Because MaxSim is GEMM-shaped
+(Section~\ref{sec:background}), the appropriate dense reference is not a
+columnar scan but the matrix formulation of Equation~\ref{eq:maxsim}: with
+query tokens stacked as $Q \in \mathbb{R}^{m \times D}$ and corpus tokens as
+$X \in \mathbb{R}^{N \times D}$, all pair similarities are one product
+$Q X^\top$, followed by a per-document segmented maximum. Executed through a
+multithreaded Basic Linear Algebra Subprograms (BLAS) library, this
+formulation outperforms a straightforward columnar scan by nearly an order
+of magnitude on our hardware, and it is the baseline any MaxSim method must
+be held to.
 
-The kernel exploits the observation from Section~\ref{sec:background} that
-MaxSim is GEMM-shaped. It packs the corpus once, at build time, into
-panel-major PDX blocks: panels of 16 document tokens stored dimension-major,
-documents padded to a panel multiple by duplicating their last token. At
-query time an AVX-512 register tile accumulates all $m$ query tokens against
-one panel across the dimension range, and the per-document maximum is folded
-in registers as each document's last panel completes, so the $m \times N$
-score matrix is never materialized. This removes the three costs that BLAS
-cannot avoid: re-packing the operand on every call, writing the full score
-matrix, and reading it back for the reduction. The result is a kernel that
-computes the identical exact scores at roughly $3\times$ the speed of the
-12-thread OpenBLAS formulation, and roughly $2\times$ single-threaded.
+This formulation can itself be improved, because a general-purpose BLAS
+performs three steps that MaxSim does not require. It packs the corpus
+operand into cache-friendly tiles on every call, although the corpus is
+static; it materializes the full $m \times N$ score matrix, although only
+one maximum per document survives; and the segmented maximum then re-reads
+that matrix from memory. Our kernel removes all three. The corpus is packed
+once, at build time, into panel-major PDX blocks: panels of 16 document
+tokens stored dimension-major, with documents padded to a panel multiple by
+duplicating their last token (exact by the padding lemma of
+Section~\ref{sec:design:bound}). At query time, an AVX-512 register tile
+accumulates all $m$ query tokens against one panel across the full dimension
+range, and the per-document maximum is folded in registers as each
+document's last panel completes, so the score matrix is never written. The
+resulting kernel computes identical exact scores at roughly $3\times$ the
+throughput of the 12-thread OpenBLAS formulation, and roughly $2\times$
+single-threaded. It serves as the dense baseline for all pruning
+experiments, and constitutes a contribution independent of pruning: the PDX
+layout pays off for MaxSim through packing amortization and a fused
+reduction, a mechanism distinct from the memory-bound argument of the
+$m = 1$ literature.
 
 \subsection{Fused BOND kernels}
 \label{sec:design:bond}
@@ -296,8 +314,8 @@ computes the identical exact scores at roughly $3\times$ the speed of the
 The pruned variant keeps the identical microkernel and adds pruning at a
 small set of \emph{checkpoints} $C \subseteq \{1,\dots,D\}$: it processes one
 document at a time depth-first across dimension segments, and at each
-checkpoint evaluates $\mathrm{UB}_d$ (Equation~\ref{eq:ubd}) against a shared,
-rising threshold $\tau$. If the document survives all checkpoints, the final
+checkpoint evaluates the document upper bound $\mathrm{UB}_d$ of
+Equation~\ref{eq:ubd} against a shared, rising threshold $\tau$. If the document survives all checkpoints, the final
 segment folds its exact score as in the dense kernel. Because pruning is the
 only difference to the dense arm, any wall-clock gap between the two is
 attributable to the mechanism, not to implementation drift; the two arms
@@ -306,9 +324,18 @@ verifies on every dataset. Three variants exist: a document-level arm, a
 token-level arm that additionally applies the domination test of
 Section~\ref{sec:design:bound} with lane masking, and a \emph{cheap-bound}
 arm that relaxes the document-side residual to 1, mirroring the query-only
-bound the original BOND paper found superior for L2. The checkpoint set $C$
-and the threshold policy (self-seeded, externally seeded, or an oracle
-threshold for accounting) are parameters throughout.
+bound of the original BOND paper. The checkpoint set $C$ and the threshold
+policy (self-seeded, externally seeded, or an oracle threshold for
+accounting) are parameters throughout.
+
+The cheap-bound arm deserves a note in advance. For Euclidean search, the
+original BOND study concluded that the cheap bound wins at wall-clock: its
+looseness costs little pruning and its bookkeeping is far cheaper. For
+MaxSim we find the opposite (Section~\ref{sec:results}): the cheap bound
+prunes nothing at any checkpoint where pruning is possible at all, so the
+tight bound is the better choice despite its higher evaluation cost. The
+tightness a Euclidean partial distance provides for free must, for an inner
+product, be bought with the full Cauchy--Schwarz residual.
 
 The threshold can also be \emph{seeded}: any lower bound on the true
 $\tau_k$ is safe, and a better starting threshold means earlier pruning. Our
@@ -325,15 +352,16 @@ recall--latency frontier.
 \label{sec:design:instruments}
 
 Wall-clock alone cannot answer RQ1, because a kernel conflates what the
-bound \emph{could} prune with what its schedule manages to capture. We keep
-three instruments separate from the throughput kernels. First, a wide-block
+bound \emph{could} prune with what its schedule manages to capture. Three
+instruments are therefore kept separate from the throughput kernels. First,
+a wide-block
 \emph{accounting} kernel evaluates both pruning tests at every dimension
 fetch, breadth-first over a block of tokens, and counts exactly which cells
 of the (token $\times$ dimension) grid are touched: this is the upper
 envelope of what any schedule could save, the mechanism under a microscope.
 Second, a NumPy \emph{checkpoint simulator} replays the fused kernel's
 document-level policy at a fixed threshold and predicts its pruning and cell
-counts; we validate it against the kernel's own counters. Third, the exact
+counts; it is validated against the kernel's own counters. Third, the exact
 NumPy oracle provides ground-truth scores, and every exact-safe run is gated
 on exact top-$k$ agreement with it (ties at the $k$-th rank are accepted by
 score). Accounting numbers (cells touched) and wall-clock numbers are never
@@ -365,15 +393,15 @@ all cores, and thread counts are always reported with the number.
 \subsection{Measurement protocol}
 \label{sec:method:protocol}
 
-Fair timing turned out to be a research problem of its own, and two controls
-in particular decide our conclusions.
+Two measurement controls are essential to the validity of the wall-clock
+comparisons.
 
-\paragraph{Interleaved baselines.} Comparing a candidate arm against a dense
-baseline timed in a separate run is not safe on a laptop-class CPU: thermal
-and frequency state drift between runs. We time all arms
-\emph{interleaved}, round-robin in one process, best-of-5 per arm. This
-control corrected our own headline number: a standalone-timed baseline had
-inflated one dataset's pruning win from $+8.7\%$ to $-19.6\%$.
+\paragraph{Interleaved baselines.} On a laptop-class CPU, thermal and
+frequency state drift between runs, so a baseline timed in a separate run is
+not comparable to a candidate arm; margins of the size at stake here (single
+percents to tens of percents) can be produced by the measurement alone. All
+arms are therefore timed \emph{interleaved}: round-robin within one process,
+best-of-5 per arm, with the dense baseline measured in the same loop.
 
 \paragraph{Fixed candidate budgets.} When comparing candidate-generation
 methods (RQ4), every method is granted the same budget $B$ of documents
@@ -381,11 +409,9 @@ eligible for full scoring, with $B$ on the axis. A method may fill its
 budget with better candidates and win on recall, but it cannot win the
 latency comparison by silently scoring fewer documents. Complete pipelines
 sit inside the timer, including per-token hit aggregation, and index build
-cost is reported separately from query latency. We adopted this control
-after dissecting an earlier exploratory benchmark of these systems, in which
-a $164\times$ budget mismatch, an untimed pipeline stage, and two different
-runtime stacks compounded into headline speedups that do not survive
-matched conditions.
+cost is reported separately from query latency. Without these constraints,
+comparisons between such pipelines are dominated by budget and
+timer-boundary choices rather than by the methods themselves.
 
 \paragraph{Separation of regimes.} Exact-safe and approximate results never
 share a table: exact-safe arms must pass the exact-agreement gate, and
@@ -398,11 +424,12 @@ reported apart.
 
 Table~\ref{tab:experiments} maps the experiments to the research questions.
 The mechanism experiments (RQ1) measure the bound itself: e01 measures bound
-slack, the ratio $\mathrm{UB}_d / \mathrm{score}$, as a function of scan
-depth; e02 measures survival curves, the fraction of documents and tokens
-still alive at each depth under three threshold policies (self-seeded,
-seeded, oracle) and three dimension orders (natural, BOND's
-variance-descending order, PCA rotation). The kernel experiments (RQ2, RQ3)
+slack, the ratio of the document upper bound $\mathrm{UB}_d$ to the exact
+score, as a function of scan depth; e02 measures survival curves, the
+fraction of documents and tokens still alive at each depth under three
+threshold policies (self-seeded, seeded, oracle) and three dimension orders
+(natural, BOND's variance-descending order, and a principal-component (PCA)
+rotation). The kernel experiments (RQ2, RQ3)
 compare the fused dense arm against NumPy/OpenBLAS and against the fused
 BOND arms across orders and granularities (e03), checkpoint sets (e08), and
 the tight versus cheap bound (e09), all at $\mathrm{shrink}=1$ under the
@@ -447,8 +474,9 @@ RQ1/RQ3 figures below are final.}
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{e01_bound_slack_scifact}
-  \caption{Bound slack $\mathrm{UB}_d/\mathrm{score}$ versus scan depth on
-  SciFact, for three dimension orders (mean and p10--p90 band over
+  \caption{Bound slack, the ratio of the document upper bound
+  $\mathrm{UB}_d$ to the exact score, versus scan depth on SciFact, for
+  three dimension orders (mean and 10th--90th percentile band over
   query--document pairs). Even at half the dimensions the bound still
   overestimates scores by ${\sim}5\%$, far wider than typical
   inter-document score gaps.}
@@ -484,9 +512,9 @@ cells 84--92\%, so the exact-safe ceiling is ${\le}16\%$ of work.}
 
 \todo{dense kernel table (1T / all cores, per dataset) vs OpenBLAS; e03
 verdict at default checkpoints; e08 late-checkpoint result (88--98\% of
-documents pruned exact-safe, recall 1.0); e09 tight-vs-cheap reversal of the
-BOND 2002 lesson; interleaved-corrected margins: ArguAna $+8.7\%$, others
-within $+0.9$--$2.3\%$.}
+documents pruned exact-safe, recall 1.0); e09 tight-vs-cheap outcome (tight
+wins, cheap prunes 0\%); all-cores margins under the interleaved protocol:
+ArguAna $+8.7\%$, others within $+0.9$--$2.3\%$.}
 
 \subsection{RQ4: integration}
 
