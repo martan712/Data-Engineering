@@ -1,0 +1,144 @@
+=== R8 Stage 4 run -> logging to results/logs/r8_stage4_20260708_215710.log ===
+Wed Jul  8 09:57:10 PM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+[1m[33mwarning[39m[0m[1m:[0m [1m`VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead[0m
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                          [100%][0m
+[32m[32m[1m47 passed[0m[32m in 7.21s[0m[0m
+
+=== Stage 4 e02 (R8): seeded-tau recovery, all cores ===
+[1m[33mwarning[39m[0m[1m:[0m [1m`VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead[0m
+
+=== e02 scifact: 5183 docs, 50 queries, threads=all ===
+  faiss index ready in 0.1s (n_lists=4096)
+  dense-brute (interleaved) = 20.360 ms/q
+  self_bound       prune= 35.0%  kernel=  20.179 ms/q (  +0.9%)  seed=  0.00 ms/q  total_margin=  +0.9%
+  seed_partial     prune= 48.4%  kernel=  19.908 ms/q (  +2.2%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 50.7%  kernel=  19.610 ms/q (  +3.7%)  seed=  3.07 ms/q  total_margin= -11.4%
+  ivf_seed_strong  prune= 87.8%  kernel=  19.102 ms/q (  +6.2%)  seed= 11.03 ms/q  total_margin= -48.0%
+  oracle           prune= 88.2%  kernel=  18.935 ms/q (  +7.0%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json
+
+=== e02 nfcorpus: 3633 docs, 50 queries, threads=all ===
+  faiss index ready in 0.2s (n_lists=4096)
+  dense-brute (interleaved) = 10.179 ms/q
+  self_bound       prune= 58.3%  kernel=  10.380 ms/q (  -2.0%)  seed=  0.00 ms/q  total_margin=  -2.0%
+  seed_partial     prune= 69.3%  kernel=  10.241 ms/q (  -0.6%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 69.0%  kernel=  10.273 ms/q (  -0.9%)  seed=  1.87 ms/q  total_margin= -19.3%
+  ivf_seed_strong  prune= 94.3%  kernel=   9.600 ms/q (  +5.7%)  seed=  7.43 ms/q  total_margin= -67.3%
+  oracle           prune= 94.8%  kernel=   9.788 ms/q (  +3.8%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json
+
+=== e02 arguana: 8674 docs, 50 queries, threads=all ===
+  faiss index ready in 0.3s (n_lists=4096)
+  dense-brute (interleaved) = 52.979 ms/q
+  self_bound       prune= 74.0%  kernel=  49.410 ms/q (  +6.7%)  seed=  0.00 ms/q  total_margin=  +6.7%
+  seed_partial     prune= 79.4%  kernel=  49.108 ms/q (  +7.3%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 87.6%  kernel=  49.280 ms/q (  +7.0%)  seed=  6.80 ms/q  total_margin=  -5.9%
+  ivf_seed_strong  prune= 96.6%  kernel=  47.891 ms/q (  +9.6%)  seed= 22.25 ms/q  total_margin= -32.4%
+  oracle           prune= 97.1%  kernel=  48.688 ms/q (  +8.1%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json
+
+=== e02 scidocs: 25657 docs, 50 queries, threads=all ===
+  faiss index ready in 0.9s (n_lists=8192)
+  dense-brute (interleaved) = 66.655 ms/q
+  self_bound       prune= 69.9%  kernel=  63.841 ms/q (  +4.2%)  seed=  0.00 ms/q  total_margin=  +4.2%
+  seed_partial     prune= 86.3%  kernel=  62.270 ms/q (  +6.6%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 81.4%  kernel=  64.952 ms/q (  +2.6%)  seed=  3.76 ms/q  total_margin=  -3.1%
+  ivf_seed_strong  prune= 97.4%  kernel=  63.971 ms/q (  +4.0%)  seed= 11.19 ms/q  total_margin= -12.8%
+  oracle           prune= 98.2%  kernel=  61.911 ms/q (  +7.1%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json
+
+Done in 635.4s
+
+=== Stage 4 e01 (R8): fixed candidate arms, all cores ===
+[1m[33mwarning[39m[0m[1m:[0m [1m`VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead[0m
+
+=== e01 scifact: 5183 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 0.3s (n_lists=4096)
+  plaid ready in 4.8s
+  pdx_ivf ready in 39.9s (n_buckets=4096)
+  partitioned index ready in 1.2s (P=64, ~81 docs/partition)
+  dense_fused    recall=1.000  ms/q=  20.097  margin=  +0.0%
+  bond           recall=1.000  ms/q=  19.887 (+3.03 seed)  margin= -14.0%
+  faiss@100      recall=0.958  ms/q=  24.037  margin= -19.6%
+  faiss@500      recall=0.998  ms/q=  81.165  margin=-303.9%
+  faiss@1000     recall=1.000  ms/q= 108.362  margin=-439.2%
+  faiss@5000     recall=1.000  ms/q= 257.453  margin=-1181.0%
+  plaid@100      recall=0.892  ms/q=  52.355  margin=-160.5%
+  plaid@500      recall=0.936  ms/q=  66.184  margin=-229.3%
+  plaid@1000     recall=0.938  ms/q=  87.632  margin=-336.0%
+  plaid@5000     recall=0.940  ms/q= 269.850  margin=-1242.7%
+  pdx@100        recall=0.964  ms/q=  26.672  margin= -32.7%
+  pdx@500        recall=0.998  ms/q=  59.181  margin=-194.5%
+  pdx@1000       recall=1.000  ms/q=  91.437  margin=-355.0%
+  pdx@5000       recall=1.000  ms/q= 286.852  margin=-1327.3%
+  partitioned@100 recall=0.388  ms/q=   2.482  margin= +87.6%
+  partitioned@500 recall=0.752  ms/q=   5.445  margin= +72.9%
+  partitioned@1000 recall=0.858  ms/q=  11.033  margin= +45.1%
+  partitioned@5000 recall=1.000  ms/q=  56.426  margin=-180.8%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_scifact.png
+
+=== e01 nfcorpus: 3633 docs, 50 queries, budgets=[100, 500, 1000, 3633], threads=all ===
+  faiss ready in 0.2s (n_lists=4096)
+  plaid ready in 1.1s
+  pdx_ivf ready in 44.3s (n_buckets=4096)
+  partitioned index ready in 0.9s (P=64, ~57 docs/partition)
+  dense_fused    recall=1.000  ms/q=  10.532  margin=  +0.0%
+  bond           recall=1.000  ms/q=  10.089 (+1.80 seed)  margin= -12.9%
+  faiss@100      recall=0.934  ms/q=  20.609  margin= -95.7%
+  faiss@500      recall=1.000  ms/q=  38.450  margin=-265.1%
+  faiss@1000     recall=1.000  ms/q=  63.263  margin=-500.7%
+  faiss@3633     recall=1.000  ms/q= 151.254  margin=-1336.2%
+  plaid@100      recall=0.852  ms/q=  18.976  margin= -80.2%
+  plaid@500      recall=0.932  ms/q=  27.990  margin=-165.8%
+  plaid@1000     recall=0.934  ms/q=  44.082  margin=-318.6%
+  plaid@3633     recall=0.938  ms/q= 141.819  margin=-1246.6%
+  pdx@100        recall=0.936  ms/q=  15.815  margin= -50.2%
+  pdx@500        recall=1.000  ms/q=  23.635  margin=-124.4%
+  pdx@1000       recall=1.000  ms/q=  28.906  margin=-174.5%
+  pdx@3633       recall=1.000  ms/q= 151.205  margin=-1335.7%
+  partitioned@100 recall=0.462  ms/q=   3.153  margin= +70.1%
+  partitioned@500 recall=0.758  ms/q=   5.620  margin= +46.6%
+  partitioned@1000 recall=0.890  ms/q=  13.368  margin= -26.9%
+  partitioned@3633 recall=1.000  ms/q=  45.486  margin=-331.9%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_nfcorpus.png
+
+=== e01 arguana: 8674 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 0.4s (n_lists=4096)
+  plaid ready in 1.1s
+  pdx_ivf ready in 58.7s (n_buckets=4096)
+  partitioned index ready in 2.0s (P=128, ~68 docs/partition)
+  dense_fused    recall=1.000  ms/q=  52.960  margin=  +0.0%
+  bond           recall=1.000  ms/q=  48.975 (+7.35 seed)  margin=  -6.4%
+  faiss@100      recall=0.984  ms/q=  42.660  margin= +19.4%
+  faiss@500      recall=0.996  ms/q=  63.325  margin= -19.6%
+  faiss@1000     recall=0.996  ms/q= 118.823  margin=-124.4%
+  faiss@5000     recall=1.000  ms/q= 372.815  margin=-604.0%
+  plaid@100      recall=0.918  ms/q= 120.029  margin=-126.6%
+  plaid@500      recall=0.950  ms/q= 136.551  margin=-157.8%
+  plaid@1000     recall=0.954  ms/q= 175.696  margin=-231.8%
+  plaid@5000     recall=0.952  ms/q= 373.568  margin=-605.4%
+  pdx@100        recall=0.982  ms/q=  61.838  margin= -16.8%
+  pdx@500        recall=0.996  ms/q=  74.126  margin= -40.0%
+  pdx@1000       recall=0.996  ms/q= 128.350  margin=-142.4%
+  pdx@5000       recall=1.000  ms/q= 457.125  margin=-763.2%
+  partitioned@100 recall=0.500  ms/q=   1.980  margin= +96.3%
+  partitioned@500 recall=0.858  ms/q=   9.550  margin= +82.0%
+  partitioned@1000 recall=0.922  ms/q=  21.658  margin= +59.1%
+  partitioned@5000 recall=0.998  ms/q= 171.316  margin=-223.5%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_arguana.png
+
+=== e01 scidocs: 25657 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 2.1s (n_lists=8192)
+  plaid ready in 1.3s
+  pdx_ivf ready in 303.7s (n_buckets=8192)
+  partitioned index ready in 6.3s (P=128, ~200 docs/partition)

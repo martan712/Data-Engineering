@@ -1,0 +1,196 @@
+{
+  "experiment": "e02_seeded_tau_recovery",
+  "purpose": "R8: realistic candidate-seeded tau vs oracle tau at the R12 exact-safe operating point (Stage 1 \u00a74.4b)",
+  "dataset": "nfcorpus",
+  "n_docs": 3633,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "kernel": {
+    "bound": "tight",
+    "order": "natural",
+    "checkpoints": [
+      112
+    ],
+    "shrink": 1.0
+  },
+  "rep_best_of": 8,
+  "rep_seed_cost_best_of": 3,
+  "seed_threads": 1,
+  "faiss": {
+    "n_lists": 4096,
+    "metric": "inner_product"
+  },
+  "runs": {
+    "mt": {
+      "threads": "all_cores",
+      "dense_interleaved_ms_per_query": 10.032870700015337,
+      "oracle_kernel_margin_pct": 4.619898869264291,
+      "arms": [
+        {
+          "arm": "self_bound",
+          "threshold_policy": "self_bound",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 57.310211946050096,
+          "prune_recovery_vs_oracle": 0.6045703998373937,
+          "ms_per_query_kernel": 9.990679539987468,
+          "kernel_margin_vs_dense_pct": 0.4205292910612767,
+          "seed_cost_ms_per_query": 0.0,
+          "ms_per_query_total": 9.990679539987468,
+          "total_margin_vs_dense_pct": 0.4205292910612767,
+          "mean_tau_gap_vs_oracle": null
+        },
+        {
+          "arm": "seed_partial",
+          "threshold_policy": "seed_partial",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 69.19075144508669,
+          "prune_recovery_vs_oracle": 0.7298992421382733,
+          "ms_per_query_kernel": 9.828945159970317,
+          "kernel_margin_vs_dense_pct": 2.0325741868148306,
+          "seed_cost_ms_per_query": null,
+          "ms_per_query_total": null,
+          "total_margin_vs_dense_pct": null,
+          "mean_tau_gap_vs_oracle": 0.1486006164550781
+        },
+        {
+          "arm": "ivf_seed_cheap",
+          "threshold_policy": "ivf_seed_cheap",
+          "ivf_params": {
+            "nprobe": 4,
+            "k_token": 32,
+            "s": 10
+          },
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 69.11973575557391,
+          "prune_recovery_vs_oracle": 0.7291500914660706,
+          "ms_per_query_kernel": 9.833946319995448,
+          "kernel_margin_vs_dense_pct": 1.9827264395980415,
+          "seed_cost_ms_per_query": 2.0323858600022504,
+          "ms_per_query_total": 11.866332179997698,
+          "total_margin_vs_dense_pct": -18.274545090863757,
+          "mean_tau_gap_vs_oracle": 0.15203462600708012
+        },
+        {
+          "arm": "ivf_seed_strong",
+          "threshold_policy": "ivf_seed_strong",
+          "ivf_params": {
+            "nprobe": 16,
+            "k_token": 128,
+            "s": 100
+          },
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 94.26644646297825,
+          "prune_recovery_vs_oracle": 0.994424925230117,
+          "ms_per_query_kernel": 9.53976340002555,
+          "kernel_margin_vs_dense_pct": 4.91491732260672,
+          "seed_cost_ms_per_query": 7.427436699945247,
+          "ms_per_query_total": 16.967200099970796,
+          "total_margin_vs_dense_pct": -69.11610452574514,
+          "mean_tau_gap_vs_oracle": 0.0030963706970214846
+        },
+        {
+          "arm": "oracle",
+          "threshold_policy": "oracle",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 94.79493531516653,
+          "prune_recovery_vs_oracle": 1.0,
+          "ms_per_query_kernel": 9.56936221999058,
+          "kernel_margin_vs_dense_pct": 4.619898869264291,
+          "seed_cost_ms_per_query": null,
+          "ms_per_query_total": null,
+          "total_margin_vs_dense_pct": null,
+          "mean_tau_gap_vs_oracle": 0.0
+        }
+      ]
+    },
+    "1t": {
+      "threads": "single",
+      "dense_interleaved_ms_per_query": 57.18292093995842,
+      "oracle_kernel_margin_pct": 3.450924275134227,
+      "arms": [
+        {
+          "arm": "self_bound",
+          "threshold_policy": "self_bound",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 77.37021745114231,
+          "prune_recovery_vs_oracle": 0.8160808747103945,
+          "ms_per_query_kernel": 56.64538270000776,
+          "kernel_margin_vs_dense_pct": 0.9400328474214774,
+          "seed_cost_ms_per_query": 0.0,
+          "ms_per_query_total": 56.64538270000776,
+          "total_margin_vs_dense_pct": 0.9400328474214774,
+          "mean_tau_gap_vs_oracle": null
+        },
+        {
+          "arm": "seed_partial",
+          "threshold_policy": "seed_partial",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 81.46050096339114,
+          "prune_recovery_vs_oracle": 0.8592241184087518,
+          "ms_per_query_kernel": 56.252204480042565,
+          "kernel_margin_vs_dense_pct": 1.6276126588445894,
+          "seed_cost_ms_per_query": null,
+          "ms_per_query_total": null,
+          "total_margin_vs_dense_pct": null,
+          "mean_tau_gap_vs_oracle": 0.1486006164550781
+        },
+        {
+          "arm": "ivf_seed_cheap",
+          "threshold_policy": "ivf_seed_cheap",
+          "ivf_params": {
+            "nprobe": 4,
+            "k_token": 32,
+            "s": 10
+          },
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 82.1607486925406,
+          "prune_recovery_vs_oracle": 0.8666101488238674,
+          "ms_per_query_kernel": 56.175984920046176,
+          "kernel_margin_vs_dense_pct": 1.7609034364815326,
+          "seed_cost_ms_per_query": 1.946034860011423,
+          "ms_per_query_total": 58.1220197800576,
+          "total_margin_vs_dense_pct": -1.6422715465780824,
+          "mean_tau_gap_vs_oracle": 0.15203462600708012
+        },
+        {
+          "arm": "ivf_seed_strong",
+          "threshold_policy": "ivf_seed_strong",
+          "ivf_params": {
+            "nprobe": 16,
+            "k_token": 128,
+            "s": 100
+          },
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 94.35672997522708,
+          "prune_recovery_vs_oracle": 0.9952501785538013,
+          "ms_per_query_kernel": 55.27170399996976,
+          "kernel_margin_vs_dense_pct": 3.3422863130678895,
+          "seed_cost_ms_per_query": 7.538631200004602,
+          "ms_per_query_total": 62.81033519997436,
+          "total_margin_vs_dense_pct": -9.84107521531591,
+          "mean_tau_gap_vs_oracle": 0.0030963706970214846
+        },
+        {
+          "arm": "oracle",
+          "threshold_policy": "oracle",
+          "ivf_params": null,
+          "recall_vs_exact_at_10": 1.0,
+          "pruned_docs_pct": 94.80704651802918,
+          "prune_recovery_vs_oracle": 1.0,
+          "ms_per_query_kernel": 55.20958164001058,
+          "kernel_margin_vs_dense_pct": 3.450924275134227,
+          "seed_cost_ms_per_query": null,
+          "ms_per_query_total": null,
+          "total_margin_vs_dense_pct": null,
+          "mean_tau_gap_vs_oracle": 0.0
+        }
+      ]
+    }
+  }
+}

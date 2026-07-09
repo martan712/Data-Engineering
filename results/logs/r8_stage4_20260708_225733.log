@@ -1,0 +1,494 @@
+=== R8 Stage 4 run -> logging to results/logs/r8_stage4_20260708_225733.log ===
+Wed Jul  8 10:57:33 PM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+...............................................                          [100%]
+47 passed in 6.47s
+
+=== Stage 4 e02 (R8): seeded-tau recovery, all cores ===
+
+=== e02 scifact: 5183 docs, 50 queries, threads=all ===
+  faiss index ready in 0.1s (n_lists=4096)
+  dense-brute (interleaved) = 19.840 ms/q
+  self_bound       prune= 34.2%  kernel=  20.159 ms/q (  -1.6%)  seed=  0.00 ms/q  total_margin=  -1.6%
+  seed_partial     prune= 48.8%  kernel=  19.675 ms/q (  +0.8%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 51.0%  kernel=  19.658 ms/q (  +0.9%)  seed=  3.10 ms/q  total_margin= -14.7%
+  ivf_seed_strong  prune= 87.8%  kernel=  18.663 ms/q (  +5.9%)  seed= 10.98 ms/q  total_margin= -49.4%
+  oracle           prune= 88.2%  kernel=  18.698 ms/q (  +5.8%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json
+
+=== e02 nfcorpus: 3633 docs, 50 queries, threads=all ===
+  faiss index ready in 0.3s (n_lists=4096)
+  dense-brute (interleaved) = 10.033 ms/q
+  self_bound       prune= 57.3%  kernel=   9.991 ms/q (  +0.4%)  seed=  0.00 ms/q  total_margin=  +0.4%
+  seed_partial     prune= 69.2%  kernel=   9.829 ms/q (  +2.0%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 69.1%  kernel=   9.834 ms/q (  +2.0%)  seed=  2.03 ms/q  total_margin= -18.3%
+  ivf_seed_strong  prune= 94.3%  kernel=   9.540 ms/q (  +4.9%)  seed=  7.43 ms/q  total_margin= -69.1%
+  oracle           prune= 94.8%  kernel=   9.569 ms/q (  +4.6%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json
+
+=== e02 arguana: 8674 docs, 50 queries, threads=all ===
+  faiss index ready in 0.3s (n_lists=4096)
+  dense-brute (interleaved) = 51.600 ms/q
+  self_bound       prune= 74.6%  kernel=  48.745 ms/q (  +5.5%)  seed=  0.00 ms/q  total_margin=  +5.5%
+  seed_partial     prune= 80.4%  kernel=  48.332 ms/q (  +6.3%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 87.4%  kernel=  47.946 ms/q (  +7.1%)  seed=  7.34 ms/q  total_margin=  -7.1%
+  ivf_seed_strong  prune= 96.6%  kernel=  47.326 ms/q (  +8.3%)  seed= 22.68 ms/q  total_margin= -35.7%
+  oracle           prune= 97.1%  kernel=  47.173 ms/q (  +8.6%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json
+
+=== e02 scidocs: 25657 docs, 50 queries, threads=all ===
+  faiss index ready in 0.8s (n_lists=8192)
+  dense-brute (interleaved) = 65.229 ms/q
+  self_bound       prune= 69.9%  kernel=  63.614 ms/q (  +2.5%)  seed=  0.00 ms/q  total_margin=  +2.5%
+  seed_partial     prune= 86.3%  kernel=  62.079 ms/q (  +4.8%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 80.9%  kernel=  62.562 ms/q (  +4.1%)  seed=  3.78 ms/q  total_margin=  -1.7%
+  ivf_seed_strong  prune= 97.4%  kernel=  61.070 ms/q (  +6.4%)  seed= 10.69 ms/q  total_margin= -10.0%
+  oracle           prune= 98.2%  kernel=  60.938 ms/q (  +6.6%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json
+
+Done in 572.1s
+
+=== Stage 4 e01 (R8): fixed candidate arms, all cores ===
+
+=== e01 scifact: 5183 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 4.2s
+  pdx_ivf ready in 37.8s (n_buckets=4096)
+  partitioned index ready in 1.0s (P=64, ~81 docs/partition)
+  dense_fused    recall=1.000  ms/q=  19.921  margin=  +0.0%
+  bond           recall=1.000  ms/q=  19.698 (+3.22 seed)  margin= -15.0%
+  faiss@100      recall=0.958  ms/q=  32.056  margin= -60.9%
+  faiss@500      recall=0.998  ms/q=  61.688  margin=-209.7%
+  faiss@1000     recall=1.000  ms/q=  88.700  margin=-345.3%
+  faiss@5000     recall=1.000  ms/q= 164.110  margin=-723.8%
+  plaid@100      recall=0.892  ms/q=  51.809  margin=-160.1%
+  plaid@500      recall=0.936  ms/q=  63.420  margin=-218.4%
+  plaid@1000     recall=0.938  ms/q=  85.531  margin=-329.4%
+  plaid@5000     recall=0.940  ms/q= 267.381  margin=-1242.2%
+  pdx@100        recall=0.964  ms/q=  25.341  margin= -27.2%
+  pdx@500        recall=0.998  ms/q=  38.943  margin= -95.5%
+  pdx@1000       recall=1.000  ms/q=  50.363  margin=-152.8%
+  pdx@5000       recall=1.000  ms/q= 154.169  margin=-673.9%
+  partitioned@100 recall=0.388  ms/q=   3.191  margin= +84.0%
+  partitioned@500 recall=0.752  ms/q=   5.652  margin= +71.6%
+  partitioned@1000 recall=0.858  ms/q=  10.948  margin= +45.0%
+  partitioned@5000 recall=1.000  ms/q=  55.082  margin=-176.5%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_scifact.png
+
+=== e01 nfcorpus: 3633 docs, 50 queries, budgets=[100, 500, 1000, 3633], threads=all ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 0.9s
+  pdx_ivf ready in 32.9s (n_buckets=4096)
+  partitioned index ready in 0.7s (P=64, ~57 docs/partition)
+  dense_fused    recall=1.000  ms/q=  10.174  margin=  +0.0%
+  bond           recall=1.000  ms/q=   9.880 (+1.94 seed)  margin= -16.2%
+  faiss@100      recall=0.934  ms/q=  21.811  margin=-114.4%
+  faiss@500      recall=1.000  ms/q=  41.323  margin=-306.2%
+  faiss@1000     recall=1.000  ms/q=  70.294  margin=-590.9%
+  faiss@3633     recall=1.000  ms/q= 107.753  margin=-959.1%
+  plaid@100      recall=0.852  ms/q=  18.319  margin= -80.1%
+  plaid@500      recall=0.932  ms/q=  26.700  margin=-162.4%
+  plaid@1000     recall=0.934  ms/q=  41.934  margin=-312.2%
+  plaid@3633     recall=0.938  ms/q= 131.355  margin=-1191.1%
+  pdx@100        recall=0.936  ms/q=  13.743  margin= -35.1%
+  pdx@500        recall=1.000  ms/q=  21.470  margin=-111.0%
+  pdx@1000       recall=1.000  ms/q=  29.781  margin=-192.7%
+  pdx@3633       recall=1.000  ms/q=  69.345  margin=-581.6%
+  partitioned@100 recall=0.462  ms/q=   3.622  margin= +64.4%
+  partitioned@500 recall=0.758  ms/q=   5.644  margin= +44.5%
+  partitioned@1000 recall=0.890  ms/q=  11.025  margin=  -8.4%
+  partitioned@3633 recall=1.000  ms/q=  37.970  margin=-273.2%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_nfcorpus.png
+
+=== e01 arguana: 8674 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 0.9s
+  pdx_ivf ready in 39.3s (n_buckets=4096)
+  partitioned index ready in 1.4s (P=128, ~68 docs/partition)
+  dense_fused    recall=1.000  ms/q=  51.688  margin=  +0.0%
+  bond           recall=1.000  ms/q=  48.118 (+7.29 seed)  margin=  -7.2%
+  faiss@100      recall=0.984  ms/q=  58.059  margin= -12.3%
+  faiss@500      recall=0.996  ms/q=  81.599  margin= -57.9%
+  faiss@1000     recall=0.996  ms/q= 100.820  margin= -95.1%
+  faiss@5000     recall=1.000  ms/q= 242.213  margin=-368.6%
+  plaid@100      recall=0.918  ms/q= 110.974  margin=-114.7%
+  plaid@500      recall=0.950  ms/q= 126.225  margin=-144.2%
+  plaid@1000     recall=0.954  ms/q= 162.379  margin=-214.1%
+  plaid@5000     recall=0.952  ms/q= 347.940  margin=-573.1%
+  pdx@100        recall=0.982  ms/q=  59.930  margin= -15.9%
+  pdx@500        recall=0.996  ms/q=  70.924  margin= -37.2%
+  pdx@1000       recall=0.996  ms/q=  89.264  margin= -72.7%
+  pdx@5000       recall=1.000  ms/q= 279.551  margin=-440.8%
+  partitioned@100 recall=0.500  ms/q=   3.299  margin= +93.6%
+  partitioned@500 recall=0.858  ms/q=   7.759  margin= +85.0%
+  partitioned@1000 recall=0.922  ms/q=  17.863  margin= +65.4%
+  partitioned@5000 recall=0.998  ms/q=  96.423  margin= -86.5%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_arguana.png
+
+=== e01 scidocs: 25657 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=all ===
+  faiss ready in 0.3s (n_lists=8192)
+  plaid ready in 1.0s
+  pdx_ivf ready in 186.0s (n_buckets=8192)
+  partitioned index ready in 5.1s (P=128, ~200 docs/partition)
+  dense_fused    recall=1.000  ms/q=  65.503  margin=  +0.0%
+  bond           recall=1.000  ms/q=  62.812 (+3.88 seed)  margin=  -1.8%
+  faiss@100      recall=0.922  ms/q=  28.641  margin= +56.3%
+  faiss@500      recall=0.988  ms/q=  43.492  margin= +33.6%
+  faiss@1000     recall=0.992  ms/q=  78.536  margin= -19.9%
+  faiss@5000     recall=1.000  ms/q= 161.654  margin=-146.8%
+  plaid@100      recall=0.870  ms/q= 122.088  margin= -86.4%
+  plaid@500      recall=0.920  ms/q= 133.409  margin=-103.7%
+  plaid@1000     recall=0.922  ms/q= 165.163  margin=-152.1%
+  plaid@5000     recall=0.922  ms/q= 311.656  margin=-375.8%
+  pdx@100        recall=0.920  ms/q=  24.854  margin= +62.1%
+  pdx@500        recall=0.988  ms/q=  33.491  margin= +48.9%
+  pdx@1000       recall=0.994  ms/q=  46.283  margin= +29.3%
+  pdx@5000       recall=1.000  ms/q= 153.739  margin=-134.7%
+  partitioned@100 recall=0.012  ms/q=   3.038  margin= +95.4%
+  partitioned@500 recall=0.270  ms/q=   1.492  margin= +97.7%
+  partitioned@1000 recall=0.686  ms/q=   4.481  margin= +93.2%
+  partitioned@5000 recall=0.946  ms/q=  24.095  margin= +63.2%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_scidocs.png
+
+Done in 2278.0s
+
+=== Stage 4 e03 (R8): partitioned fused scan frontier, all cores ===
+
+=== e03 scifact: 5183 docs, 50 queries, threads=all ===
+  build: 1.3s  P=64 (mean 81 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 64]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +13.0)
+  dense-brute (interleaved) = 19.774 ms/q
+  [brute] nprobe=  1  probed=  1.8%  recall=0.388 (min 0.00)  ms/q=   0.931  speedup=21.24x
+  [brute] nprobe=  2  probed=  3.8%  recall=0.544 (min 0.00)  ms/q=   1.823  speedup=10.85x
+  [brute] nprobe=  4  probed=  7.2%  recall=0.668 (min 0.00)  ms/q=   3.615  speedup=5.47x
+  [brute] nprobe=  8  probed= 13.7%  recall=0.786 (min 0.20)  ms/q=   7.053  speedup=2.80x
+  [brute] nprobe= 16  probed= 27.8%  recall=0.896 (min 0.50)  ms/q=  14.035  speedup=1.41x
+  [brute] nprobe= 32  probed= 54.2%  recall=0.970 (min 0.80)  ms/q=  28.494  speedup=0.69x
+  [brute] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  56.136  speedup=0.35x
+  [bond ] nprobe=  1  probed=  1.8%  recall=0.388 (min 0.00)  ms/q=   1.045  speedup=18.92x
+  [bond ] nprobe=  2  probed=  3.8%  recall=0.544 (min 0.00)  ms/q=   2.031  speedup=9.73x
+  [bond ] nprobe=  4  probed=  7.2%  recall=0.668 (min 0.00)  ms/q=   3.816  speedup=5.18x
+  [bond ] nprobe=  8  probed= 13.7%  recall=0.786 (min 0.20)  ms/q=   7.458  speedup=2.65x
+  [bond ] nprobe= 16  probed= 27.8%  recall=0.896 (min 0.50)  ms/q=  14.506  speedup=1.36x
+  [bond ] nprobe= 32  probed= 54.2%  recall=0.970 (min 0.80)  ms/q=  28.489  speedup=0.69x
+  [bond ] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  56.427  speedup=0.35x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_scifact.png
+
+=== e03 nfcorpus: 3633 docs, 50 queries, threads=all ===
+  build: 0.8s  P=64 (mean 57 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 64]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +5.7)
+  dense-brute (interleaved) = 10.069 ms/q
+  [brute] nprobe=  1  probed=  1.7%  recall=0.350 (min 0.00)  ms/q=   0.598  speedup=16.83x
+  [brute] nprobe=  2  probed=  3.2%  recall=0.462 (min 0.00)  ms/q=   1.181  speedup=8.53x
+  [brute] nprobe=  4  probed=  6.8%  recall=0.618 (min 0.20)  ms/q=   2.335  speedup=4.31x
+  [brute] nprobe=  8  probed= 13.9%  recall=0.734 (min 0.30)  ms/q=   4.686  speedup=2.15x
+  [brute] nprobe= 16  probed= 27.7%  recall=0.876 (min 0.40)  ms/q=   9.422  speedup=1.07x
+  [brute] nprobe= 32  probed= 54.1%  recall=0.958 (min 0.60)  ms/q=  18.723  speedup=0.54x
+  [brute] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  36.732  speedup=0.27x
+  [bond ] nprobe=  1  probed=  1.7%  recall=0.350 (min 0.00)  ms/q=   0.703  speedup=14.32x
+  [bond ] nprobe=  2  probed=  3.2%  recall=0.462 (min 0.00)  ms/q=   1.301  speedup=7.74x
+  [bond ] nprobe=  4  probed=  6.8%  recall=0.618 (min 0.20)  ms/q=   2.576  speedup=3.91x
+  [bond ] nprobe=  8  probed= 13.9%  recall=0.734 (min 0.30)  ms/q=   5.097  speedup=1.98x
+  [bond ] nprobe= 16  probed= 27.7%  recall=0.876 (min 0.40)  ms/q=   9.904  speedup=1.02x
+  [bond ] nprobe= 32  probed= 54.1%  recall=0.958 (min 0.60)  ms/q=  19.506  speedup=0.52x
+  [bond ] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  38.019  speedup=0.26x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_nfcorpus.png
+
+=== e03 arguana: 8674 docs, 50 queries, threads=all ===
+  build: 1.4s  P=128 (mean 68 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 128]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +17.9)
+  dense-brute (interleaved) = 51.697 ms/q
+  [brute] nprobe=  1  probed=  1.0%  recall=0.500 (min 0.00)  ms/q=   3.290  speedup=15.71x
+  [brute] nprobe=  2  probed=  2.0%  recall=0.656 (min 0.00)  ms/q=   2.968  speedup=17.42x
+  [brute] nprobe=  4  probed=  3.8%  recall=0.758 (min 0.00)  ms/q=   5.173  speedup=9.99x
+  [brute] nprobe=  8  probed=  7.5%  recall=0.870 (min 0.30)  ms/q=  10.419  speedup=4.96x
+  [brute] nprobe= 16  probed= 14.7%  recall=0.924 (min 0.40)  ms/q=  21.008  speedup=2.46x
+  [brute] nprobe= 32  probed= 28.6%  recall=0.964 (min 0.50)  ms/q=  41.085  speedup=1.26x
+  [brute] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 252.733  speedup=0.20x
+  [bond ] nprobe=  1  probed=  1.0%  recall=0.500 (min 0.00)  ms/q=   3.126  speedup=16.54x
+  [bond ] nprobe=  2  probed=  2.0%  recall=0.656 (min 0.00)  ms/q=   4.391  speedup=11.77x
+  [bond ] nprobe=  4  probed=  3.8%  recall=0.758 (min 0.00)  ms/q=   5.432  speedup=9.52x
+  [bond ] nprobe=  8  probed=  7.5%  recall=0.870 (min 0.30)  ms/q=   9.898  speedup=5.22x
+  [bond ] nprobe= 16  probed= 14.7%  recall=0.924 (min 0.40)  ms/q=  24.613  speedup=2.10x
+  [bond ] nprobe= 32  probed= 28.6%  recall=0.964 (min 0.50)  ms/q=  43.752  speedup=1.18x
+  [bond ] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 254.003  speedup=0.20x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_arguana.png
+
+=== e03 scidocs: 25657 docs, 50 queries, threads=all ===
+  build: 4.3s  P=128 (mean 200 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 128]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +4.7)
+  dense-brute (interleaved) = 65.161 ms/q
+  [brute] nprobe=  1  probed=  0.3%  recall=0.012 (min 0.00)  ms/q=   1.476  speedup=44.16x
+  [brute] nprobe=  2  probed=  1.0%  recall=0.270 (min 0.00)  ms/q=   1.324  speedup=49.22x
+  [brute] nprobe=  4  probed=  2.7%  recall=0.594 (min 0.00)  ms/q=   3.284  speedup=19.84x
+  [brute] nprobe=  8  probed=  6.4%  recall=0.808 (min 0.10)  ms/q=   7.160  speedup=9.10x
+  [brute] nprobe= 16  probed= 13.6%  recall=0.924 (min 0.60)  ms/q=  15.024  speedup=4.34x
+  [brute] nprobe= 32  probed= 27.6%  recall=0.954 (min 0.70)  ms/q=  29.932  speedup=2.18x
+  [brute] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 111.939  speedup=0.58x
+  [bond ] nprobe=  1  probed=  0.3%  recall=0.012 (min 0.00)  ms/q=   1.730  speedup=37.66x
+  [bond ] nprobe=  2  probed=  1.0%  recall=0.270 (min 0.00)  ms/q=   1.633  speedup=39.90x
+  [bond ] nprobe=  4  probed=  2.7%  recall=0.594 (min 0.00)  ms/q=   3.576  speedup=18.22x
+  [bond ] nprobe=  8  probed=  6.4%  recall=0.808 (min 0.10)  ms/q=   8.574  speedup=7.60x
+  [bond ] nprobe= 16  probed= 13.6%  recall=0.924 (min 0.60)  ms/q=  16.241  speedup=4.01x
+  [bond ] nprobe= 32  probed= 27.6%  recall=0.954 (min 0.70)  ms/q=  30.644  speedup=2.13x
+  [bond ] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 114.354  speedup=0.57x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_scidocs.png
+
+Done in 603.0s
+
+=== Stage 4 e02 (R8): seeded-tau recovery, 1T ===
+
+=== e02 scifact: 5183 docs, 50 queries, threads=1 ===
+  faiss index ready in 0.3s (n_lists=4096)
+  dense-brute (interleaved) = 116.186 ms/q
+  self_bound       prune= 72.4%  kernel= 113.181 ms/q (  +2.6%)  seed=  0.00 ms/q  total_margin=  +2.6%
+  seed_partial     prune= 75.6%  kernel= 112.713 ms/q (  +3.0%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 75.7%  kernel= 112.691 ms/q (  +3.0%)  seed=  3.06 ms/q  total_margin=  +0.4%
+  ivf_seed_strong  prune= 87.8%  kernel= 110.692 ms/q (  +4.7%)  seed= 10.88 ms/q  total_margin=  -4.6%
+  oracle           prune= 88.2%  kernel= 110.770 ms/q (  +4.7%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json
+
+=== e02 nfcorpus: 3633 docs, 50 queries, threads=1 ===
+  faiss index ready in 0.2s (n_lists=4096)
+  dense-brute (interleaved) = 57.183 ms/q
+  self_bound       prune= 77.4%  kernel=  56.645 ms/q (  +0.9%)  seed=  0.00 ms/q  total_margin=  +0.9%
+  seed_partial     prune= 81.5%  kernel=  56.252 ms/q (  +1.6%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 82.2%  kernel=  56.176 ms/q (  +1.8%)  seed=  1.95 ms/q  total_margin=  -1.6%
+  ivf_seed_strong  prune= 94.4%  kernel=  55.272 ms/q (  +3.3%)  seed=  7.54 ms/q  total_margin=  -9.8%
+  oracle           prune= 94.8%  kernel=  55.210 ms/q (  +3.5%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json
+
+=== e02 arguana: 8674 docs, 50 queries, threads=1 ===
+  faiss index ready in 0.3s (n_lists=4096)
+  dense-brute (interleaved) = 306.721 ms/q
+  self_bound       prune= 92.8%  kernel= 286.663 ms/q (  +6.5%)  seed=  0.00 ms/q  total_margin=  +6.5%
+  seed_partial     prune= 93.9%  kernel= 286.430 ms/q (  +6.6%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 94.8%  kernel= 285.734 ms/q (  +6.8%)  seed=  7.30 ms/q  total_margin=  +4.5%
+  ivf_seed_strong  prune= 96.8%  kernel= 284.964 ms/q (  +7.1%)  seed= 21.98 ms/q  total_margin=  -0.1%
+  oracle           prune= 97.2%  kernel= 284.896 ms/q (  +7.1%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json
+
+=== e02 scidocs: 25657 docs, 50 queries, threads=1 ===
+  faiss index ready in 0.8s (n_lists=8192)
+  dense-brute (interleaved) = 388.553 ms/q
+  self_bound       prune= 92.3%  kernel= 370.238 ms/q (  +4.7%)  seed=  0.00 ms/q  total_margin=  +4.7%
+  seed_partial     prune= 95.0%  kernel= 368.658 ms/q (  +5.1%)  seed=   n/a ms/q  total_margin=    n/a
+  ivf_seed_cheap   prune= 94.0%  kernel= 369.109 ms/q (  +5.0%)  seed=  3.56 ms/q  total_margin=  +4.1%
+  ivf_seed_strong  prune= 97.7%  kernel= 366.803 ms/q (  +5.6%)  seed= 10.56 ms/q  total_margin=  +2.9%
+  oracle           prune= 98.2%  kernel= 366.527 ms/q (  +5.7%)  seed=   n/a ms/q  total_margin=    n/a
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json
+
+Done in 2599.4s
+
+=== Stage 4 e01 (R8): fixed candidate arms, 1T ===
+
+=== e01 scifact: 5183 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=1 ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 5.0s
+  pdx_ivf ready in 37.1s (n_buckets=4096)
+  partitioned index ready in 1.1s (P=64, ~81 docs/partition)
+  dense_fused    recall=1.000  ms/q= 116.259  margin=  +0.0%
+  bond           recall=1.000  ms/q= 112.469 (+3.15 seed)  margin=  +0.6%
+  faiss@100      recall=0.958  ms/q=  15.626  margin= +86.6%
+  faiss@500      recall=0.998  ms/q=  38.137  margin= +67.2%
+  faiss@1000     recall=1.000  ms/q=  64.842  margin= +44.2%
+  faiss@5000     recall=1.000  ms/q= 220.754  margin= -89.9%
+  plaid@100      recall=0.892  ms/q= 308.201  margin=-165.1%
+  plaid@500      recall=0.936  ms/q= 386.640  margin=-232.6%
+  plaid@1000     recall=0.938  ms/q= 533.748  margin=-359.1%
+  plaid@5000     recall=0.940  ms/q=1654.704  margin=-1323.3%
+  pdx@100        recall=0.964  ms/q=  21.745  margin= +81.3%
+  pdx@500        recall=0.998  ms/q=  44.374  margin= +61.8%
+  pdx@1000       recall=1.000  ms/q=  71.180  margin= +38.8%
+  pdx@5000       recall=1.000  ms/q= 244.136  margin=-110.0%
+  partitioned@100 recall=0.388  ms/q=   2.452  margin= +97.9%
+  partitioned@500 recall=0.752  ms/q=  12.741  margin= +89.0%
+  partitioned@1000 recall=0.858  ms/q=  24.543  margin= +78.9%
+  partitioned@5000 recall=1.000  ms/q= 114.729  margin=  +1.3%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_scifact.png
+
+=== e01 nfcorpus: 3633 docs, 50 queries, budgets=[100, 500, 1000, 3633], threads=1 ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 1.0s
+  pdx_ivf ready in 33.0s (n_buckets=4096)
+  partitioned index ready in 0.8s (P=64, ~57 docs/partition)
+  dense_fused    recall=1.000  ms/q=  57.132  margin=  +0.0%
+  bond           recall=1.000  ms/q=  55.708 (+1.91 seed)  margin=  -0.9%
+  faiss@100      recall=0.934  ms/q=   9.387  margin= +83.6%
+  faiss@500      recall=1.000  ms/q=  25.748  margin= +54.9%
+  faiss@1000     recall=1.000  ms/q=  36.632  margin= +35.9%
+  faiss@3633     recall=1.000  ms/q=  88.472  margin= -54.9%
+  plaid@100      recall=0.852  ms/q=  85.413  margin= -49.5%
+  plaid@500      recall=0.932  ms/q= 140.272  margin=-145.5%
+  plaid@1000     recall=0.934  ms/q= 205.721  margin=-260.1%
+  plaid@3633     recall=0.938  ms/q= 709.171  margin=-1141.3%
+  pdx@100        recall=0.936  ms/q=  12.880  margin= +77.5%
+  pdx@500        recall=1.000  ms/q=  29.253  margin= +48.8%
+  pdx@1000       recall=1.000  ms/q=  40.243  margin= +29.6%
+  pdx@3633       recall=1.000  ms/q=  99.123  margin= -73.5%
+  partitioned@100 recall=0.462  ms/q=   2.132  margin= +96.3%
+  partitioned@500 recall=0.758  ms/q=   9.506  margin= +83.4%
+  partitioned@1000 recall=0.890  ms/q=  18.703  margin= +67.3%
+  partitioned@3633 recall=1.000  ms/q=  60.274  margin=  -5.5%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_nfcorpus.png
+
+=== e01 arguana: 8674 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=1 ===
+  faiss ready in 0.1s (n_lists=4096)
+  plaid ready in 0.9s
+  pdx_ivf ready in 48.4s (n_buckets=4096)
+  partitioned index ready in 1.5s (P=128, ~68 docs/partition)
+  dense_fused    recall=1.000  ms/q= 307.177  margin=  +0.0%
+  bond           recall=1.000  ms/q= 286.849 (+6.94 seed)  margin=  +4.4%
+  faiss@100      recall=0.984  ms/q=  34.619  margin= +88.7%
+  faiss@500      recall=0.996  ms/q=  58.499  margin= +81.0%
+  faiss@1000     recall=0.996  ms/q=  91.523  margin= +70.2%
+  faiss@5000     recall=1.000  ms/q= 390.253  margin= -27.0%
+  plaid@100      recall=0.918  ms/q= 686.869  margin=-123.6%
+  plaid@500      recall=0.950  ms/q= 784.393  margin=-155.4%
+  plaid@1000     recall=0.954  ms/q= 937.436  margin=-205.2%
+  plaid@5000     recall=0.952  ms/q=2170.773  margin=-606.7%
+  pdx@100        recall=0.982  ms/q=  46.678  margin= +84.8%
+  pdx@500        recall=0.996  ms/q=  71.571  margin= +76.7%
+  pdx@1000       recall=0.996  ms/q= 105.374  margin= +65.7%
+  pdx@5000       recall=1.000  ms/q= 442.814  margin= -44.2%
+  partitioned@100 recall=0.500  ms/q=   2.959  margin= +99.0%
+  partitioned@500 recall=0.858  ms/q=  18.009  margin= +94.1%
+  partitioned@1000 recall=0.922  ms/q=  38.572  margin= +87.4%
+  partitioned@5000 recall=0.998  ms/q= 185.191  margin= +39.7%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_arguana.png
+
+=== e01 scidocs: 25657 docs, 50 queries, budgets=[100, 500, 1000, 5000], threads=1 ===
+  faiss ready in 0.3s (n_lists=8192)
+  plaid ready in 1.0s
+  pdx_ivf ready in 272.3s (n_buckets=8192)
+  partitioned index ready in 5.8s (P=128, ~200 docs/partition)
+  dense_fused    recall=1.000  ms/q= 394.638  margin=  +0.0%
+  bond           recall=1.000  ms/q= 371.781 (+3.83 seed)  margin=  +4.8%
+  faiss@100      recall=0.922  ms/q=  16.205  margin= +95.9%
+  faiss@500      recall=0.988  ms/q=  31.705  margin= +92.0%
+  faiss@1000     recall=0.992  ms/q=  54.059  margin= +86.3%
+  faiss@5000     recall=1.000  ms/q= 221.027  margin= +44.0%
+  plaid@100      recall=0.870  ms/q= 740.603  margin= -87.7%
+  plaid@500      recall=0.920  ms/q= 821.886  margin=-108.3%
+  plaid@1000     recall=0.922  ms/q= 926.721  margin=-134.8%
+  plaid@5000     recall=0.922  ms/q=1924.209  margin=-387.6%
+  pdx@100        recall=0.920  ms/q=  21.769  margin= +94.5%
+  pdx@500        recall=0.988  ms/q=  38.080  margin= +90.4%
+  pdx@1000       recall=0.994  ms/q=  61.562  margin= +84.4%
+  pdx@5000       recall=1.000  ms/q= 244.482  margin= +38.0%
+  partitioned@100 recall=0.012  ms/q=   0.679  margin= +99.8%
+  partitioned@500 recall=0.270  ms/q=   2.771  margin= +99.3%
+  partitioned@1000 recall=0.686  ms/q=  11.136  margin= +97.2%
+  partitioned@5000 recall=0.946  ms/q=  75.050  margin= +81.0%
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e01_fixed_candidate_arms_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e01_fixed_candidate_arms_scidocs.png
+
+Done in 6780.2s
+
+=== Stage 4 e03 (R8): partitioned fused scan frontier, 1T ===
+
+=== e03 scifact: 5183 docs, 50 queries, threads=1 ===
+  build: 1.3s  P=64 (mean 81 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 64]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +13.0)
+  dense-brute (interleaved) = 116.255 ms/q
+  [brute] nprobe=  1  probed=  1.8%  recall=0.388 (min 0.00)  ms/q=   2.226  speedup=52.22x
+  [brute] nprobe=  2  probed=  3.8%  recall=0.544 (min 0.00)  ms/q=   4.468  speedup=26.02x
+  [brute] nprobe=  4  probed=  7.2%  recall=0.668 (min 0.00)  ms/q=   8.498  speedup=13.68x
+  [brute] nprobe=  8  probed= 13.7%  recall=0.786 (min 0.20)  ms/q=  16.127  speedup=7.21x
+  [brute] nprobe= 16  probed= 27.8%  recall=0.896 (min 0.50)  ms/q=  32.640  speedup=3.56x
+  [brute] nprobe= 32  probed= 54.2%  recall=0.970 (min 0.80)  ms/q=  63.847  speedup=1.82x
+  [brute] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 119.853  speedup=0.97x
+  [bond ] nprobe=  1  probed=  1.8%  recall=0.388 (min 0.00)  ms/q=   2.423  speedup=47.99x
+  [bond ] nprobe=  2  probed=  3.8%  recall=0.544 (min 0.00)  ms/q=   4.738  speedup=24.54x
+  [bond ] nprobe=  4  probed=  7.2%  recall=0.668 (min 0.00)  ms/q=   8.860  speedup=13.12x
+  [bond ] nprobe=  8  probed= 13.7%  recall=0.786 (min 0.20)  ms/q=  16.409  speedup=7.08x
+  [bond ] nprobe= 16  probed= 27.8%  recall=0.896 (min 0.50)  ms/q=  32.483  speedup=3.58x
+  [bond ] nprobe= 32  probed= 54.2%  recall=0.970 (min 0.80)  ms/q=  62.827  speedup=1.85x
+  [bond ] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 116.913  speedup=0.99x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_scifact.png
+
+=== e03 nfcorpus: 3633 docs, 50 queries, threads=1 ===
+  build: 0.9s  P=64 (mean 57 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 64]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +5.7)
+  dense-brute (interleaved) = 57.350 ms/q
+  [brute] nprobe=  1  probed=  1.7%  recall=0.350 (min 0.00)  ms/q=   1.033  speedup=55.50x
+  [brute] nprobe=  2  probed=  3.2%  recall=0.462 (min 0.00)  ms/q=   1.929  speedup=29.73x
+  [brute] nprobe=  4  probed=  6.8%  recall=0.618 (min 0.20)  ms/q=   4.005  speedup=14.32x
+  [brute] nprobe=  8  probed= 13.9%  recall=0.734 (min 0.30)  ms/q=   8.240  speedup=6.96x
+  [brute] nprobe= 16  probed= 27.7%  recall=0.876 (min 0.40)  ms/q=  16.529  speedup=3.47x
+  [brute] nprobe= 32  probed= 54.1%  recall=0.958 (min 0.60)  ms/q=  32.320  speedup=1.77x
+  [brute] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  60.553  speedup=0.95x
+  [bond ] nprobe=  1  probed=  1.7%  recall=0.350 (min 0.00)  ms/q=   1.143  speedup=50.20x
+  [bond ] nprobe=  2  probed=  3.2%  recall=0.462 (min 0.00)  ms/q=   2.093  speedup=27.40x
+  [bond ] nprobe=  4  probed=  6.8%  recall=0.618 (min 0.20)  ms/q=   4.208  speedup=13.63x
+  [bond ] nprobe=  8  probed= 13.9%  recall=0.734 (min 0.30)  ms/q=   8.509  speedup=6.74x
+  [bond ] nprobe= 16  probed= 27.7%  recall=0.876 (min 0.40)  ms/q=  16.782  speedup=3.42x
+  [bond ] nprobe= 32  probed= 54.1%  recall=0.958 (min 0.60)  ms/q=  32.432  speedup=1.77x
+  [bond ] nprobe= 64* probed=100.0%  recall=1.000 (min 1.00)  ms/q=  60.555  speedup=0.95x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_nfcorpus.png
+
+=== e03 arguana: 8674 docs, 50 queries, threads=1 ===
+  build: 1.5s  P=128 (mean 68 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 128]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +17.9)
+  dense-brute (interleaved) = 307.517 ms/q
+  [brute] nprobe=  1  probed=  1.0%  recall=0.500 (min 0.00)  ms/q=   2.775  speedup=110.82x
+  [brute] nprobe=  2  probed=  2.0%  recall=0.656 (min 0.00)  ms/q=   5.574  speedup=55.17x
+  [brute] nprobe=  4  probed=  3.8%  recall=0.758 (min 0.00)  ms/q=  10.637  speedup=28.91x
+  [brute] nprobe=  8  probed=  7.5%  recall=0.870 (min 0.30)  ms/q=  21.243  speedup=14.48x
+  [brute] nprobe= 16  probed= 14.7%  recall=0.924 (min 0.40)  ms/q=  43.071  speedup=7.14x
+  [brute] nprobe= 32  probed= 28.6%  recall=0.964 (min 0.50)  ms/q=  86.101  speedup=3.57x
+  [brute] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 319.050  speedup=0.96x
+  [bond ] nprobe=  1  probed=  1.0%  recall=0.500 (min 0.00)  ms/q=   2.970  speedup=103.55x
+  [bond ] nprobe=  2  probed=  2.0%  recall=0.656 (min 0.00)  ms/q=   5.756  speedup=53.43x
+  [bond ] nprobe=  4  probed=  3.8%  recall=0.758 (min 0.00)  ms/q=  10.667  speedup=28.83x
+  [bond ] nprobe=  8  probed=  7.5%  recall=0.870 (min 0.30)  ms/q=  20.888  speedup=14.72x
+  [bond ] nprobe= 16  probed= 14.7%  recall=0.924 (min 0.40)  ms/q=  41.522  speedup=7.41x
+  [bond ] nprobe= 32  probed= 28.6%  recall=0.964 (min 0.50)  ms/q=  82.125  speedup=3.74x
+  [bond ] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 302.150  speedup=1.02x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_arguana.png
+
+=== e03 scidocs: 25657 docs, 50 queries, threads=1 ===
+  build: 4.5s  P=128 (mean 200 docs/partition)  nprobe sweep: [1, 2, 4, 8, 16, 32, 128]
+  exact-safe partition bound: prunable=0.00% of partitions at ORACLE tau  (min UB - tau = +4.7)
+  dense-brute (interleaved) = 389.962 ms/q
+  [brute] nprobe=  1  probed=  0.3%  recall=0.012 (min 0.00)  ms/q=   0.588  speedup=663.71x
+  [brute] nprobe=  2  probed=  1.0%  recall=0.270 (min 0.00)  ms/q=   2.542  speedup=153.42x
+  [brute] nprobe=  4  probed=  2.7%  recall=0.594 (min 0.00)  ms/q=   7.920  speedup=49.24x
+  [brute] nprobe=  8  probed=  6.4%  recall=0.808 (min 0.10)  ms/q=  20.387  speedup=19.13x
+  [brute] nprobe= 16  probed= 13.6%  recall=0.924 (min 0.60)  ms/q=  47.245  speedup=8.25x
+  [brute] nprobe= 32  probed= 27.6%  recall=0.954 (min 0.70)  ms/q= 101.976  speedup=3.82x
+  [brute] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 399.415  speedup=0.98x
+  [bond ] nprobe=  1  probed=  0.3%  recall=0.012 (min 0.00)  ms/q=   0.678  speedup=575.49x
+  [bond ] nprobe=  2  probed=  1.0%  recall=0.270 (min 0.00)  ms/q=   2.748  speedup=141.91x
+  [bond ] nprobe=  4  probed=  2.7%  recall=0.594 (min 0.00)  ms/q=   8.297  speedup=47.00x
+  [bond ] nprobe=  8  probed=  6.4%  recall=0.808 (min 0.10)  ms/q=  20.481  speedup=19.04x
+  [bond ] nprobe= 16  probed= 13.6%  recall=0.924 (min 0.60)  ms/q=  46.378  speedup=8.41x
+  [bond ] nprobe= 32  probed= 27.6%  recall=0.954 (min 0.70)  ms/q=  98.997  speedup=3.94x
+  [bond ] nprobe=128* probed=100.0%  recall=1.000 (min 1.00)  ms/q= 384.491  speedup=1.01x
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage4_integration_e03_partitioned_fused_scan_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage4_integration/e03_partitioned_fused_scan_scidocs.png
+
+Done in 1308.7s
+
+=== All done ===
+Thu Jul  9 02:53:30 AM CEST 2026

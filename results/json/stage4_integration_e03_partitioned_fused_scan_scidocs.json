@@ -1,0 +1,356 @@
+{
+  "experiment": "e03_partitioned_fused_scan",
+  "purpose": "R8: IVF-partitioned panel layout with the fused BOND kernel as the bucket scanner \u2014 latency-recall frontier vs nprobe",
+  "dataset": "scidocs",
+  "n_docs": 25657,
+  "n_queries": 50,
+  "query_seed": 42,
+  "k": 10,
+  "kernel": {
+    "bound": "tight",
+    "order": "natural",
+    "checkpoints": [
+      112
+    ],
+    "shrink": 1.0
+  },
+  "partitioning": {
+    "n_partitions_requested": 128,
+    "n_partitions_nonempty": 128,
+    "docs_per_partition_mean": 200.4453125,
+    "docs_per_partition_max": 470,
+    "token_radius_mean": 0.7126803398132324,
+    "token_radius_min": 0.3148899972438812,
+    "build_seconds": 4.548774051996588,
+    "kmeans_niters": 15,
+    "probe_score": "sum_i <q_i, c_p>"
+  },
+  "exact_safe_partition_bound": {
+    "prunable_partitions_pct_oracle_tau": 0.0,
+    "min_ub_minus_oracle_tau_mean": 4.6616213989257815,
+    "note": "UB_p = sum_i <q_i,c_p> + m*R_p (unit-norm queries); partitions with UB_p < tau could be skipped EXACTLY"
+  },
+  "rep_best_of": 5,
+  "runs": {
+    "mt": {
+      "threads": "all_cores",
+      "dense_interleaved_ms_per_query": 65.1610387799883,
+      "arms": [
+        {
+          "scanner": "brute",
+          "nprobe": 1,
+          "is_full_probe": false,
+          "ms_per_query": 1.475574299984146,
+          "speedup_vs_dense": 44.15978157161481,
+          "recall_vs_exact_at_10_mean": 0.012,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 0.2529524106481662,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 2,
+          "is_full_probe": false,
+          "ms_per_query": 1.323838899988914,
+          "speedup_vs_dense": 49.22127517217841,
+          "recall_vs_exact_at_10_mean": 0.27,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 1.0439256343298124,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 4,
+          "is_full_probe": false,
+          "ms_per_query": 3.2842695199360605,
+          "speedup_vs_dense": 19.84034452241206,
+          "recall_vs_exact_at_10_mean": 0.594,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 2.7450598277273257,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 8,
+          "is_full_probe": false,
+          "ms_per_query": 7.159802259993739,
+          "speedup_vs_dense": 9.100955084204418,
+          "recall_vs_exact_at_10_mean": 0.8080000000000002,
+          "recall_vs_exact_at_10_min": 0.1,
+          "docs_probed_pct_mean": 6.350235803094672,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 16,
+          "is_full_probe": false,
+          "ms_per_query": 15.02400643999863,
+          "speedup_vs_dense": 4.3371279851497615,
+          "recall_vs_exact_at_10_mean": 0.924,
+          "recall_vs_exact_at_10_min": 0.6,
+          "docs_probed_pct_mean": 13.614062439100437,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 32,
+          "is_full_probe": false,
+          "ms_per_query": 29.932385520005482,
+          "speedup_vs_dense": 2.176941050570044,
+          "recall_vs_exact_at_10_mean": 0.9540000000000001,
+          "recall_vs_exact_at_10_min": 0.7,
+          "docs_probed_pct_mean": 27.61772615660443,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 128,
+          "is_full_probe": true,
+          "ms_per_query": 111.93877966004948,
+          "speedup_vs_dense": 0.5821131780950085,
+          "recall_vs_exact_at_10_mean": 1.0,
+          "recall_vs_exact_at_10_min": 1.0,
+          "docs_probed_pct_mean": 100.0,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 1,
+          "is_full_probe": false,
+          "ms_per_query": 1.730464700012817,
+          "speedup_vs_dense": 37.65522566250885,
+          "recall_vs_exact_at_10_mean": 0.012,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 0.2529524106481662,
+          "docs_pruned_pct_of_probed_mean": 0.19806763285024154
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 2,
+          "is_full_probe": false,
+          "ms_per_query": 1.6333115399902454,
+          "speedup_vs_dense": 39.89504585290413,
+          "recall_vs_exact_at_10_mean": 0.27,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 1.0439256343298124,
+          "docs_pruned_pct_of_probed_mean": 3.454695346683303
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 4,
+          "is_full_probe": false,
+          "ms_per_query": 3.5755067999707535,
+          "speedup_vs_dense": 18.224280479768993,
+          "recall_vs_exact_at_10_mean": 0.594,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 2.7450598277273257,
+          "docs_pruned_pct_of_probed_mean": 29.437573221453512
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 8,
+          "is_full_probe": false,
+          "ms_per_query": 8.573666980009875,
+          "speedup_vs_dense": 7.600136433094028,
+          "recall_vs_exact_at_10_mean": 0.8080000000000002,
+          "recall_vs_exact_at_10_min": 0.1,
+          "docs_probed_pct_mean": 6.350235803094672,
+          "docs_pruned_pct_of_probed_mean": 60.26439294786549
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 16,
+          "is_full_probe": false,
+          "ms_per_query": 16.241013039980317,
+          "speedup_vs_dense": 4.012128961388192,
+          "recall_vs_exact_at_10_mean": 0.924,
+          "recall_vs_exact_at_10_min": 0.6,
+          "docs_probed_pct_mean": 13.614062439100437,
+          "docs_pruned_pct_of_probed_mean": 77.9417655014286
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 32,
+          "is_full_probe": false,
+          "ms_per_query": 30.64394404005725,
+          "speedup_vs_dense": 2.126392043230822,
+          "recall_vs_exact_at_10_mean": 0.9540000000000001,
+          "recall_vs_exact_at_10_min": 0.7,
+          "docs_probed_pct_mean": 27.61772615660443,
+          "docs_pruned_pct_of_probed_mean": 87.74346112889071
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 128,
+          "is_full_probe": true,
+          "ms_per_query": 114.35404500000004,
+          "speedup_vs_dense": 0.5698183984658197,
+          "recall_vs_exact_at_10_mean": 1.0,
+          "recall_vs_exact_at_10_min": 1.0,
+          "docs_probed_pct_mean": 100.0,
+          "docs_pruned_pct_of_probed_mean": 96.05472190825114
+        }
+      ]
+    },
+    "1t": {
+      "threads": "single",
+      "dense_interleaved_ms_per_query": 389.9616640000022,
+      "arms": [
+        {
+          "scanner": "brute",
+          "nprobe": 1,
+          "is_full_probe": false,
+          "ms_per_query": 0.5875467200530693,
+          "speedup_vs_dense": 663.7117537900297,
+          "recall_vs_exact_at_10_mean": 0.012,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 0.2529524106481662,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 2,
+          "is_full_probe": false,
+          "ms_per_query": 2.541751899989322,
+          "speedup_vs_dense": 153.4223950030845,
+          "recall_vs_exact_at_10_mean": 0.27,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 1.0439256343298124,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 4,
+          "is_full_probe": false,
+          "ms_per_query": 7.920369099883828,
+          "speedup_vs_dense": 49.235289300560744,
+          "recall_vs_exact_at_10_mean": 0.594,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 2.7450598277273257,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 8,
+          "is_full_probe": false,
+          "ms_per_query": 20.386735960055375,
+          "speedup_vs_dense": 19.12820496444704,
+          "recall_vs_exact_at_10_mean": 0.8080000000000002,
+          "recall_vs_exact_at_10_min": 0.1,
+          "docs_probed_pct_mean": 6.350235803094672,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 16,
+          "is_full_probe": false,
+          "ms_per_query": 47.245205939980224,
+          "speedup_vs_dense": 8.253994373427117,
+          "recall_vs_exact_at_10_mean": 0.924,
+          "recall_vs_exact_at_10_min": 0.6,
+          "docs_probed_pct_mean": 13.614062439100437,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 32,
+          "is_full_probe": false,
+          "ms_per_query": 101.97649474008358,
+          "speedup_vs_dense": 3.8240347934485457,
+          "recall_vs_exact_at_10_mean": 0.9540000000000001,
+          "recall_vs_exact_at_10_min": 0.7,
+          "docs_probed_pct_mean": 27.61772615660443,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "brute",
+          "nprobe": 128,
+          "is_full_probe": true,
+          "ms_per_query": 399.4145816199307,
+          "speedup_vs_dense": 0.9763330683081481,
+          "recall_vs_exact_at_10_mean": 1.0,
+          "recall_vs_exact_at_10_min": 1.0,
+          "docs_probed_pct_mean": 100.0,
+          "docs_pruned_pct_of_probed_mean": 0.0
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 1,
+          "is_full_probe": false,
+          "ms_per_query": 0.6776213400007691,
+          "speedup_vs_dense": 575.4861026064492,
+          "recall_vs_exact_at_10_mean": 0.012,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 0.2529524106481662,
+          "docs_pruned_pct_of_probed_mean": 1.692059952929518
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 2,
+          "is_full_probe": false,
+          "ms_per_query": 2.7479578799102455,
+          "speedup_vs_dense": 141.90962199636743,
+          "recall_vs_exact_at_10_mean": 0.27,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 1.0439256343298124,
+          "docs_pruned_pct_of_probed_mean": 15.122138882101257
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 4,
+          "is_full_probe": false,
+          "ms_per_query": 8.297287399909692,
+          "speedup_vs_dense": 46.99869309146102,
+          "recall_vs_exact_at_10_mean": 0.594,
+          "recall_vs_exact_at_10_min": 0.0,
+          "docs_probed_pct_mean": 2.7450598277273257,
+          "docs_pruned_pct_of_probed_mean": 39.76238031843491
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 8,
+          "is_full_probe": false,
+          "ms_per_query": 20.48066078001284,
+          "speedup_vs_dense": 19.04048254051292,
+          "recall_vs_exact_at_10_mean": 0.8080000000000002,
+          "recall_vs_exact_at_10_min": 0.1,
+          "docs_probed_pct_mean": 6.350235803094672,
+          "docs_pruned_pct_of_probed_mean": 65.50493278729357
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 16,
+          "is_full_probe": false,
+          "ms_per_query": 46.377797379973345,
+          "speedup_vs_dense": 8.408369651647012,
+          "recall_vs_exact_at_10_mean": 0.924,
+          "recall_vs_exact_at_10_min": 0.6,
+          "docs_probed_pct_mean": 13.614062439100437,
+          "docs_pruned_pct_of_probed_mean": 80.47400576500146
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 32,
+          "is_full_probe": false,
+          "ms_per_query": 98.99690792008187,
+          "speedup_vs_dense": 3.9391297384238517,
+          "recall_vs_exact_at_10_mean": 0.9540000000000001,
+          "recall_vs_exact_at_10_min": 0.7,
+          "docs_probed_pct_mean": 27.61772615660443,
+          "docs_pruned_pct_of_probed_mean": 89.00234188366018
+        },
+        {
+          "scanner": "bond",
+          "nprobe": 128,
+          "is_full_probe": true,
+          "ms_per_query": 384.49085426007514,
+          "speedup_vs_dense": 1.01422871228096,
+          "recall_vs_exact_at_10_mean": 1.0,
+          "recall_vs_exact_at_10_min": 1.0,
+          "docs_probed_pct_mean": 100.0,
+          "docs_pruned_pct_of_probed_mean": 96.40682854581596
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+=== R8 Stage 4 run -> logging to results/logs/r8_stage4_20260708_225537.log ===
+Wed Jul  8 10:55:37 PM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+warning: `VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+...............................................                          [100%]
+47 passed in 8.46s
+
+=== Stage 4 e02 (R8): seeded-tau recovery, all cores ===
+warning: `VIRTUAL_ENV=/home/martan/Data Engineering/research/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+
+=== e02 scifact: 5183 docs, 50 queries, threads=all ===
+  faiss index ready in 0.3s (n_lists=4096)
