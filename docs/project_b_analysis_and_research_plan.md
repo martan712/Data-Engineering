@@ -641,7 +641,21 @@ IVF-seed + fused reranker) and R10 (write-up). Contributions that stand:
 RQ1 (mechanism), RQ2 (fused dense kernel, 3.2x over OpenBLAS), RQ3
 (single-dataset exact-safe win), and R8 (system).
 
-Last updated 2026-07-04 (fifth pass: R12a + R12b + R12c analysis. R12a e09
+Last updated 2026-07-09 (sixth pass: R8 / Stage 4 landed — e01/e02/e03 on
+all four datasets, MT + 1T, interleaved baseline; methodology + Mikel-chart
+dissection in `docs/stage4_comparison_methodology.md`. Headlines: (1) at
+matched candidate budgets every token-level candidate pipeline (faiss_ivf /
+plaid / pdx_ivf) loses to the exhaustive fused dense scan on 3 of 4
+datasets — per-query candidate generation costs more than the whole scan;
+only on scidocs (25.7k docs) do faiss/pdx at B=100 win. (2) A strong IVF
+tau-seed recovers ~99% of the ORACLE pruning but its seed cost exceeds the
+kernel saving everywhere — the R12c oracle margins are reachable but not
+monetizable; self_bound stays the honest free policy. (3) The partitioned
+fused scan is a real approximate frontier (2–5x at recall 0.87–0.95 on
+arguana/scidocs) but its full-probe exact control is SLOWER than the
+monolithic scan and the exact-safe partition bound prunes 0% — approximate
+only. RQ5 answered; R8 closed. Remaining critical path: R10 write-up.
+Prior: 2026-07-04 (fifth pass: R12a + R12b + R12c analysis. R12a e09
 rerun landed overnight (all 4 datasets, 24 arms, recall 1.0) → adopt the TIGHT
 doc-level bound (cheap prunes 0% at every late checkpoint — reverses the
 BOND-2002 lesson). R12b: the e08 "wall-clock exceeds cells" finding is a
@@ -749,15 +763,25 @@ accelerate ColBERT MaxSim top-k retrieval on a single CPU node — exactly
   decision question for this paper.
 - **RQ5 (system context)**: candidate-set seeding (IVF/PLAID) interplay at
   fixed candidate sets — the fused kernel as the reranker in an IVF pipeline.
-  → Stage 4 (R8), in scope. IR-quality metrics under CoRECT (Stage 5 / R9)
-  are deferred to future work; exact agreement is the quality guarantee for
-  the exact-safe arm.
+  → Stage 4 (R8). **Answered (2026-07-09, e01/e02/e03 on all four datasets;
+  details under R8 below, controls in `docs/stage4_comparison_methodology.md`):
+  at this corpus scale the exhaustive fused dense scan IS the system** — at
+  matched budgets every token-level candidate pipeline (faiss_ivf, plaid,
+  pdx_ivf) is slower than scanning the whole corpus with the RQ2 kernel on
+  scifact/nfcorpus/arguana; the crossover appears only on scidocs (25.7k
+  docs, faiss/pdx +56/+62% at B=100, recall 0.92). Realistic IVF tau-seeding
+  recovers ~99% of the oracle pruning but never profitably (seed cost >
+  kernel saving); the partitioned fused scan gives a genuine approximate
+  frontier whose exact control is slower than the monolithic scan.
+  IR-quality metrics under CoRECT (Stage 5 / R9) are deferred to future
+  work; exact agreement is the quality guarantee for the exact-safe arm.
 
 A single-dataset RQ3 result with a defensible baseline, a quantified mechanism
-explanation (RQ1), and the standalone RQ2 dense-kernel contribution — landed as
-a working IVF-reranker system in Stage 4 (R8) — is a sound, publishable result.
-The approximate frontier (RQ4), scale (R7), and CoRECT IR-quality (R9) are
-future work.
+explanation (RQ1), the standalone RQ2 dense-kernel contribution, and the
+Stage 4 system verdict (the RQ2 kernel already removed the fat that candidate
+pipelines are designed to cut — landed 2026-07-09) is a sound, publishable
+result. The approximate frontier (RQ4), scale (R7), and CoRECT IR-quality
+(R9) are future work.
 
 ### Instruments (shared bound math, two distinct ALGORITHMS)
 
@@ -878,6 +902,17 @@ used by e08.
       only where it prunes (nfcorpus bond order). Decision deferred to R12 —
       RESOLVED in R12a (2026-07-04): at e08's winning late checkpoints cheap
       prunes 0% everywhere, so **adopt TIGHT** (see R12(a) below).
+- [x] Stage 4 / R8 instruments + runs (2026-07-09): baselines implemented
+      for real — `faiss_ivf` (token IVF + exact rerank at fixed budget),
+      `plaid` (PyLate FastPlaid), `pdx_ivf` (the Mikel-branch flat PDX-IVF
+      via the `pdxearch` build; `extern/patches/README.md` has the Fedora
+      build note) — with gate tests in `tests/test_stage4_baselines.py`;
+      `candidate_seed_threshold` policy (Stage 1 §4.4 option b);
+      IVF-partitioned fused scan (`src/bondmaxsim/partitioned_scan.py`);
+      drivers e01/e02/e03 run on all four datasets, MT + 1T, interleaved
+      (results/json/stage4_integration_*). Findings under R8 below;
+      fairness controls + Mikel-chart dissection in
+      `docs/stage4_comparison_methodology.md`.
 - [x] Tie-aware exact-agreement fix (2026-07-03): nfcorpus query 181 has an
       EXACT score tie (7.0799808556, identical in float64) at rank 10; the
       fused kernel picked the other tied doc and tripped the shrink=1 gate
@@ -1031,22 +1066,65 @@ Queue (execute top to bottom):
       mechanism verdict rests on the bound looseness of L2-normalized d=128
       embeddings, which is corpus-size-independent (e04 gives the small-scale
       trend); the DRAM-floor argument is expected to hold at scale.
-- [ ] **R8 — Stage 4**: baselines (`faiss_ivf`, `plaid` stubs) + fixed
-      candidate-set comparisons; PLAID retuned at appropriate scale. The
-      fused kernels are the production path; candidate seeding feeds
-      τ_seed (Stage 1 §4.4) — measure how much a realistic seed recovers
-      vs the oracle policy.
+- [x] **R8 — Stage 4**: DONE 2026-07-09 (e01/e02/e03, all four datasets,
+      MT + 1T, interleaved dense baseline, only the winning mechanism arm
+      promoted — TIGHT bound, natural order, C={112}, shrink=1).
+      **(a) e01 fixed-budget method separation:** at matched budgets
+      B ∈ {100,500,1000,5000} every token-level candidate pipeline loses to
+      the exhaustive fused dense scan on scifact/nfcorpus/arguana (best
+      pipeline arm −12% to −160% vs dense, MT) — per-query candidate
+      generation costs more than scanning the whole corpus with the RQ2
+      kernel. Only on scidocs (25.7k docs) do faiss@100 (+56%) and pdx@100
+      (+62%) beat dense, at recall 0.92 — the crossover exists and is a
+      scale effect (R7 stays live as future work). The seeded exact-safe
+      BOND arm beats dense kernel-only (arguana 48.1 vs 51.7 ms/q MT) but
+      goes negative once its seed cost is charged (−1.8% to −16.2% total).
+      Under the same controls the Mikel-branch "PDX-IVF ≫ PLAID ≫ exact"
+      chart collapses: pdx ≈ faiss ≈ plaid, all above dense (budget/timer/
+      stack confounds — methodology doc §3).
+      **(b) e02 seeded-tau recovery:** `ivf_seed_strong` recovers ~99% of
+      the ORACLE pruning on every dataset (e.g. scifact 87.8% vs 88.2% docs
+      pruned; kernel margin +5.9% ≈ oracle +5.8%) — the R12c oracle-tau
+      margins ARE reachable by a realistic seed — but the seed pipeline
+      costs 7–23 ms/q against kernel savings of ~1–4 ms/q, so every seeded
+      arm is net-negative at this scale; `self_bound` (free, 39–77%
+      recovery) remains the honest production policy. All arms recall 1.0.
+      **(c) e03 partitioned fused scan:** a real approximate frontier —
+      scidocs 4.0x at recall 0.92, arguana 5.2x at 0.87, ~2.1x at 0.95–0.96
+      on both — but nfcorpus/scifact cross below 1x by recall ~0.88–0.9;
+      the full-probe exact control is 2–5x SLOWER than the monolithic scan
+      (per-partition slicing overhead), and the exact-safe partition bound
+      (UB_p = Σ_i⟨q_i,c_p⟩ + m·R_p) prunes 0% of partitions under oracle
+      tau. The arm lives strictly on the approximate frontier
+      (Convention 4); the brute-vs-bond scanner ablation is a wash (±5%).
 - [~] **R9 — Stage 5**: DEFERRED TO FUTURE WORK (2026-07-08). CoRECT adapter,
       RC metrics, matched-quality frontier under fairness controls (one machine,
       fixed threads, CIs). Coupled to R5: with the paper scoped exact-safe,
       exact agreement (recall_vs_exact@10 = 1.0) is the quality guarantee and
       BEIR qrels recall the proxy, so CoRECT RC metrics are not on the
       critical path.
-- [ ] **R10 — paper**: write up per the Final Paper Structure; every claim
-      through the Validation Checklist. The RQ2 finding (MaxSim is
-      GEMM-shaped; vertical layout wins via packing amortization + epilogue
-      fusion — 3.2x over 12-thread OpenBLAS) is a standalone contribution
-      independent of the RQ3 verdict.
+- [ ] **R10 — paper (the remaining critical path)**: write up per the Final
+      Paper Structure; every claim through the Validation Checklist. Stage 4
+      is now FROZEN (2026-07-09), so the stubbed results/discussion sections
+      of `report/` can be written. Concrete steps:
+      1. Results: RQ1 mechanism numbers (survival curves, cells ceiling),
+         RQ2 kernel (3.2x over 12-thread OpenBLAS — standalone contribution
+         independent of the RQ3 verdict), RQ3 corrected R12c table (G1 NOT
+         met; single-dataset arguana +8.7% win, interleaved), R8 Stage 4
+         system verdict (dense scan beats candidate pipelines at matched
+         budgets; seeding reachable-but-not-monetizable; partitioned
+         approximate frontier).
+      2. Discussion: why the bound math (not engineering) caps exact-safe
+         BOND for MaxSim; the interleaved-baseline methodology lesson
+         (R12b); the scidocs crossover as the scale boundary of the verdict.
+      3. Figures: e01 budget-axis separation + e03 latency-recall frontier
+         (already in results/figures/stage4_integration/), plus the existing
+         Stage 3 e08/R12c evidence.
+      4. Future work section: R5 late-checkpoint shrink frontier, R7 scale
+         (100k–1M docs — where e01-scidocs says candidate generation starts
+         to pay), R9 CoRECT RC metrics.
+      5. Validation Checklist pass over every headline claim before
+         submission.
 - [ ] **e07 on scidocs (deferred to the back)**: the only R4 remainder.
       Hits a memory issue on the 25.7k-doc corpus — run later once
       resolved; until then the e07 record (reorder cost negligible) rests
