@@ -23,6 +23,12 @@ Method separation at fixed candidate budgets {100, 500, 1000, 5000}∩corpus:
   B candidates, exact MaxSim rerank (`src/bondmaxsim/baselines/faiss_ivf.py`)
 - `plaid@B` — PyLate FastPlaid with n_full_scores=B, n_ivf_probe=8
   (`src/bondmaxsim/baselines/plaid.py`)
+- `pdx@B` — the Mikel-branch flat PDX-IVF (`IndexPDXBONDIVFFlat` via the
+  optional `pdxearch` build), same aggregation + exact rerank recipe
+  (`src/bondmaxsim/baselines/pdx_ivf.py`); the arm is skipped gracefully if
+  `pdxearch` is not installed
+- `partitioned@B` — our IVF-partitioned fused scan with nprobe chosen so
+  probed docs ≈ B (`src/bondmaxsim/partitioned_scan.py`); APPROXIMATE
 
 Reports ms_per_query (interleaved best-of-5) and recall_vs_exact@10 per arm.
 The budget axis doubles as the "mechanism vs candidate generation" separation
@@ -57,10 +63,12 @@ nprobe=P is the exact control (gate-tested). Build cost reported separately.
 Usage: `uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan <threads:0|1> [dataset ...]`
 
 ## Deferred (with R7 / future work)
-- `pdx_ivf` baseline (`src/bondmaxsim/baselines/pdx_ivf.py`, stub): PDX-sigmod
-  IVF needs its own C++ build and matters at a corpus scale this machine
-  cannot hold (R7 deferred); the FAISS arm covers the candidate-generation
-  control at this scale.
+- Corpus scale: `pdx_ivf` was implemented and run after all
+  (`src/bondmaxsim/baselines/pdx_ivf.py`; Fedora build note in
+  `extern/patches/README.md`), but the corpus scale where candidate
+  generation is expected to dominate (100k–1M docs) does not fit this
+  machine — deferred with R7. e01-scidocs (25.7k docs) shows the crossover
+  beginning.
 - BOND-vs-ADSampling inside the PDX layout (earlier-draft e02): the RQ3
   mechanism verdict closed in Stage 3; an ADSampling arm would require the
   same PDX C++ integration and is not on the R8 critical path.
