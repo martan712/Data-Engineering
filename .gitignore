@@ -27,13 +27,16 @@ uv.lock
 # Ported embedding blobs (regenerable via `python -m bondmaxsim.data.port_embeddings`)
 data/embeddings/*.npz
 
+# Stage 4 baseline index caches (regenerable from the embedding blobs)
+data/faiss_indexes/
+data/plaid_indexes/
+
 # Downloaded datasets (regenerable; not research evidence)
 *.csv
 *.png
 
 # Top-level planning notes (gitignored by design; use docs/ for tracked notes)
 Notes/
-
 # results/ is TRACKED — all outputs under results/ are research evidence
 # and must stay on-branch (see docs/project_structure.md .gitignore Policy).
 !results/
