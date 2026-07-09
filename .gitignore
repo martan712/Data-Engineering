@@ -24,8 +24,8 @@ uv.lock
 *.pt
 *.pkl
 
-# Local data storage
-data
+# Local data storage (root data/ only — src/bondmaxsim/data is a package)
+/data/
 *.csv
 *.png
 
