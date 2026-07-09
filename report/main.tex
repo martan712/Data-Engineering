@@ -309,15 +309,18 @@ paper runs at $\mathrm{shrink} = 1$.
 \subsection{A fused dense kernel}
 \label{sec:kernels:dense}
 
-A pruned kernel that beats a weak scan demonstrates nothing about pruning,
-so the dense baseline must be as strong as possible. Because MaxSim is
-GEMM-shaped (Section~\ref{sec:background}), that baseline is the matrix
-formulation of Equation~\ref{eq:maxsim}: stacking query tokens as
-$Q \in \mathbb{R}^{m \times D}$ and corpus tokens as
-$X \in \mathbb{R}^{N \times D}$, one product $Q X^\top$ followed by a
-per-document maximum. Through a multithreaded Basic Linear Algebra
-Subprograms (BLAS) library, this outperforms a columnar scan by nearly an
-order of magnitude on our hardware.
+A pruning claim is only meaningful against a strong dense baseline: a
+pruned kernel that beats a weak scan demonstrates nothing about pruning.
+For MaxSim, the strong dense formulation is a matrix product. Stack the $m$
+query tokens as rows of $Q \in \mathbb{R}^{m \times D}$ and all $N$ corpus
+tokens as rows of $X \in \mathbb{R}^{N \times D}$; then $Q X^\top$ contains
+every token-pair similarity, and Equation~\ref{eq:maxsim} follows by taking
+the maximum per document and summing. Matrix multiplication is the most
+heavily optimized routine in numerical computing, available through
+multithreaded Basic Linear Algebra Subprograms (BLAS) libraries. Computed
+this way, exact MaxSim runs nearly an order of magnitude faster on our
+hardware than a straightforward columnar scan, confirming the GEMM-regime
+argument of Section~\ref{sec:background}.
 
 Even so, a general-purpose BLAS performs three steps MaxSim does not need:
 it re-packs the static corpus into cache tiles on every call, it
