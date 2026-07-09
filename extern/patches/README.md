@@ -51,3 +51,17 @@ The upstream PDX/PDX-sigmod repositories contain generic benchmark scripts.
 The local patches configure dataset paths, kernel selections, and output
 settings for the specific hardware (AMD ZEN5 / Ryzen AI 7 445, AVX-512,
 Fedora 43) used to produce the baseline results cited in Stage 1 §5.1.
+
+## Build note: pdxearch on Fedora (R8, 2026-07-08)
+
+Building the `pdxearch` Python package from `extern/PDX-sigmod` (for the
+Stage 4 `pdx_ivf` baseline) requires two local working-tree changes:
+
+- `git submodule update --init extern/Eigen` inside `extern/PDX-sigmod`
+  (nested submodule; `adsampling.hpp` includes `<Eigen/Eigen/Dense>`);
+- the one-line `setup.py` change from `PDX-sigmod-996c714.diff` (line ~321):
+  drop `link_args.append("-static-libstdc++")` — the static libstdc++ is not
+  packaged on Fedora; dynamic linking is used instead. This hunk is applied
+  to the working tree (visible via `git -C extern/PDX-sigmod diff`).
+
+Install with: `CXX=g++ uv pip install ./extern/PDX-sigmod`
