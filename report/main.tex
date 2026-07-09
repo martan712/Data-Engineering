@@ -331,8 +331,11 @@ memory.
 Our kernel removes all three. The corpus is packed once, at build time,
 into panel-major PDX blocks: panels of 16 document tokens stored
 dimension-major, documents padded to a panel multiple by duplicating their
-last token (exact by Section~\ref{sec:bound:safety}). At query time, an
-AVX-512 register tile accumulates all $m$ query tokens against one panel,
+last token (exact by Section~\ref{sec:bound:safety}). The panel width
+matches the SIMD width of the hardware: one AVX-512 instruction, the widest
+SIMD extension on current x86 CPUs, processes a 512-bit vector of 16
+single-precision floats, i.e.\ one dimension of one full panel. At query
+time, a register tile accumulates all $m$ query tokens against one panel,
 and the per-document maximum folds in registers as each document's last
 panel completes; the score matrix is never written.
 
