@@ -68,6 +68,34 @@ def oracle_threshold(exact_scores: np.ndarray, k: int) -> float:
     return float(np.partition(exact_scores, -k)[-k])
 
 
+def candidate_seed_threshold(candidate_exact_scores: np.ndarray, k: int) -> float:
+    """Threshold from exact scores of a candidate subset (Stage 1 §4.4 option b).
+
+    The realistic seeding policy for the synchronized wide-block / fused scan:
+    a candidate generator (FAISS-IVF, PLAID, or a prior pass) proposes a small
+    set of promising documents, those are scored exactly, and the k-th best
+    exact score seeds tau_k.  Because the candidates are a subset of the full
+    corpus, their k-th best exact score is never larger than the true k-th
+    best, so the seeded threshold is always safe (the §2.3 theorem holds for
+    any valid lower bound on the final k-th score).
+
+    Parameters
+    ----------
+    candidate_exact_scores : float32 [num_candidates] — exact MaxSim scores of
+                             the candidate documents
+    k                      : int — top-k target
+
+    Returns
+    -------
+    tau : float — k-th largest candidate score, or -inf if fewer than k
+          candidates were proposed
+    """
+    n = candidate_exact_scores.shape[0]
+    if n < k:
+        return float("-inf")
+    return float(np.partition(candidate_exact_scores, -k)[-k])
+
+
 def seed_threshold(
     partial_scores: np.ndarray,
     exact_scores: np.ndarray,
