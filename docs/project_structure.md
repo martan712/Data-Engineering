@@ -25,6 +25,7 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 │   ├── project_b_analysis_and_research_plan.md   # the plan (Stages 0–5)
 │   ├── stage0_references_and_baselines.md        # Stage 0 artifact
 │   ├── stage1_bond_maxsim_formalization.md       # Stage 1 artifact (proof + audit)
+│   ├── stage4_comparison_methodology.md          # Stage 4 fairness controls + Mikel-chart dissection (R8)
 │   ├── project_structure.md                      # THIS FILE
 │   └── sources/                                  # primary sources brought on-branch
 │       └── bond_maxsim_methodology.md            # formula source (was gitignored)
