@@ -219,43 +219,52 @@ masquerade as a scoring speedup (Section~\ref{sec:method:protocol}).
 \section{The BOND-MaxSim bound}
 \label{sec:bound}
 
-This section derives the MaxSim analogue of the BOND bound, states the
-pruning rules it supports, and proves them exact-safe.
-Section~\ref{sec:kernels} covers the kernels that implement them.
+\subsection{Why pruning needs a bound}
+\label{sec:bound:why}
 
-\subsection{Bound and pruning rules}
+An exhaustive MaxSim scan pays $m \times N \times D$ multiply-adds per
+query, although most documents end up nowhere near the top-$k$. BOND
+instead scans dimensions incrementally and abandons a document as soon as
+an upper bound on its final score, computable from the scanned prefix
+alone, falls below the running $k$-th best score $\tau_k$. For Euclidean
+search this bound is nearly free: a partial squared distance only grows, so
+it already bounds the final distance, with no slack and at the cost of one
+comparison. An inner product has no such monotonicity; its unscanned
+dimensions can raise or lower it, so a partial MaxSim score proves nothing
+by itself. What is needed, and what this section derives, is a valid bound
+on the unscanned remainder.
+
+\subsection{Deriving the bound}
 \label{sec:bound:rules}
 
-Let $S$ be the set of dimensions scanned so far (a prefix of a chosen scan
-order), and let $P_{ij}(S) = \sum_{z \in S} q_{iz} d_{jz}$ be the partial
-inner product of query token $i$ and document token $j$. By Cauchy--Schwarz,
-the unscanned remainder is bounded by the product of the residual norms:
+After scanning a prefix $S$ of the dimensions, the partial score
+$P_{ij}(S) = \sum_{z \in S} q_{iz} d_{jz}$ of a token pair is known; the
+remainder, the inner product of the two unscanned subvectors, is not. The
+remainder is largest when those subvectors align perfectly, in which case
+it equals the product of their lengths. This is the Cauchy--Schwarz
+inequality:
 \begin{equation}
-  \big|\langle q_i, d_j\rangle - P_{ij}(S)\big| \;\le\;
-  \underbrace{\|q_i^{S^c}\| \cdot \|d_j^{S^c}\|}_{R_{ij}(S)} ,
+  \big|\langle q_i^{S^c}, d_j^{S^c}\rangle\big| \;\le\;
+  \|q_i^{S^c}\| \cdot \|d_j^{S^c}\| \;=:\; R_{ij}(S).
 \end{equation}
-and since all tokens are unit-norm, both residual norms follow from the
-scanned energy alone: $\|x^{S^c}\|^2 = 1 - \sum_{z \in S} x_z^2$. Thus every
-pair has a valid interval $P_{ij} \pm R_{ij}$ at every prefix, without
-touching unscanned values. Summing the upper ends over query tokens gives a
-document-level upper bound
+Unit-norm tokens make these lengths free,
+$\|x^{S^c}\|^2 = 1 - \sum_{z \in S} x_z^2$, so every pair carries a valid
+interval $P_{ij} \pm R_{ij}$ at every prefix, at no extra memory traffic.
+Assuming the best case for every token pair gives the document bound
 \begin{equation}
   \mathrm{score}(q, d) \;\le\; \sum_i \max_j \big( P_{ij}(S) + R_{ij}(S) \big)
   \;=\; \mathrm{UB}_d(S),
   \label{eq:ubd}
 \end{equation}
-and the BOND pruning rule carries over: if $\mathrm{UB}_d(S) < \tau_k$, the
-$k$-th best exact score so far, document $d$ can be discarded. The same
-intervals support a \emph{token-level} test inside one document. Write
-$U_{ij} = P_{ij} + R_{ij}$ and $L_{ij} = P_{ij} - R_{ij}$, and for each
-query token $i$ let $L_i = \max_{j \in \mathrm{Live}} L_{ij}$ over the
-document's still-live tokens: a token $j$ is dropped once $U_{ij} < L_i$ for
-every query token $i$.
+and the BOND rule carries over: document $d$ is discarded as soon as
+$\mathrm{UB}_d(S) < \tau_k$. The same intervals give a \emph{token-level}
+test: writing $U_{ij} = P_{ij} + R_{ij}$ and $L_{ij} = P_{ij} - R_{ij}$, a
+document token $j$ is dropped once
+$U_{ij} < L_i := \max_{j' \in \mathrm{Live}} L_{ij'}$ for every query
+token $i$.
 
-\subsection{Exact safety}
+\subsection{Correctness}
 \label{sec:bound:safety}
-
-The document test and the token test together preserve exactness.
 
 \begin{theorem}[exact safety]
 \label{thm:safety}
@@ -281,28 +290,18 @@ $\mathrm{score}(q,d) \le \mathrm{UB}_d(S) < \tau_k$, so it cannot belong to
 the final top-$k$.
 \end{proof}
 
-The unit-norm precondition deserves emphasis: it is a \emph{safety}
-precondition, not a convenience. If a stored norm exceeds~1, the residual is
-underestimated and exactness silently breaks, so our pipeline verifies norms
-at export time.
-
-The bound also admits an approximate mode that scales the residual down by a
-factor $\mathrm{shrink} < 1$, trading recall for pruning. No recall guarantee
-survives this, so we treat it as a separate regime and exclude it from this
-paper's claims; everything below runs at $\mathrm{shrink} = 1$.
-
-\subsection{Transfer to a blocked kernel}
-\label{sec:bound:transfer}
-
-Two further lemmas transfer the proof from the per-document formulation to
-the blocked kernel of Section~\ref{sec:kernels:bond}: a coarser (checkpointed,
-document-level) bound is looser than the per-dimension one and therefore
-still safe, and padding documents to a fixed token multiple is harmless if
-the padding \emph{duplicates a real token}. Zero-padding would not be: a
-zero token contributes $\max_j 0 = 0$, which corrupts scores when all true
-maxima are negative. On the query side the situation is reversed and
-zero-padding is exact. Finally, a threshold shared by all threads only ever
-rises toward the true $\tau_k$ from below, so parallel execution stays safe.
+Three remarks complete the picture. First, unit normalization is a
+\emph{safety} precondition, not a convenience: a stored norm above~1 makes
+the residual too small and breaks exactness silently, so the pipeline
+verifies norms at export time. Second, the proof transfers to the blocked
+kernel of Section~\ref{sec:kernels:bond}: a checkpointed, document-level
+bound is looser than the per-dimension one and therefore still safe;
+padding a document by duplicating one of its own tokens leaves every
+$\max_j$ unchanged; and a threshold shared across threads only rises toward
+the true $\tau_k$ from below. Third, the bound admits an approximate mode
+that scales the residual by a factor $\mathrm{shrink} < 1$, trading recall
+for pruning; no recall guarantee survives this, and everything in this
+paper runs at $\mathrm{shrink} = 1$.
 
 \section{Kernel designs}
 \label{sec:kernels}
@@ -332,7 +331,7 @@ that matrix from memory. Our kernel removes all three. The corpus is packed
 once, at build time, into panel-major PDX blocks: panels of 16 document
 tokens stored dimension-major, with documents padded to a panel multiple by
 duplicating their last token (exact by the padding lemma of
-Section~\ref{sec:bound:transfer}). At query time, an AVX-512 register tile
+Section~\ref{sec:bound:safety}). At query time, an AVX-512 register tile
 accumulates all $m$ query tokens against one panel across the full dimension
 range, and the per-document maximum is folded in registers as each
 document's last panel completes, so the score matrix is never written. The
