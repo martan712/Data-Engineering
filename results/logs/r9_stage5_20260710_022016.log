@@ -1,0 +1,116 @@
+=== R9 Stage 5 run -> logging to results/logs/r9_stage5_20260710_022016.log ===
+Fri Jul 10 02:20:16 AM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+.......................................................                  [100%]
+55 passed in 9.07s
+
+=== Stage 5 e01 (R9): CoRECT IR evaluation, all cores ===
+
+=== e01 scifact: 5183 docs, 300 queries (300 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 15.9s
+  faiss ready in 0.2s
+  plaid ready in 2.5s
+  partitioned index ready in 0.8s (P=64)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  16.069±0.609
+  bond_exact_safe  nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  16.940±1.129
+  partitioned@16   nDCG@10=0.7177 R@100=0.8989 MRR@10=0.6907 vs_exact@10=0.899 ms/q=  10.452±1.720
+  partitioned@32   nDCG@10=0.7451 R@100=0.9600 MRR@10=0.7131 vs_exact@10=0.970 ms/q=  19.951±3.758
+  faiss@100        nDCG@10=0.7369 R@100=0.9317 MRR@10=0.7064 vs_exact@10=0.932 ms/q=  23.875±4.494
+  faiss@1000       nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  57.074±4.402
+  faiss@5000       nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q= 123.400±4.252
+  plaid@100        nDCG@10=0.7417 R@100=0.8780 MRR@10=0.7113 vs_exact@10=0.857 ms/q=  43.149±1.352
+  plaid@1000       nDCG@10=0.7463 R@100=0.9627 MRR@10=0.7135 vs_exact@10=0.916 ms/q=  69.923±0.930
+  plaid@5000       nDCG@10=0.7463 R@100=0.9667 MRR@10=0.7135 vs_exact@10=0.917 ms/q= 193.413±3.147
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_scifact.png
+
+=== e01 nfcorpus: 3633 docs, 323 queries (323 with test qrels), k=100, budgets=[100, 1000, 3633], threads=all ===
+  exact oracle (k=100) in 8.2s
+  faiss ready in 0.1s
+  plaid ready in 1.0s
+  partitioned index ready in 0.7s (P=64)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@3633
+    quality: plaid@3633
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.3780 R@100=0.3168 MRR@10=0.5999 vs_exact@10=0.998 ms/q=  10.365±0.772
+  bond_exact_safe  nDCG@10=0.3782 R@100=0.3168 MRR@10=0.6015 vs_exact@10=0.999 ms/q=  10.882±0.612
+  partitioned@16   nDCG@10=0.3151 R@100=0.2516 MRR@10=0.5414 vs_exact@10=0.730 ms/q=   6.470±1.994
+  partitioned@32   nDCG@10=0.3528 R@100=0.2898 MRR@10=0.5692 vs_exact@10=0.886 ms/q=  13.407±2.576
+  faiss@100        nDCG@10=0.3690 R@100=0.2672 MRR@10=0.5963 vs_exact@10=0.887 ms/q=  24.508±5.430
+  faiss@1000       nDCG@10=0.3784 R@100=0.3159 MRR@10=0.6026 vs_exact@10=0.995 ms/q=  37.690±5.265
+  faiss@3633       nDCG@10=0.3779 R@100=0.3165 MRR@10=0.5999 vs_exact@10=0.998 ms/q=  61.141±4.623
+  plaid@100        nDCG@10=0.3600 R@100=0.2041 MRR@10=0.5680 vs_exact@10=0.693 ms/q=  14.052±0.355
+  plaid@1000       nDCG@10=0.3731 R@100=0.3135 MRR@10=0.5933 vs_exact@10=0.874 ms/q=  31.350±0.998
+  plaid@3633       nDCG@10=0.3765 R@100=0.3158 MRR@10=0.5959 vs_exact@10=0.891 ms/q=  95.892±0.853
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_nfcorpus.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_nfcorpus.png
+
+=== e01 arguana: 8674 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 28.7s
+  faiss ready in 0.3s
+  plaid ready in 1.1s
+  partitioned index ready in 1.1s (P=128)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 529, in <module>
+    main()
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 524, in main
+    run_dataset(ds, nt)
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 290, in run_dataset
+    corect_smoke_test(dense_run, qrels)
+  File "/home/martan/Documents/uni/Data Engineering/src/bondmaxsim/eval/corect.py", line 110, in corect_smoke_test
+    ours = compute_quality_metrics(run, qrels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/martan/Documents/uni/Data Engineering/src/bondmaxsim/eval/qrels.py", line 111, in compute_quality_metrics
+    out = _evaluate(run, qrels, ["ndcg@10", "recall@100", "mrr@10"])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/martan/Documents/uni/Data Engineering/src/bondmaxsim/eval/qrels.py", line 42, in _evaluate
+    out = evaluate(Qrels(dict(qrels)), Run(judged), metrics)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/martan/Documents/uni/Data Engineering/.venv/lib/python3.12/site-packages/ranx/meta/evaluate.py", line 135, in evaluate
+    check_keys(qrels, run)
+  File "/home/martan/Documents/uni/Data Engineering/.venv/lib/python3.12/site-packages/ranx/meta/evaluate.py", line 61, in check_keys
+    qrels.keys() == run.keys()
+AssertionError: Qrels and Run query ids do not match. Pass `make_comparable=True` to add empty results for queries missing from the run and remove those not appearing in qrels.

@@ -28,8 +28,11 @@ def _evaluate(
 ) -> dict[str, float]:
     """Evaluate a run against qrels with ranx, restricted to judged queries.
 
-    Queries in the run without judgments are dropped (BEIR convention);
-    raises ValueError if no run query has judgments at all.
+    Metrics are averaged over the queries that are both in the run and have
+    judgments (BEIR convention).  Run queries without judgments are dropped;
+    qrels queries not in the run are dropped too, so a subset run is scored on
+    its own queries rather than the full benchmark.  Raises ValueError if the
+    run shares no query with the qrels.
     """
     from ranx import Qrels, Run, evaluate  # [retrieval] extra
 
@@ -39,7 +42,8 @@ def _evaluate(
             "No overlap between run queries and qrels — check the ID sidecar "
             "(bondmaxsim.data.beir_ids) and test-query encoding."
         )
-    out = evaluate(Qrels(dict(qrels)), Run(judged), metrics)
+    sub_qrels = {qid: qrels[qid] for qid in judged}
+    out = evaluate(Qrels(sub_qrels), Run(judged), metrics)
     if isinstance(out, float):  # single-metric convenience form
         return {metrics[0]: out}
     return out

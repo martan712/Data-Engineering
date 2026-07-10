@@ -183,3 +183,57 @@ def load_dataset(
         assert_unit_norm(query_values)
 
     return flat_tokens, doc_starts, queries
+
+
+def load_eval_queries(
+    name: str,
+    data_dir: Path | None = None,
+    verify_norm: bool = True,
+) -> tuple[list[np.ndarray], list[str]]:
+    """Load the qrels-evaluable queries and their BEIR IDs for Stage 5.
+
+    Prefers <name>_test_queries.npz (test-split queries re-encoded by
+    bondmaxsim.data.encode_test_queries — needed for scifact/nfcorpus, whose
+    main archives hold train queries only); otherwise falls back to the main
+    archive's queries with IDs from the data/beir_ids sidecar.
+
+    Parameters
+    ----------
+    name       : dataset name, e.g. 'scifact'
+    data_dir   : directory containing the .npz files (default data/embeddings)
+    verify_norm: assert unit-norm on all query tokens
+
+    Returns
+    -------
+    queries   : list of float32 [m, 128] per-query token matrices
+    query_ids : list of BEIR query ID strings, aligned with queries
+    """
+    from bondmaxsim.data.beir_ids import load_ids
+    from bondmaxsim.oracle.normalization import assert_unit_norm
+
+    if data_dir is None:
+        data_dir = _DEFAULT_DATA_DIR
+    data_dir = Path(data_dir)
+
+    test_path = data_dir / f"{name}_test_queries.npz"
+    if test_path.exists():
+        data = np.load(test_path)
+        query_values = data["query_values"].astype(np.float32, copy=False)
+        query_starts = data["query_starts"].astype(np.int64, copy=False)
+        query_ids = [str(x) for x in data["query_ids"]]
+    else:
+        blob = load_packed_embeddings(data_dir / f"{name}.npz")
+        query_values = blob["query_values"].astype(np.float32, copy=False)
+        query_starts = blob["query_starts"].astype(np.int64, copy=False)
+        query_ids = load_ids(name)["query_ids"][: len(query_starts)]
+
+    if verify_norm:
+        assert_unit_norm(query_values)
+
+    Tq = len(query_values)
+    queries: list[np.ndarray] = []
+    for i in range(len(query_starts)):
+        start = int(query_starts[i])
+        end = int(query_starts[i + 1]) if i + 1 < len(query_starts) else Tq
+        queries.append(query_values[start:end])
+    return queries, query_ids

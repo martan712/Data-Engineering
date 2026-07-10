@@ -1,0 +1,84 @@
+=== R9 Stage 5 run -> logging to results/logs/r9_stage5_20260709_165432.log ===
+Thu Jul  9 04:54:32 PM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+.......................................................                  [100%]
+55 passed in 7.98s
+
+=== Stage 5 e01 (R9): CoRECT IR evaluation, all cores ===
+
+=== e01 scifact: 5183 docs, 300 queries (300 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 13.7s
+  faiss ready in 0.3s
+  plaid ready in 2.4s
+  partitioned index ready in 0.8s (P=64)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  14.810±0.105
+  bond_exact_safe  nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  15.287±0.234
+  partitioned@16   nDCG@10=0.7177 R@100=0.8989 MRR@10=0.6907 vs_exact@10=0.899 ms/q=   8.812±0.113
+  partitioned@32   nDCG@10=0.7451 R@100=0.9600 MRR@10=0.7131 vs_exact@10=0.970 ms/q=  16.852±0.171
+  faiss@100        nDCG@10=0.7369 R@100=0.9317 MRR@10=0.7064 vs_exact@10=0.932 ms/q=  19.548±1.399
+  faiss@1000       nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  42.028±1.596
+  faiss@5000       nDCG@10=0.7456 R@100=0.9633 MRR@10=0.7128 vs_exact@10=1.000 ms/q=  95.073±5.808
+  plaid@100        nDCG@10=0.7417 R@100=0.8780 MRR@10=0.7113 vs_exact@10=0.857 ms/q=  39.330±0.966
+  plaid@1000       nDCG@10=0.7463 R@100=0.9627 MRR@10=0.7135 vs_exact@10=0.916 ms/q=  65.604±2.076
+  plaid@5000       nDCG@10=0.7463 R@100=0.9667 MRR@10=0.7135 vs_exact@10=0.917 ms/q= 182.209±0.819
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_scifact.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_scifact.png
+
+=== e01 nfcorpus: 3633 docs, 323 queries (323 with test qrels), k=100, budgets=[100, 1000, 3633], threads=all ===
+  exact oracle (k=100) in 6.8s
+  faiss ready in 0.1s
+  plaid ready in 1.3s
+  partitioned index ready in 0.6s (P=64)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@3633
+    quality: plaid@3633
+  interleaved timing: 10 arms x 5 reps (+warmup)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 529, in <module>
+    main()
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 524, in main
+    run_dataset(ds, nt)
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 344, in run_dataset
+    fn()
+  File "/home/martan/Documents/uni/Data Engineering/experiments/stage5_corect/e01_ir_evaluation.py", line 223, in run_bond
+    ids, scores, stats = run_fused_panel_bond(
+                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/martan/Documents/uni/Data Engineering/src/bondmaxsim/kernels/fused_panel.py", line 243, in run_fused_panel_bond
+    fn(
+KeyboardInterrupt

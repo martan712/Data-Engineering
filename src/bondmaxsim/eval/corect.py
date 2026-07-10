@@ -68,7 +68,11 @@ def compute_rc_metrics(
             "No overlap between run queries and qrels — check the ID sidecar "
             "(bondmaxsim.data.beir_ids) and test-query encoding."
         )
-    metric_dicts = evaluate_results(dict(qrels), judged, list(k_values))
+    # Restrict qrels to the judged run so pytrec_eval averages over the same
+    # query subset as ranx (bondmaxsim.eval.qrels); otherwise unretrieved qrels
+    # queries score zero and the two metric sources diverge on a subset run.
+    sub_qrels = {qid: qrels[qid] for qid in judged}
+    metric_dicts = evaluate_results(sub_qrels, judged, list(k_values))
 
     flat: dict[str, float] = {}
     for d in metric_dicts:

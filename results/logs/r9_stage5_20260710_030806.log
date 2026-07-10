@@ -1,0 +1,170 @@
+=== R9 Stage 5 run -> logging to results/logs/r9_stage5_20260710_030806.log ===
+Fri Jul 10 03:08:06 AM CEST 2026
+
+=== Rebuild fused kernel ===
+make: Entering directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/home/martan/Documents/uni/Data Engineering/cpp/fused_panel_maxsim'
+
+=== Gate tests (must be green before results count) ===
+.......................................................                  [100%]
+55 passed in 7.99s
+
+=== Stage 5 e01 (R9): CoRECT IR evaluation, all cores (arguana, scidocs) ===
+
+=== e01 arguana: 8674 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 25.0s
+  faiss ready in 0.1s
+  plaid ready in 2.5s
+  partitioned index ready in 1.2s (P=128)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.3142 R@100=0.8850 MRR@10=0.2089 vs_exact@10=0.998 ms/q=  32.670±0.829
+  bond_exact_safe  nDCG@10=0.3126 R@100=0.8850 MRR@10=0.2082 vs_exact@10=0.999 ms/q=  33.977±0.395
+  partitioned@16   nDCG@10=0.3183 R@100=0.8700 MRR@10=0.2129 vs_exact@10=0.940 ms/q=  15.573±1.721
+  partitioned@32   nDCG@10=0.3177 R@100=0.8850 MRR@10=0.2119 vs_exact@10=0.975 ms/q=  28.066±4.728
+  faiss@100        nDCG@10=0.3095 R@100=0.8900 MRR@10=0.2044 vs_exact@10=0.981 ms/q=  46.187±3.235
+  faiss@1000       nDCG@10=0.3119 R@100=0.8850 MRR@10=0.2074 vs_exact@10=0.998 ms/q=  72.358±2.339
+  faiss@5000       nDCG@10=0.3144 R@100=0.8850 MRR@10=0.2105 vs_exact@10=0.998 ms/q= 190.326±3.054
+  plaid@100        nDCG@10=0.2971 R@100=0.6800 MRR@10=0.2003 vs_exact@10=0.917 ms/q=  82.582±1.161
+  plaid@1000       nDCG@10=0.3098 R@100=0.8750 MRR@10=0.2063 vs_exact@10=0.959 ms/q= 112.963±2.303
+  plaid@5000       nDCG@10=0.3123 R@100=0.8850 MRR@10=0.2069 vs_exact@10=0.960 ms/q= 227.971±5.751
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_arguana.png
+
+=== e01 scidocs: 25657 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 40.3s
+  faiss ready in 0.7s
+  plaid ready in 1.3s
+  partitioned index ready in 3.4s (P=128)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q=  57.345±0.363
+  bond_exact_safe  nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q=  57.773±0.115
+  partitioned@16   nDCG@10=0.1613 R@100=0.3819 MRR@10=0.2848 vs_exact@10=0.896 ms/q=  11.875±0.791
+  partitioned@32   nDCG@10=0.1657 R@100=0.3889 MRR@10=0.2884 vs_exact@10=0.957 ms/q=  23.102±0.665
+  faiss@100        nDCG@10=0.1666 R@100=0.3699 MRR@10=0.2867 vs_exact@10=0.900 ms/q=  27.586±5.187
+  faiss@1000       nDCG@10=0.1652 R@100=0.3907 MRR@10=0.2875 vs_exact@10=0.987 ms/q=  54.421±2.681
+  faiss@5000       nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 123.404±2.987
+  plaid@100        nDCG@10=0.1557 R@100=0.2308 MRR@10=0.2676 vs_exact@10=0.870 ms/q= 103.727±2.860
+  plaid@1000       nDCG@10=0.1616 R@100=0.3922 MRR@10=0.2750 vs_exact@10=0.922 ms/q= 126.348±2.922
+  plaid@5000       nDCG@10=0.1616 R@100=0.3972 MRR@10=0.2750 vs_exact@10=0.922 ms/q= 227.461±1.883
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_scidocs.png
+
+Done in 2574.8s
+
+=== Stage 5 e01 (R9): CoRECT IR evaluation, 1T (arguana, scidocs) ===
+
+=== e01 arguana: 8674 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=1 ===
+  exact oracle (k=100) in 21.7s
+  faiss ready in 0.4s
+  plaid ready in 3.2s
+  partitioned index ready in 1.1s (P=128)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.3121 R@100=0.8850 MRR@10=0.2076 vs_exact@10=1.000 ms/q= 136.140±0.343
+  bond_exact_safe  nDCG@10=0.3121 R@100=0.8850 MRR@10=0.2076 vs_exact@10=1.000 ms/q= 135.335±0.724
+  partitioned@16   nDCG@10=0.3178 R@100=0.8700 MRR@10=0.2108 vs_exact@10=0.939 ms/q=  19.446±0.110
+  partitioned@32   nDCG@10=0.3203 R@100=0.8850 MRR@10=0.2142 vs_exact@10=0.974 ms/q=  38.464±0.110
+  faiss@100        nDCG@10=0.3095 R@100=0.8900 MRR@10=0.2044 vs_exact@10=0.981 ms/q=  19.869±0.097
+  faiss@1000       nDCG@10=0.3119 R@100=0.8850 MRR@10=0.2074 vs_exact@10=0.998 ms/q=  52.256±0.087
+  faiss@5000       nDCG@10=0.3144 R@100=0.8850 MRR@10=0.2105 vs_exact@10=0.998 ms/q= 212.222±0.183
+  plaid@100        nDCG@10=0.2971 R@100=0.6800 MRR@10=0.2003 vs_exact@10=0.917 ms/q= 373.359±0.988
+  plaid@1000       nDCG@10=0.3098 R@100=0.8750 MRR@10=0.2063 vs_exact@10=0.959 ms/q= 505.992±0.401
+  plaid@5000       nDCG@10=0.3123 R@100=0.8850 MRR@10=0.2069 vs_exact@10=0.960 ms/q=1119.257±1.499
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_arguana.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_arguana.png
+
+=== e01 scidocs: 25657 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=1 ===
+  exact oracle (k=100) in 35.4s
+  faiss ready in 0.7s
+  plaid ready in 1.1s
+  partitioned index ready in 3.2s (P=128)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 10 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 173.093±0.412
+  bond_exact_safe  nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 174.190±0.359
+  partitioned@16   nDCG@10=0.1613 R@100=0.3819 MRR@10=0.2848 vs_exact@10=0.896 ms/q=  21.705±0.085
+  partitioned@32   nDCG@10=0.1657 R@100=0.3889 MRR@10=0.2884 vs_exact@10=0.957 ms/q=  46.292±0.120
+  faiss@100        nDCG@10=0.1666 R@100=0.3699 MRR@10=0.2867 vs_exact@10=0.900 ms/q=   9.238±0.027
+  faiss@1000       nDCG@10=0.1652 R@100=0.3907 MRR@10=0.2875 vs_exact@10=0.987 ms/q=  29.920±0.082
+  faiss@5000       nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 121.191±1.303
+  plaid@100        nDCG@10=0.1557 R@100=0.2308 MRR@10=0.2676 vs_exact@10=0.870 ms/q= 435.409±1.083
+  plaid@1000       nDCG@10=0.1616 R@100=0.3922 MRR@10=0.2750 vs_exact@10=0.922 ms/q= 522.155±1.116
+  plaid@5000       nDCG@10=0.1616 R@100=0.3972 MRR@10=0.2750 vs_exact@10=0.922 ms/q=1046.404±5.817
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_scidocs.png
+
+Done in 7141.9s
+
+=== All done — Stage 5 complete ===
+Fri Jul 10 05:50:18 AM CEST 2026
