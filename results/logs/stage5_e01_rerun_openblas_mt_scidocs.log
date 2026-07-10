@@ -1,0 +1,41 @@
+
+=== e01 scidocs: 25657 docs, 200 queries (200 with test qrels), k=100, budgets=[100, 1000, 5000], threads=all ===
+  exact oracle (k=100) in 36.4s
+  faiss ready in 0.7s
+  plaid ready in 3.1s
+  partitioned index ready in 3.7s (P=128)
+  CoRECT smoke test on dense_fused run: OK (agrees with ranx)
+  scoring quality rows (qrels + CoRECT RC metrics per arm)...
+    quality: dense_fused
+    quality: openblas
+    quality: bond_exact_safe
+    quality: partitioned@16
+    quality: partitioned@32
+    quality: faiss@100
+    quality: plaid@100
+    quality: faiss@1000
+    quality: plaid@1000
+    quality: faiss@5000
+    quality: plaid@5000
+  interleaved timing: 11 arms x 5 reps (+warmup)
+    warmup done, timing reps...
+    rep 1/5 done
+    rep 2/5 done
+    rep 3/5 done
+    rep 4/5 done
+    rep 5/5 done
+  dense_fused      nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q=  57.593±0.330
+  openblas         nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 193.964±1.828
+  bond_exact_safe  nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q=  57.935±0.231
+  partitioned@16   nDCG@10=0.1613 R@100=0.3819 MRR@10=0.2848 vs_exact@10=0.896 ms/q=  11.472±1.093
+  partitioned@32   nDCG@10=0.1657 R@100=0.3889 MRR@10=0.2884 vs_exact@10=0.957 ms/q=  23.891±0.468
+  faiss@100        nDCG@10=0.1666 R@100=0.3699 MRR@10=0.2867 vs_exact@10=0.900 ms/q=  30.291±1.409
+  faiss@1000       nDCG@10=0.1652 R@100=0.3907 MRR@10=0.2875 vs_exact@10=0.987 ms/q=  53.003±4.556
+  faiss@5000       nDCG@10=0.1644 R@100=0.3952 MRR@10=0.2841 vs_exact@10=1.000 ms/q= 206.095±2.459
+  plaid@100        nDCG@10=0.1557 R@100=0.2308 MRR@10=0.2676 vs_exact@10=0.870 ms/q= 110.246±2.190
+  plaid@1000       nDCG@10=0.1616 R@100=0.3922 MRR@10=0.2750 vs_exact@10=0.922 ms/q= 128.491±3.087
+  plaid@5000       nDCG@10=0.1616 R@100=0.3972 MRR@10=0.2750 vs_exact@10=0.922 ms/q= 229.117±4.727
+  JSON: /home/martan/Documents/uni/Data Engineering/results/json/stage5_corect_e01_ir_evaluation_scidocs.json
+  Figure: /home/martan/Documents/uni/Data Engineering/results/figures/stage5_corect/e01_ir_evaluation_scidocs.png
+
+Done in 1599.4s

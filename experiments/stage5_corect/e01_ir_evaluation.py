@@ -11,6 +11,11 @@ surface relative to recall_vs_exact.
 Method arms (plan doc R9, one-stack interleaved controls as Stage 4 e01):
   dense_fused          : fused dense MaxSim over the full corpus — the exact
                          production baseline (RQ2 kernel).
+  openblas             : the NumPy/scipy-openblas GEMM formulation of exact
+                         MaxSim (exact_maxsim_topk, the oracle routine) as a
+                         timed arm — the general-purpose BLAS reference the
+                         fused kernel is measured against in E3, now placed
+                         on the system-level quality-latency table.
   bond_exact_safe      : fused BOND, TIGHT bound, natural order, C={112},
                          self_bound tau (the free production policy;
                          recall 1.0 by construction — exactness costs
@@ -212,6 +217,14 @@ def run_dataset(dataset: str, nt: int) -> None:
             if collect is not None:
                 collect.append((ids, scores))
 
+    def run_blas(collect=None):
+        # The oracle routine itself, timed: one GEMM (query @ flat.T) plus a
+        # reduceat max-sum, threaded by the BLAS according to the run's pin.
+        for Q in Qs:
+            ids, scores = exact_maxsim_topk(Q, flat, starts, k=K_RETRIEVE)
+            if collect is not None:
+                collect.append((ids, scores))
+
     prepared = []
     for q in queries:
         pd, go, do, gd, Qe, order = pk.dispatch_order_panel(q, ORDER)
@@ -296,6 +309,10 @@ def run_dataset(dataset: str, nt: int) -> None:
     if agree < 1.0:
         raise RuntimeError(f"dense_fused exact-agreement@10 failed: {agree}")
 
+    # The openblas arm IS the oracle routine, so its results are the already
+    # computed `exact` list; only its wall-clock needs a timed pass.
+    quality["openblas"], _ = quality_row(exact, "openblas")
+
     got = []
     run_bond(collect=got)
     quality["bond_exact_safe"], _ = quality_row(
@@ -332,7 +349,8 @@ def run_dataset(dataset: str, nt: int) -> None:
         fn()
         return (time.perf_counter() - t0) / len(queries) * 1e3
 
-    arms_fns = [("dense_fused", run_dense), ("bond_exact_safe", run_bond)]
+    arms_fns = [("dense_fused", run_dense), ("openblas", run_blas),
+                ("bond_exact_safe", run_bond)]
     arms_fns += [(f"partitioned@{p}", part_runs[p]) for p in PART_NPROBES]
     arms_fns += [(f"faiss@{b}", faiss_runs[b]) for b in budgets]
     arms_fns += [(f"plaid@{b}", plaid_runs[b]) for b in budgets]
@@ -391,6 +409,8 @@ def run_dataset(dataset: str, nt: int) -> None:
               f"ms/q={kern:8.3f}±{row['ms_per_query_std']:.3f}")
 
     emit("dense_fused", "fused_panel_maxsim_brute", None,
+         "exact_full_scan", 1.0)
+    emit("openblas", "numpy_openblas_maxsim", None,
          "exact_full_scan", 1.0)
     emit("bond_exact_safe", "fused_panel_maxsim_bond", None,
          "self_bound", 1.0,
@@ -473,6 +493,7 @@ def _save_figure(payload, dataset):
                              squeeze=False)
     styles = {
         "dense_fused": ("#5c4a9e", "*", 130),
+        "openblas": ("#8a8a8a", "v", 55),
         "bond_exact_safe": ("#2e8b57", "P", 70),
         "partitioned": ("#2e8b57", "o", 40),
         "faiss": ("#2a78d6", "s", 40),

@@ -19,6 +19,7 @@ Method arms (one-stack controls as Stage 4 e01, retrieval depth k=100):
 | arm | what it is | why it is here |
 |---|---|---|
 | `dense_fused` | fused dense MaxSim over the full corpus | the exact production baseline (RQ2 kernel) |
+| `openblas` | NumPy/scipy-openblas GEMM MaxSim (the oracle routine, timed) | the general-purpose BLAS reference of E3, placed on the system-level table |
 | `bond_exact_safe` | fused BOND, TIGHT bound, natural order, C={112}, self_bound tau | the free exact-safe policy (R8b): recall 1.0 by construction — exactness costs nothing in IR quality |
 | `partitioned@{16,32}` | partitioned fused scan (bond scanner) at two e03 frontier points | the genuine approximate frontier: nprobe 16/32 land at recall_vs_exact@10 ≈0.9/0.95 on every dataset |
 | `faiss_ivf@B`, `plaid@B` | tuned external references at matched budgets B ∈ {100, 1000, 5000} | candidate-generation pipelines the qrels metrics must judge |
