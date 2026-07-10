@@ -774,7 +774,7 @@ full-scan nDCG@10, recall@100, and MRR@10 to rounding at essentially the same
 wall-clock as the dense scan, so the RQ3 negative result costs the retrieval
 system nothing. On the three smaller corpora, no fixed-budget candidate
 pipeline improves on the monolithic scan: FAISS-IVF reaches full-scan quality
-only at $B{=}1000$, where it is $2$--$4\times$ slower than the dense scan, and
+only at $B{=}1000$, where it is $2.4$--$5\times$ slower than the dense scan, and
 PLAID's compressed scoring stays short on recall@100 at every budget. On
 SciDocs, the crossover of E6 carries into the quality table: FAISS-IVF at
 $B{=}100$ halves the scan's latency at full-scan nDCG@10, though it remains
@@ -791,7 +791,7 @@ corpora, although by smaller margins than published late-interaction results,
 which we attribute to the text-only encoding of
 Section~\ref{sec:method:setup}; on ArguAna, BM25 even exceeds every MaxSim
 arm's recall@100 (0.930 against 0.885) while ordering its top-10 worse.
-However, BM25 answers a query in 0.1--0.5~ms, $60$--$150\times$ faster than
+However, BM25 answers a query in 0.1--0.5~ms, $60$--$180\times$ faster than
 the exhaustive scan. On corpora of this size, late interaction buys its
 quality margin at a large latency multiple, and that multiple is the cost
 the kernels of this paper reduce.
@@ -821,42 +821,46 @@ exact-safe claim in this paper is gated on.
 \toprule
 Dataset & Method & nDCG@10 & R@100 & MRR@10 & rec/exact@10 & ms/q \\
 \midrule
-\multirow{7}{*}{SciFact}
- & dense fused (exact)        & 0.746 & 0.963 & 0.713 & 1.000 & 16.1 \\
- & exact-safe BOND            & 0.746 & 0.963 & 0.713 & 1.000 & 16.9 \\
- & partitioned, nprobe 16     & 0.718 & 0.899 & 0.691 & 0.899 & \textbf{10.5} \\
- & partitioned, nprobe 32     & 0.745 & 0.960 & 0.713 & 0.970 & 20.0 \\
- & FAISS-IVF ($B{=}1000$)     & 0.746 & 0.963 & 0.713 & 1.000 & 57.1 \\
- & PLAID ($B{=}1000$)         & 0.746 & 0.963 & 0.713 & 0.916 & 69.9 \\
- & BM25                       & 0.672 & 0.906 & 0.634 & --    & 0.1 \\
+\multirow{8}{*}{SciFact}
+ & dense fused (exact)         & 0.746 & 0.963 & 0.713 & 1.000 & 18.6 \\
+ & OpenBLAS (exact)            & 0.746 & 0.963 & 0.713 & 1.000 & 60.2 \\
+ & exact-safe BOND             & 0.746 & 0.963 & 0.713 & 1.000 & 16.8 \\
+ & partitioned, nprobe 16      & 0.718 & 0.899 & 0.691 & 0.899 & \textbf{10.3} \\
+ & partitioned, nprobe 32      & 0.745 & 0.960 & 0.713 & 0.970 & 21.3 \\
+ & FAISS-IVF ($B{=}1000$)      & 0.746 & 0.963 & 0.713 & 1.000 & 93.8 \\
+ & PLAID ($B{=}1000$)          & 0.746 & 0.963 & 0.713 & 0.916 & 68.4 \\
+ & BM25                        & 0.672 & 0.906 & 0.634 & --    & 0.1 \\
 \midrule
-\multirow{7}{*}{NFCorpus}
- & dense fused (exact)        & 0.378 & 0.317 & 0.600 & 0.998 & 10.4 \\
- & exact-safe BOND            & 0.378 & 0.317 & 0.601 & 0.999 & 10.9 \\
- & partitioned, nprobe 16     & 0.315 & 0.252 & 0.541 & 0.730 & \textbf{6.5} \\
- & partitioned, nprobe 32     & 0.353 & 0.290 & 0.569 & 0.886 & 13.4 \\
- & FAISS-IVF ($B{=}1000$)     & 0.378 & 0.316 & 0.603 & 0.995 & 37.7 \\
- & PLAID ($B{=}1000$)         & 0.373 & 0.314 & 0.593 & 0.874 & 31.4 \\
- & BM25                       & 0.317 & 0.242 & 0.532 & --    & 0.1 \\
+\multirow{8}{*}{NFCorpus}
+ & dense fused (exact)         & 0.378 & 0.317 & 0.600 & 0.999 & 9.6 \\
+ & OpenBLAS (exact)            & 0.378 & 0.317 & 0.599 & 1.000 & 21.6 \\
+ & exact-safe BOND             & 0.378 & 0.317 & 0.599 & 0.999 & 10.2 \\
+ & partitioned, nprobe 16      & 0.315 & 0.252 & 0.541 & 0.730 & \textbf{5.2} \\
+ & partitioned, nprobe 32      & 0.353 & 0.290 & 0.569 & 0.886 & 10.1 \\
+ & FAISS-IVF ($B{=}1000$)      & 0.378 & 0.316 & 0.603 & 0.995 & 41.7 \\
+ & PLAID ($B{=}1000$)          & 0.373 & 0.314 & 0.593 & 0.874 & 29.4 \\
+ & BM25                        & 0.317 & 0.242 & 0.532 & --    & 0.1 \\
 \midrule
-\multirow{7}{*}{ArguAna}
- & dense fused (exact)        & 0.314 & 0.885 & 0.209 & 0.998 & 32.7 \\
- & exact-safe BOND            & 0.313 & 0.885 & 0.208 & 0.999 & 34.0 \\
- & partitioned, nprobe 16     & 0.318 & 0.870 & 0.213 & 0.940 & \textbf{15.6} \\
- & partitioned, nprobe 32     & 0.318 & 0.885 & 0.212 & 0.975 & 28.1 \\
- & FAISS-IVF ($B{=}1000$)     & 0.312 & 0.885 & 0.207 & 0.998 & 72.4 \\
- & PLAID ($B{=}1000$)         & 0.310 & 0.875 & 0.206 & 0.959 & 113.0 \\
- & BM25                       & 0.306 & 0.930 & 0.192 & --    & 0.5 \\
+\multirow{8}{*}{ArguAna}
+ & dense fused (exact)         & 0.314 & 0.885 & 0.209 & 0.998 & 33.0 \\
+ & OpenBLAS (exact)            & 0.314 & 0.885 & 0.209 & 1.000 & 150.6 \\
+ & exact-safe BOND             & 0.312 & 0.885 & 0.207 & 0.998 & 34.1 \\
+ & partitioned, nprobe 16      & 0.315 & 0.870 & 0.209 & 0.940 & \textbf{17.6} \\
+ & partitioned, nprobe 32      & 0.317 & 0.885 & 0.212 & 0.975 & 28.7 \\
+ & FAISS-IVF ($B{=}1000$)      & 0.312 & 0.885 & 0.207 & 0.998 & 79.4 \\
+ & PLAID ($B{=}1000$)          & 0.310 & 0.875 & 0.206 & 0.959 & 113.8 \\
+ & BM25                        & 0.306 & 0.930 & 0.192 & --    & 0.5 \\
 \midrule
-\multirow{8}{*}{SciDocs}
- & dense fused (exact)        & 0.164 & 0.395 & 0.284 & 1.000 & 57.3 \\
- & exact-safe BOND            & 0.164 & 0.395 & 0.284 & 1.000 & 57.8 \\
- & partitioned, nprobe 16     & 0.161 & 0.382 & 0.285 & 0.896 & \textbf{11.9} \\
- & partitioned, nprobe 32     & 0.166 & 0.389 & 0.288 & 0.957 & 23.1 \\
- & FAISS-IVF ($B{=}100$)      & 0.167 & 0.370 & 0.287 & 0.900 & 27.6 \\
- & FAISS-IVF ($B{=}1000$)     & 0.165 & 0.391 & 0.287 & 0.987 & 54.4 \\
- & PLAID ($B{=}1000$)         & 0.162 & 0.392 & 0.275 & 0.922 & 126.3 \\
- & BM25                       & 0.130 & 0.335 & 0.228 & --    & 0.4 \\
+\multirow{9}{*}{SciDocs}
+ & dense fused (exact)         & 0.164 & 0.395 & 0.284 & 1.000 & 57.6 \\
+ & OpenBLAS (exact)            & 0.164 & 0.395 & 0.284 & 1.000 & 194.0 \\
+ & exact-safe BOND             & 0.164 & 0.395 & 0.284 & 1.000 & 57.9 \\
+ & partitioned, nprobe 16      & 0.161 & 0.382 & 0.285 & 0.896 & \textbf{11.5} \\
+ & partitioned, nprobe 32      & 0.166 & 0.389 & 0.288 & 0.957 & 23.9 \\
+ & FAISS-IVF ($B{=}100$)       & 0.167 & 0.370 & 0.287 & 0.900 & 30.3 \\
+ & FAISS-IVF ($B{=}1000$)      & 0.165 & 0.391 & 0.287 & 0.987 & 53.0 \\
+ & PLAID ($B{=}1000$)          & 0.162 & 0.392 & 0.275 & 0.922 & 128.5 \\
+ & BM25                        & 0.130 & 0.335 & 0.228 & --    & 0.4 \\
 \bottomrule
 \end{tabular}
 \caption{Retrieval quality and latency (E9; all cores, interleaved) for the
