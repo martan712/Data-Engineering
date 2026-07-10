@@ -58,6 +58,27 @@ uv run python -m experiments.stage5_corect.e02_paired_significance
 
 Output: `results/json/stage5_corect_e02_paired_significance.json`
 
+## `e03_bm25_baseline.py`
+
+BM25 lexical reference on the identical e01 protocol (same evaluable test
+queries, qrels, k=100, rank-based run dicts). `bondmaxsim.baselines.bm25`
+wraps bm25s (Lucene scoring, k1=1.5, b=0.75, English stopwords, Snowball
+stemming); corpus/query text comes from the cached HF `BeIR/*` datasets and
+is indexed TEXT-ONLY to match how the embeddings were encoded (published BEIR
+BM25 numbers index title+text and are not directly comparable). Purpose:
+stack-independent anchor for the absolute qrels numbers — result (2026-07-10):
+nDCG@10 scifact 0.672 / nfcorpus 0.317 / arguana 0.306 / scidocs 0.130, close
+to published BEIR BM25, so the low arguana/scidocs absolutes are corpus
+properties. Timed under the e01 rep protocol (per-query loop, tokenization in
+the timer, build excluded) but standalone, not interleaved: at 0.1–0.5 ms/q it
+is 60–150x below the vector arms, outside any thermal-drift concern.
+
+```bash
+HF_DATASETS_OFFLINE=1 uv run python -m experiments.stage5_corect.e03_bm25_baseline
+```
+
+Output: `results/json/stage5_corect_e03_bm25_baseline.json`
+
 ## How extern/CoRECT is used (and what is deliberately not used)
 
 We execute the actual pinned checkout (`extern/CoRECT` @ `fedf8bb2`), never a

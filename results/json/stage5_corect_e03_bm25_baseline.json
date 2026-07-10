@@ -1,0 +1,163 @@
+{
+  "experiment": "e03_bm25_baseline",
+  "purpose": "BM25 lexical quality reference on the e01 protocol (same test queries, qrels, k, rank-based runs); indexes text-only documents to match the embedding cache; quality only, no latency comparison",
+  "k_retrieve": 100,
+  "datasets": {
+    "scifact": {
+      "n_docs": 5183,
+      "n_queries": 300,
+      "build": {
+        "n_docs": 5183,
+        "k1": 1.5,
+        "b": 0.75,
+        "scoring": "lucene",
+        "stopwords": "en",
+        "stemmer": "snowball-english",
+        "build_s": 0.4903209800104378
+      },
+      "timing_note": "e01 rep protocol but standalone, not interleaved with the e01 arms (see module docstring)",
+      "nDCG_at_10": 0.6716991193713816,
+      "recall_at_100": 0.906,
+      "MRR_at_10": 0.6341203703703704,
+      "CoRECT_RC_metrics": {
+        "NDCG@10": 0.6717,
+        "NDCG@100": 0.6939,
+        "MAP@10": 0.62226,
+        "MAP@100": 0.62754,
+        "Recall@10": 0.80867,
+        "Recall@100": 0.906,
+        "P@10": 0.08933,
+        "P@100": 0.0103,
+        "MRR@10": 0.63412,
+        "MRR@100": 0.63754
+      },
+      "ms_per_query": 0.1046471533481963,
+      "ms_per_query_reps": [
+        0.1046471533481963,
+        0.10602426331994744,
+        0.1073636366830518,
+        0.10966811663820408,
+        0.10545733666125064
+      ],
+      "ms_per_query_mean": 0.10663210133013006,
+      "ms_per_query_std": 0.0017573895691216106
+    },
+    "nfcorpus": {
+      "n_docs": 3633,
+      "n_queries": 323,
+      "build": {
+        "n_docs": 3633,
+        "k1": 1.5,
+        "b": 0.75,
+        "scoring": "lucene",
+        "stopwords": "en",
+        "stemmer": "snowball-english",
+        "build_s": 0.29623225299292244
+      },
+      "timing_note": "e01 rep protocol but standalone, not interleaved with the e01 arms (see module docstring)",
+      "nDCG_at_10": 0.3172801985580152,
+      "recall_at_100": 0.24219906397654378,
+      "MRR_at_10": 0.5315691188756204,
+      "CoRECT_RC_metrics": {
+        "NDCG@10": 0.31728,
+        "NDCG@100": 0.2712,
+        "MAP@10": 0.11734,
+        "MAP@100": 0.14075,
+        "Recall@10": 0.14381,
+        "Recall@100": 0.2422,
+        "P@10": 0.22724,
+        "P@100": 0.0656,
+        "MRR@10": 0.53157,
+        "MRR@100": 0.5352
+      },
+      "ms_per_query": 0.10030028793561466,
+      "ms_per_query_reps": [
+        0.10030028793561466,
+        0.1104238451906875,
+        0.10548075543025988,
+        0.11229040246239168,
+        0.10389125076606985
+      ],
+      "ms_per_query_mean": 0.10647730835700471,
+      "ms_per_query_std": 0.004363567552895336
+    },
+    "arguana": {
+      "n_docs": 8674,
+      "n_queries": 200,
+      "build": {
+        "n_docs": 8674,
+        "k1": 1.5,
+        "b": 0.75,
+        "scoring": "lucene",
+        "stopwords": "en",
+        "stemmer": "snowball-english",
+        "build_s": 0.6411066419968847
+      },
+      "timing_note": "e01 rep protocol but standalone, not interleaved with the e01 arms (see module docstring)",
+      "nDCG_at_10": 0.30606348867591326,
+      "recall_at_100": 0.93,
+      "MRR_at_10": 0.19220833333333331,
+      "CoRECT_RC_metrics": {
+        "NDCG@10": 0.30606,
+        "NDCG@100": 0.36335,
+        "MAP@10": 0.19221,
+        "MAP@100": 0.20528,
+        "Recall@10": 0.675,
+        "Recall@100": 0.93,
+        "P@10": 0.0675,
+        "P@100": 0.0093,
+        "MRR@10": 0.19221,
+        "MRR@100": 0.20528
+      },
+      "ms_per_query": 0.5137986499903491,
+      "ms_per_query_reps": [
+        0.5240915100148413,
+        0.5137986499903491,
+        0.552603625037591,
+        0.6049468399578473,
+        0.5663323200133163
+      ],
+      "ms_per_query_mean": 0.552354589002789,
+      "ms_per_query_std": 0.03239365959776409
+    },
+    "scidocs": {
+      "n_docs": 25657,
+      "n_queries": 200,
+      "build": {
+        "n_docs": 25657,
+        "k1": 1.5,
+        "b": 0.75,
+        "scoring": "lucene",
+        "stopwords": "en",
+        "stemmer": "snowball-english",
+        "build_s": 1.9288395370094804
+      },
+      "timing_note": "e01 rep protocol but standalone, not interleaved with the e01 arms (see module docstring)",
+      "nDCG_at_10": 0.12956384669669568,
+      "recall_at_100": 0.33466666666666667,
+      "MRR_at_10": 0.22816468253968253,
+      "CoRECT_RC_metrics": {
+        "NDCG@10": 0.12956,
+        "NDCG@100": 0.19549,
+        "MAP@10": 0.07278,
+        "MAP@100": 0.08754,
+        "Recall@10": 0.14,
+        "Recall@100": 0.33467,
+        "P@10": 0.0685,
+        "P@100": 0.0164,
+        "MRR@10": 0.22816,
+        "MRR@100": 0.23987
+      },
+      "ms_per_query": 0.40818819499691017,
+      "ms_per_query_reps": [
+        0.43423033494036645,
+        0.42163019999861717,
+        0.4192927249823697,
+        0.41694503495818935,
+        0.40818819499691017
+      ],
+      "ms_per_query_mean": 0.42005729797529057,
+      "ms_per_query_std": 0.00842015862141457
+    }
+  }
+}
