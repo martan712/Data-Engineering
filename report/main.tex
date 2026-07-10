@@ -4,21 +4,20 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{enumitem}
 \usepackage{microtype}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 
-\graphicspath{{../results/figures/stage3_mechanism/}{../results/figures/stage4_integration/}}
-
-% Draft helper; remove before submission.
-\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\graphicspath{{../results/figures/stage3_mechanism/}{../results/figures/stage4_integration/}{../results/figures/stage5_corect/}}
 
 \newtheorem{theorem}{Theorem}
 
 \title{\textbf{Accelerating ColBERT MaxSim with BOND-Style Dimension Pruning on a PDX Layout}}
-\author{Martan van der Straaten\\Radboud University\\\texttt{martanvanderstraaten@gmail.com}}
+\author{Martan van der Straaten\\\textit{Radboud University}}
 \date{\today}
 
 \begin{document}
@@ -39,8 +38,10 @@ until late in the dimension scan, so early pruning never pays for its
 bookkeeping. Pruning at late checkpoints does discard 88--98\% of documents
 exactly, but at that point most of the memory traffic has already been paid,
 and the wall-clock win over the fused dense baseline is decisive on only one
-of four datasets. \todo{finalize abstract
-once Stage 4 results are frozen}
+of four datasets. Evaluated as a retrieval system, the exact-safe kernel
+matches full-scan nDCG@10 at essentially no cost, while the fixed-budget
+candidate-generation pipelines we test are slower at equal or lower quality
+on all but the largest corpus.
 \end{abstract}
 
 \section{Introduction}
@@ -377,10 +378,10 @@ with the full Cauchy--Schwarz residual.
 Finally, the threshold can be \emph{seeded}: any lower bound on the true
 $\tau_k$ is safe, and a higher starting threshold means earlier pruning.
 The seeded arm scores a handful of IVF-probed candidates exactly before the
-scan starts. One approximate system arm builds on this, the
-\emph{partitioned fused scan}: documents are clustered at build time, each
-cluster is packed in panel layout, and a query scans only its nearest
-clusters with the fused kernel. This arm can miss true top-$k$ documents
+scan starts. One further arm gives up exactness entirely: the
+\emph{partitioned fused scan} clusters the documents at build time, packs
+each cluster in panel layout, and scans only the clusters nearest to the
+query with the fused kernel. This arm can miss true top-$k$ documents
 and is therefore reported strictly as a recall--latency frontier.
 
 \subsection{Measurement instruments}
@@ -409,21 +410,28 @@ mixed in what follows: the former answer RQ1, the latter RQ3.
 \label{sec:method:setup}
 
 \paragraph{Data and embeddings.} We evaluate on four BEIR
-corpora~\cite{thakur2021beir}: NFCorpus (3{,}633 documents), SciFact
-(5{,}183), ArguAna (8{,}674), and SciDocs (25{,}657). Documents and queries
-are embedded with GTE-ModernColBERT-v1 through PyLate~\cite{chaffin2024pylate}
-($D = 128$, unit-norm token vectors; SciFact yields about 1.1M token
-vectors). Each experiment uses a fixed 50-query subsample (seed 42) and
-retrieves the top $k = 10$. Retrieval quality for exact-safe arms is
-exact agreement with the oracle; approximate arms report recall@10 against
-the same oracle.
+corpora~\cite{thakur2021beir}: NFCorpus (3{,}633 documents, 0.84M token
+vectors), SciFact (5{,}183 documents, 1.14M), ArguAna (8{,}674, 1.51M), and
+SciDocs (25{,}657, 4.53M). Documents and queries are embedded once with
+GTE-ModernColBERT-v1 through PyLate~\cite{chaffin2024pylate}: $D = 128$,
+\texttt{float32}, unit-norm token vectors (verified at export, per
+Section~\ref{sec:bound:safety}), and variable-length queries of
+$m \approx 21$ tokens on average. Documents are embedded text-only (titles
+dropped), which lowers absolute qrels numbers relative to published BEIR
+setups; every arm shares the same embeddings, so comparisons between arms are
+unaffected. These embeddings are fixed across every
+experiment; how each experiment queries and scores them is described in
+Section~\ref{sec:method:experiments}.
 
-\paragraph{Hardware.} All measurements run on one machine: an AMD Zen~5
-laptop CPU (Ryzen AI 7 445, 6 cores / 12 threads, AVX-512, 1\,MB L2 per
-core) under Fedora Linux. Kernels are C++ compiled with GCC and called
-through ctypes; the dense external reference is NumPy with
-scipy-openblas 0.3.31. Every arm is measured both single-threaded and on
-all cores, and thread counts are always reported with the number.
+\paragraph{Hardware and software.} All measurements run on one machine: an
+AMD Zen~5 laptop CPU (Ryzen AI 7 445, 6 cores / 12 threads, AVX-512, 1\,MB
+L2 per core) under Fedora Linux. The kernels are C++20, compiled with
+Clang~21 at \texttt{-O3 -march=native} with OpenMP, and called through
+\texttt{ctypes} from Python~3.12. The dense external reference is NumPy~2.4
+backed by scipy-openblas~0.3.31; the candidate-generation baselines use
+faiss-cpu~1.14 and the PLAID implementation of PyLate~1.6; qrels metrics
+use ranx~0.3. Every arm is measured both single-threaded and on all cores,
+and thread counts are always reported with the number.
 
 \subsection{Measurement protocol}
 \label{sec:method:protocol}
@@ -436,7 +444,8 @@ frequency state drift between runs, so a baseline timed in a separate run is
 not comparable to a candidate arm; margins of the size at stake here (single
 percents to tens of percents) can be produced by the measurement alone. All
 arms are therefore timed \emph{interleaved}: round-robin within one process,
-best-of-5 per arm, with the dense baseline measured in the same loop.
+five to eight repetitions per arm with the fastest kept, and the dense
+baseline measured in the same loop as the arms it is compared against.
 
 \paragraph{Fixed candidate budgets.} When comparing candidate-generation
 methods (RQ4), every method is granted the same budget $B$ of documents
@@ -457,59 +466,134 @@ reported apart.
 \subsection{Experiments}
 \label{sec:method:experiments}
 
-Table~\ref{tab:experiments} maps the experiments to the research questions.
-The mechanism experiments (RQ1) measure the bound itself: e01 measures bound
-slack, the ratio of the document upper bound $\mathrm{UB}_d$ to the exact
-score, as a function of scan depth; e02 measures survival curves, the
-fraction of documents and tokens still alive at each depth under three
-threshold policies (self-seeded, seeded, oracle) and three dimension orders
-(natural, BOND's variance-descending order, and a principal-component (PCA)
-rotation). The kernel experiments (RQ2, RQ3)
-compare the fused dense arm against NumPy/OpenBLAS and against the fused
-BOND arms across orders and granularities (e03), checkpoint sets (e08), and
-the tight versus cheap bound (e09), all at $\mathrm{shrink}=1$ under the
-interleaved protocol. The integration experiments (RQ4) compare, at fixed
-budgets, the exhaustive fused scan, seeded exact-safe BOND, FAISS-IVF with
-exact rerank, PLAID, and the partitioned fused scan (s01); ablate what a
-realistic IVF seed recovers of the oracle threshold's pruning (s02); and
-sweep the partitioned arm's probe count as a recall--latency frontier (s03).
+Nine experiments, E1--E9, span the four research questions;
+Table~\ref{tab:experiments} maps each to its research question and
+instrument, and Section~\ref{sec:results} refers to them by number. Unless
+an experiment states otherwise, it runs on all four corpora over a fixed
+50-query subsample (drawn once per corpus with seed 42) at retrieval depth
+$k = 10$; exact-safe arms are gated on exact top-$k$ agreement with the
+NumPy oracle, approximate arms report recall against the exact top-10, and
+the BOND arms use the tight bound, natural dimension order, and
+$\mathrm{shrink} = 1$. Three threshold policies recur: \emph{self-seeded}
+starts the threshold at $-\infty$ and lets it rise as documents finalize;
+\emph{seeded} initializes it by exactly scoring a small candidate set
+(Section~\ref{sec:kernels:bond}); \emph{oracle} initializes it at the true
+$k$-th score, the upper limit of what any seeding can achieve.
 
-Each experiment writes one shared result schema (dataset, arm, thread count,
-timing, pruning statistics, quality gate) to versioned JSON, and every
-figure in Section~\ref{sec:results} is generated from those files.
+\begin{itemize}[noitemsep,topsep=3pt,leftmargin=1.4em]
+  \item \textbf{E1, bound slack} (RQ1): the ratio of the document upper
+    bound $\mathrm{UB}_d$ to the exact score on a 33-point grid of scan
+    depths, aggregated over all query--document pairs of the subsample, for
+    three dimension orders (natural, variance-descending, PCA).
+  \item \textbf{E2, survival} (RQ1): the fraction of documents and tokens
+    the pruning tests of Section~\ref{sec:bound:rules} keep alive at each
+    depth, for every combination of the three threshold policies and three
+    dimension orders, on the accounting kernel.
+  \item \textbf{E3, kernel comparison} (RQ2, RQ3): the fused dense arm
+    against NumPy/OpenBLAS, and the document- and token-level BOND arms at
+    checkpoints $C = \{32, 64\}$, across the three dimension orders.
+  \item \textbf{E4, checkpoint sets} (RQ3): the document-level arm over
+    eight checkpoint sets, $\{32\}$, $\{48\}$, $\{64\}$, $\{96\}$,
+    $\{112\}$, $\{32,64\}$, $\{64,112\}$, and $\{32,64,96,112\}$, under the
+    oracle threshold; the best late sets are then re-timed interleaved
+    against the dense arm on all four corpora.
+  \item \textbf{E5, bound tightness} (RQ3): the tight bound against the
+    cheap query-only bound, at the early control $\{32,64\}$ and the three
+    best late sets of E4, under the oracle threshold.
+  \item \textbf{E6, fixed budgets} (RQ4): complete pipelines at candidate
+    budgets $B \in \{100, 500, 1000, 5000\}$ capped at corpus size: the
+    exhaustive fused scan, IVF-seeded BOND at $C=\{112\}$, FAISS-IVF
+    token search (${\sim}4\sqrt{T}$ lists for $T$ corpus tokens, rounded to
+    a power of two; 32 probes) with per-document hit aggregation and exact
+    MaxSim rerank of exactly $B$ candidates, the same construction on the
+    PDX library's IVF index, and PLAID (4-bit residuals, 8 probes, $B$ full
+    scores).
+  \item \textbf{E7, threshold seeding} (RQ4): the $C=\{112\}$ arm under
+    five threshold policies, from self-seeded through a cheap IVF seed (4
+    probes and 32 hits per query token, 10 candidate documents scored
+    exactly) and a strong one (16 probes, 128 hits, 100 documents) to
+    oracle, with the pruning recovered and the seeding cost reported
+    separately.
+  \item \textbf{E8, partition frontier} (RQ4): the partitioned fused scan
+    with $P \approx \sqrt{N_{\mathrm{docs}}}$ partitions (rounded to a
+    power of two; spherical $k$-means over unit-normalized mean document
+    vectors, 15 iterations), swept over
+    $\mathrm{nprobe} \in \{1, 2, 4, 8, 16, 32, P\}$, with the dense and the
+    BOND kernel each used as the partition scanner.
+  \item \textbf{E9, retrieval quality}: each family's best arm scored as a
+    retrieval system: the fused scan, exact-safe BOND ($C=\{112\}$,
+    self-seeded), the partitioned scan at nprobe 16 and 32, FAISS-IVF
+    and PLAID at $B \in \{100, 1000, 5000\}$, and a BM25 reference
+    (\texttt{bm25s}, Lucene scoring, $k_1{=}1.5$, $b{=}0.75$, English
+    stopwords, Snowball stemming) indexing the same text-only documents.
+    BM25 shares nothing with the embedding stack; it is timed under the
+    same rep protocol but standalone, since at its latency scale the
+    interleaving control is moot.
+\end{itemize}
+
+E9 runs in its own evaluation regime. It scores each method over the full
+evaluable test-query set of every corpus (300 queries on SciFact, 323 on
+NFCorpus, 200 each on ArguAna and SciDocs) at retrieval depth $k = 100$,
+evaluating at cutoff 10 with nDCG@10, recall@100 and MRR@10 against the BEIR
+relevance judgments. These qrels metrics are computed with \texttt{ranx} and
+cross-validated against the CoRECT
+framework's~\cite{caspari2025corect} \texttt{pytrec\_eval} on every
+run.\footnote{The two evaluators break score-ties differently, so each run is
+handed to both as its \emph{rank order} rather than its MaxSim scores.
+Separating ties by $s_i - i\varepsilon$ fails: \texttt{pytrec\_eval} holds
+scores in 32-bit floats, whose ULP at MaxSim magnitudes ($\sim$4.5) exceeds a
+usable $\varepsilon$, so the separation is truncated away and near-equal
+documents are re-tied and broken by doc-id (disagreements up to
+$5\times10^{-4}$ nDCG@10 on NFCorpus). Integer ranks are exact in
+\texttt{float32}, so both evaluators score the identical ranking and agree to
+rounding.} Where an approximate arm lands above the exact scan, the
+difference is tested with a two-sided paired permutation test over per-query
+nDCG@10 (20{,}000 sign flips per pair).
+
+Every wall-clock measurement follows the interleaved protocol of
+Section~\ref{sec:method:protocol}, and index and partition builds are timed
+separately and excluded from query latency. Each experiment writes its
+results (dataset, arm, thread count, timing, pruning statistics, quality
+gate) to one shared JSON schema, and every figure and table in
+Section~\ref{sec:results} is generated from those files.
 
 \begin{table}[t]
 \centering
 \small
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{@{}lll@{}}
 \toprule
 RQ & Experiments & Instrument \\
 \midrule
-RQ1 & e01 bound slack; e02 survival & accounting kernel \\
-RQ2 & dense arm vs.\ OpenBLAS (e03) & fused kernel \\
-RQ3 & e03 orders; e08 checkpoints; & fused kernel, \\
-    & e09 bound tightness & interleaved \\
-RQ4 & s01 fixed-budget arms; s02 seeds; & full pipelines, \\
-    & s03 partitioned frontier & interleaved \\
+RQ1 & E1 bound slack; E2 survival & accounting kernel \\
+RQ2 & E3 kernels (dense arm) & fused kernel \\
+RQ3 & E3 kernels; E4 checkpoint & fused kernel, \\
+    & sets; E5 bound tightness & interleaved \\
+RQ4 & E6 fixed budgets; E7 seeding; & full pipelines, \\
+    & E8 partition frontier & interleaved \\
+--  & E9 retrieval quality & pipelines, qrels \\
 \bottomrule
 \end{tabular}
-\caption{Experiments per research question. Stage-3 mechanism experiments
-are prefixed e, Stage-4 integration experiments s.}
+\caption{The nine experiments per research question, and the instrument each
+is measured with.}
 \label{tab:experiments}
 \end{table}
 
 \section{Results}
 \label{sec:results}
 
-\todo{This section is a skeleton; runs for Stage 4 are still landing. The
-RQ1/RQ3 figures below are final.}
+We report the four research questions in order. Throughout, figures show
+SciFact as the representative corpus except where noted; the accompanying text
+gives the range across all four datasets, and per-dataset numbers are
+collected in the tables. All wall-clock numbers follow the interleaved
+protocol of Section~\ref{sec:method:protocol}.
 
 \subsection{RQ1: the bound is loose until late in the scan}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{e01_bound_slack_scifact}
-  \caption{Bound slack, the ratio of the document upper bound
+  \caption{Bound slack (E1), the ratio of the document upper bound
   $\mathrm{UB}_d$ to the exact score, versus scan depth on SciFact, for
   three dimension orders (mean and 10th--90th percentile band over
   query--document pairs). Even at half the dimensions the bound still
@@ -521,52 +605,327 @@ RQ1/RQ3 figures below are final.}
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{e02_pruning_rate_scifact}
-  \caption{Survival curves on SciFact: fraction of documents (left) and
+  \caption{Survival curves (E2) on SciFact: fraction of documents (left) and
   tokens (right) still alive versus dimensions scanned, per threshold policy
   and dimension order. Nothing is prunable before dimension 64 of 128; most
   pruning becomes possible only past dimension 96.}
   \label{fig:e02}
 \end{figure}
 
-Figures~\ref{fig:e01} and~\ref{fig:e02} answer RQ1. \todo{one paragraph:
-slack ${\sim}11\%$ at start, ${\sim}5\%$ at $D/2$; 98--100\% of documents and
-tokens unprunable at dimension 64 under every policy and order; accounting
-cells 84--92\%, so the exact-safe ceiling is ${\le}16\%$ of work.}
+E1 and E2 (Figures~\ref{fig:e01} and~\ref{fig:e02}) answer RQ1: the bound is
+valid everywhere but too loose to act on until late in the scan. In E1, at
+the first scanned dimension the Cauchy--Schwarz upper bound already
+overestimates the exact
+score by 11--15\% (6\% on ArguAna, whose scores are lower), and even at half
+the dimensions it still overestimates by 3--7\%, far wider than the gaps
+between neighboring documents' scores that a threshold test must resolve.
+E2 turns this slack into survival: under every threshold
+policy (self-seeded, seeded, oracle) and every dimension order (natural,
+variance-descending, PCA), 98--100\% of documents and essentially all document
+tokens are still live at dimension~64 of~128, and the median document does not
+become prunable until the final dimensions. The accounting kernel makes the
+implied ceiling precise: even counting every cell the pruning tests would ever
+touch, an exact-safe schedule can avoid only 8--16\% of the
+token$\times$dimension grid; the remaining 84--92\% of cells must be read
+under any schedule. This is the ceiling every kernel in the next subsection
+operates under.
 
-\subsection{RQ2/RQ3: kernels}
+\subsection{RQ2/RQ3: a strong dense baseline that pruning rarely beats}
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{e08_checkpoint_ablation_scifact}
-  \caption{Checkpoint-set ablation on SciFact (single thread, oracle
+  \caption{Checkpoint-set ablation (E4) on SciFact (single thread, oracle
   threshold). Early checkpoint sets cost more than they save; only late
   single checkpoints ($C = \{96\}, \{112\}$) approach or beat the dense
   baseline (dashed).}
   \label{fig:e08}
 \end{figure}
 
-\todo{dense kernel table (1T / all cores, per dataset) vs OpenBLAS; e03
-verdict at default checkpoints; e08 late-checkpoint result (88--98\% of
-documents pruned exact-safe, recall 1.0); e09 tight-vs-cheap outcome (tight
-wins, cheap prunes 0\%); all-cores margins under the interleaved protocol:
-ArguAna $+8.7\%$, others within $+0.9$--$2.3\%$.}
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{single thread} & \multicolumn{2}{c}{all cores} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Dataset & fused & BLAS & fused & BLAS \\
+\midrule
+NFCorpus & 25.6 & 68.1 & 10.5 & 21.8 \\
+SciFact  & 54.2 & 121.3 & 13.9 & 45.8 \\
+ArguAna  & 138.6 & 246.4 & 36.6 & 115.3 \\
+SciDocs  & 174.4 & 426.6 & 57.7 & 171.9 \\
+\bottomrule
+\end{tabular}
+\caption{Exact dense MaxSim (E3), ms per query (lower is better), fused PDX
+kernel
+versus NumPy/scipy-openblas, single-threaded and on all 12 threads. The fused
+kernel is $1.8$--$2.7\times$ faster single-threaded and $2.1$--$3.3\times$
+faster on all cores, at bit-identical scores.}
+\label{tab:dense}
+\end{table}
 
-\subsection{RQ4: integration}
+\paragraph{The dense kernel.} Table~\ref{tab:dense} reports E3's dense arms
+and answers RQ2. The
+fused PDX kernel computes exactly the same scores as the OpenBLAS formulation
+but is $1.8$--$2.7\times$ faster on one thread and $2.1$--$3.3\times$ faster on
+all cores, roughly $3\times$ at the median. The win comes from two
+inefficiencies a general BLAS cannot avoid on this workload, neither of which
+the fused kernel pays: it re-packs the static corpus on every call, and it
+materializes then re-reads the full $m\times N$ score matrix. Both dense
+formulations dwarf a columnar $m=1$-style scan, confirming the GEMM-regime
+argument of Section~\ref{sec:background}; the layout matters for MaxSim through
+packing amortization and the fused reduction, not through the memory-bound
+mechanism of the single-vector literature.
 
-\todo{s01 fixed-budget figure and discussion (exhaustive fused scan beats
-every candidate pipeline at these corpus sizes except SciDocs); s02 seeded
-threshold recovers up to 99\% of oracle pruning but seed cost eats the
-margin; s03 partitioned frontier.}
+\paragraph{Exact-safe pruning.} Against this baseline the exact-safe arm can
+save little, exactly as RQ1 predicts. In E3 and E4, at early checkpoints
+such as $C=\{32,64\}$ the bound prunes under 2\% of documents on every
+dataset, so the pruned arm only carries the bookkeeping and loses to dense
+(Figure~\ref{fig:e08}). Pruning becomes real only at late checkpoints:
+$C=\{96\}$ or $\{112\}$ discards 88--98\% of documents \emph{exact-safe}
+(recall $1.0$, verified against the oracle), but by dimension~96--112 most of
+the memory traffic is already spent. The tight bound is essential here: in
+E5, the cheap query-only bound of the original BOND paper
+prunes 0\% at every late checkpoint. This reverses the Euclidean finding: an
+inner product's tightness must be bought with the full Cauchy--Schwarz
+residual, not inherited for free. Table~\ref{tab:exactsafe} gives the
+wall-clock margins of E4's interleaved re-timing over the dense baseline on
+all cores. Only ArguAna clears a decisive margin ($+8.7\%$); SciFact,
+SciDocs, and NFCorpus land within $+0.9$--$2.3\%$, inside the run-to-run
+noise of a laptop CPU. The answer to RQ3 is therefore negative at the
+interleaved all-cores baseline: the win is real on one dataset of four, too
+narrow a base for a general claim.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Dataset & dense (ms/q) & best margin & docs pruned \\
+\midrule
+NFCorpus & 9.3  & $+0.9\%$ & 95\% \\
+SciFact  & 14.8 & $+2.3\%$ & 88\% \\
+ArguAna  & 33.6 & $+8.7\%$ & 97\% \\
+SciDocs  & 54.0 & $+0.9\%$ & 98\% \\
+\bottomrule
+\end{tabular}
+\caption{Exact-safe BOND at its best late checkpoint (E4, interleaved:
+$C=\{112\}$ or $\{64,112\}$, tight bound, natural order, oracle threshold,
+all cores), wall-clock margin over the interleaved dense baseline, and the
+fraction of documents pruned exact-safe. Pruning is large and exact
+everywhere, but only ArguAna converts it into a decisive speedup.}
+\label{tab:exactsafe}
+\end{table}
+
+\subsection{RQ4: candidate generation rarely pays off at this scale}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{e01_fixed_candidate_arms_scidocs}
+  \caption{Fixed-budget comparison (E6) on SciDocs (25{,}657 documents, all
+  cores).
+  Each candidate-generation pipeline is timed end-to-end at candidate budget
+  $B$, with the exhaustive fused scan (dashed) as reference. On this, the
+  largest corpus, IVF pipelines cross below the exhaustive scan at small
+  budgets; on the three smaller corpora they do not.}
+  \label{fig:s01}
+\end{figure}
+
+At the corpus scales in this study, the exhaustive fused scan is the strongest
+system in its own right. In the fixed-budget comparison (E6), every
+token-level candidate pipeline (FAISS-IVF with exact rerank, the IVF index of
+the PDX library with the same rerank, and PLAID) is slower than that scan at
+matched budget and quality on NFCorpus, SciFact, and ArguAna, once per-token
+hit aggregation is placed inside the timer. SciDocs is the exception
+(Figure~\ref{fig:s01}): on 25.7k documents the
+IVF pipelines cross below the exhaustive scan at $B=100$ (FAISS $28.6$~ms and
+PDX $24.9$~ms against $65.5$~ms for dense, at recall $0.92$). We expect this
+crossover to widen on larger corpora. Much larger PDX-over-PLAID factors have
+been reported elsewhere; under our protocol these turn out to be artifacts of
+mismatched budgets, timer boundaries, and software stacks, all of which the
+fixed-budget control removes.
+
+Two further results frame the exact-safe arm. First, in E7 a realistic
+IVF-seeded
+threshold recovers up to ${\sim}99\%$ of the oracle threshold's pruning, so
+the margins of Table~\ref{tab:exactsafe} are in principle reachable without
+an oracle. However, the seed itself costs $7$--$23$~ms per query, more than
+the $1$--$4$~ms the extra pruning saves, so the free self-seeded policy
+remains the better production choice. Second, in E8 the partitioned fused
+scan traces a genuine \emph{approximate} frontier ($4\times$ at recall $0.92$ on
+SciDocs, $5.2\times$ at $0.87$ on ArguAna). Its full-probe exact control is
+$2$--$5\times$ slower than the monolithic scan, however, and its exact-safe
+partition bound prunes no partitions: the bound-tightness problem of RQ3
+recurs one level up.
+
+\subsection{Retrieval quality}
+
+The comparison so far judges each arm by exact agreement, recall against the
+oracle, and wall-clock. E9 adds the axis those
+leave out: quality on the BEIR relevance judgments, scored over the full
+test-query set as described in Section~\ref{sec:method:experiments}.
+Table~\ref{tab:ir} reports the
+nDCG@10, recall@100, and MRR@10 of each family's best arm on all four
+corpora, alongside its recall
+against the exact top-10 and interleaved latency. Exactness carries no
+quality cost and, here, no latency cost: the exact-safe BOND arm reproduces the
+full-scan nDCG@10, recall@100, and MRR@10 to rounding at essentially the same
+wall-clock as the dense scan, so the RQ3 negative result costs the retrieval
+system nothing. On the three smaller corpora, no fixed-budget candidate
+pipeline improves on the monolithic scan: FAISS-IVF reaches full-scan quality
+only at $B{=}1000$, where it is $2$--$4\times$ slower than the dense scan, and
+PLAID's compressed scoring stays short on recall@100 at every budget. On
+SciDocs, the crossover of E6 carries into the quality table: FAISS-IVF at
+$B{=}100$ halves the scan's latency at full-scan nDCG@10, though it remains
+2.5 recall@100 points short. The partitioned fused scan is the fastest arm on
+every corpus at nprobe~16, giving up between six nDCG@10 points on NFCorpus
+and nothing on ArguAna, an operating point a latency-bound deployment might
+accept where the IVF pipelines cannot.
+
+The BM25 row anchors the absolute numbers. ArguAna and SciDocs are hard for
+every system: BM25 lands at 0.306 and 0.130 nDCG@10 there, close to its
+published BEIR values, so the low scores on those corpora reflect the
+benchmarks rather than the pipeline. The MaxSim arms beat BM25 on all four
+corpora, although by smaller margins than published late-interaction results,
+which we attribute to the text-only encoding of
+Section~\ref{sec:method:setup}; on ArguAna, BM25 even exceeds every MaxSim
+arm's recall@100 (0.930 against 0.885) while ordering its top-10 worse.
+However, BM25 answers a query in 0.1--0.5~ms, $60$--$150\times$ faster than
+the exhaustive scan. On corpora of this size, late interaction buys its
+quality margin at a large latency multiple, and that multiple is the cost
+the kernels of this paper reduce.
+
+Table~\ref{tab:ir} also contains an apparent contradiction: some approximate
+arms score marginally \emph{above} the exact scan (the partitioned arms on
+ArguAna; partitioned at nprobe~32 and FAISS at $B{=}100$ on SciDocs). How can
+an approximate system beat an exact one? Exactness is defined with respect to
+the MaxSim score, not to the relevance judgments. When partition probing
+misses a document near rank 10, its replacement carries a marginally lower
+MaxSim score, and at that depth the score barely correlates with relevance,
+so the swap helps about as often as it hurts. The paired permutation test of
+Section~\ref{sec:method:experiments} confirms this: none of the inversions is
+significant ($p \ge 0.13$; at nprobe~32 on SciDocs only 10 of 200 queries
+change at all). The genuine quality losses, by contrast, are: partitioned at
+nprobe~16 loses significantly on SciFact and NFCorpus ($p < 0.001$), as does
+FAISS at $B{=}100$ on NFCorpus and ArguAna ($p \le 0.02$). The test therefore
+does separate real differences from noise at these query counts, and the
+inversions fall on the noise side. Thus the qrels metrics saturate well before recall against the
+exact top-10 does, and the latter remains the fidelity metric every
+exact-safe claim in this paper is gated on.
+
+\begin{table*}[t]
+\centering
+\small
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+Dataset & Method & nDCG@10 & R@100 & MRR@10 & rec/exact@10 & ms/q \\
+\midrule
+\multirow{7}{*}{SciFact}
+ & dense fused (exact)        & 0.746 & 0.963 & 0.713 & 1.000 & 16.1 \\
+ & exact-safe BOND            & 0.746 & 0.963 & 0.713 & 1.000 & 16.9 \\
+ & partitioned, nprobe 16     & 0.718 & 0.899 & 0.691 & 0.899 & \textbf{10.5} \\
+ & partitioned, nprobe 32     & 0.745 & 0.960 & 0.713 & 0.970 & 20.0 \\
+ & FAISS-IVF ($B{=}1000$)     & 0.746 & 0.963 & 0.713 & 1.000 & 57.1 \\
+ & PLAID ($B{=}1000$)         & 0.746 & 0.963 & 0.713 & 0.916 & 69.9 \\
+ & BM25                       & 0.672 & 0.906 & 0.634 & --    & 0.1 \\
+\midrule
+\multirow{7}{*}{NFCorpus}
+ & dense fused (exact)        & 0.378 & 0.317 & 0.600 & 0.998 & 10.4 \\
+ & exact-safe BOND            & 0.378 & 0.317 & 0.601 & 0.999 & 10.9 \\
+ & partitioned, nprobe 16     & 0.315 & 0.252 & 0.541 & 0.730 & \textbf{6.5} \\
+ & partitioned, nprobe 32     & 0.353 & 0.290 & 0.569 & 0.886 & 13.4 \\
+ & FAISS-IVF ($B{=}1000$)     & 0.378 & 0.316 & 0.603 & 0.995 & 37.7 \\
+ & PLAID ($B{=}1000$)         & 0.373 & 0.314 & 0.593 & 0.874 & 31.4 \\
+ & BM25                       & 0.317 & 0.242 & 0.532 & --    & 0.1 \\
+\midrule
+\multirow{7}{*}{ArguAna}
+ & dense fused (exact)        & 0.314 & 0.885 & 0.209 & 0.998 & 32.7 \\
+ & exact-safe BOND            & 0.313 & 0.885 & 0.208 & 0.999 & 34.0 \\
+ & partitioned, nprobe 16     & 0.318 & 0.870 & 0.213 & 0.940 & \textbf{15.6} \\
+ & partitioned, nprobe 32     & 0.318 & 0.885 & 0.212 & 0.975 & 28.1 \\
+ & FAISS-IVF ($B{=}1000$)     & 0.312 & 0.885 & 0.207 & 0.998 & 72.4 \\
+ & PLAID ($B{=}1000$)         & 0.310 & 0.875 & 0.206 & 0.959 & 113.0 \\
+ & BM25                       & 0.306 & 0.930 & 0.192 & --    & 0.5 \\
+\midrule
+\multirow{8}{*}{SciDocs}
+ & dense fused (exact)        & 0.164 & 0.395 & 0.284 & 1.000 & 57.3 \\
+ & exact-safe BOND            & 0.164 & 0.395 & 0.284 & 1.000 & 57.8 \\
+ & partitioned, nprobe 16     & 0.161 & 0.382 & 0.285 & 0.896 & \textbf{11.9} \\
+ & partitioned, nprobe 32     & 0.166 & 0.389 & 0.288 & 0.957 & 23.1 \\
+ & FAISS-IVF ($B{=}100$)      & 0.167 & 0.370 & 0.287 & 0.900 & 27.6 \\
+ & FAISS-IVF ($B{=}1000$)     & 0.165 & 0.391 & 0.287 & 0.987 & 54.4 \\
+ & PLAID ($B{=}1000$)         & 0.162 & 0.392 & 0.275 & 0.922 & 126.3 \\
+ & BM25                       & 0.130 & 0.335 & 0.228 & --    & 0.4 \\
+\bottomrule
+\end{tabular}
+\caption{Retrieval quality and latency (E9; all cores, interleaved) for the
+best
+method of each family. \emph{rec/exact@10} is recall against the exact top-10;
+IR metrics are computed on BEIR qrels over all evaluable test queries. BM25
+indexes the same text-only documents and serves as a stack-independent
+lexical reference; rec/exact@10 does not apply to it, and its latency follows
+the same rep protocol but standalone rather than interleaved (at two orders
+of magnitude below the vector arms, thermal drift cannot affect the
+comparison). The
+exact-safe kernel matches the full scan at no measurable cost; on all corpora
+but SciDocs, every candidate pipeline that reaches full-scan quality is
+slower. Approximate arms above the exact scan on nDCG@10 are within noise
+(paired permutation test, $p \ge 0.13$).}
+\label{tab:ir}
+\end{table*}
 
 \section{Discussion and conclusion}
 \label{sec:discussion}
 
-\todo{Answer the four RQs in order; negative-result framing for RQ3 (the
-mechanism fails in the bound math, not the engineering); the fused dense
-kernel and the measurement methodology as the standing contributions;
-limitations (corpus scale, one embedding model, laptop CPU); future work
-(approximate shrink frontier, larger corpora, int8/VNNI headroom, CoRECT
-IR-quality evaluation).}
+Taken together, the four research questions give a clear and mostly negative
+answer to the paper's central question. A valid MaxSim bound does exist and is
+exact-safe (RQ1), but the Cauchy--Schwarz envelope it rests on is loose enough
+that 84--92\% of the token$\times$dimension grid must be read before any
+pruning is possible, which caps the mechanism at 8--16\% of the work. The
+strongest honest baseline against which to measure that mechanism (RQ2) is not
+a library GEMM but a fused PDX kernel, roughly $3\times$ faster because MaxSim
+is GEMM-shaped and the layout amortizes packing and fuses the reduction. Set
+against that baseline, exact-safe pruning wins decisively on only one of four
+datasets (RQ3): late checkpoints prune 88--98\% of documents exactly, but by
+the depth at which they fire most of the memory traffic is already spent.
+Finally, at these corpus scales the exhaustive fused scan is itself the
+strongest system (RQ4), beating every fixed-budget candidate pipeline except on
+the largest corpus, and exact-safety adds no retrieval-quality or latency
+penalty.
+
+The RQ3 result is a negative result of a specific and useful kind: the
+mechanism fails in the bound \emph{mathematics}, not in the engineering. The
+result is not an implementation artifact: both arms share a bit-identical
+microkernel, and halving the pruned arm's bookkeeping overhead did not change
+the outcome. An inner product simply lacks the monotonicity that makes a
+partial Euclidean distance a free, tight bound. Thus the tightness must be
+bought with the full Cauchy--Schwarz residual, which does not become tight
+until three-quarters of the dimensions are paid for. This also reverses
+the original BOND finding that a cheap query-only bound wins at wall-clock.
+For MaxSim, the cheap bound prunes nothing.
+
+Two constructive contributions stand independent of the negative result. The
+first is the fused dense MaxSim kernel, a $3\times$ exact speedup over a tuned
+BLAS in its own right. The second is the measurement methodology of
+interleaved baselines and fixed candidate budgets, without which several of our
+own early numbers were inflated by the measurement rather than the method.
+
+\paragraph{Limitations and future work.} Our conclusions are scoped to four
+BEIR corpora up to ${\sim}26$k documents, one embedding model, and one
+laptop-class CPU; the SciDocs crossover in RQ4 is a direct signal that the
+candidate-pipeline balance shifts with scale, and confirming the exact-safe and
+partitioned arms on corpora one to two orders larger is the clearest next step.
+The paper deliberately stays at $\mathrm{shrink}=1$: the approximate regime,
+where the residual is shrunk below its safe value to trade recall for pruning,
+is where a loose bound is least penalized and is the natural place to look for a
+positive result. Finally, the fused kernel leaves int8/VNNI throughput
+unexploited, an orthogonal lever to pruning.
+
+We conclude that BOND-style dimension pruning transfers to MaxSim in theory
+and in exactness, but not, at these scales, in wall-clock. The lasting
+contribution of this investigation is the dense kernel we built to test the
+claim.
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
