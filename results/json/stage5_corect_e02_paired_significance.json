@@ -1,0 +1,162 @@
+{
+  "experiment": "e02_paired_significance",
+  "purpose": "paired sign-flip permutation test (per-query nDCG@10, two-sided) of each approximate arm against the exact dense scan \u2014 are the e01 nDCG inversions systematic?",
+  "k_retrieve": 100,
+  "kernel": {
+    "bound": "tight",
+    "checkpoints": [
+      112
+    ],
+    "nprobes": [
+      16,
+      32
+    ]
+  },
+  "faiss": {
+    "candidate_budget": 100,
+    "nprobe": 32
+  },
+  "n_permutations": 20000,
+  "datasets": {
+    "scifact": {
+      "n_queries": 300,
+      "mean_ndcg_at_10": {
+        "dense_fused": 0.7455718548340442,
+        "partitioned@16": 0.7177363649353182,
+        "partitioned@32": 0.7451471763111166,
+        "faiss@100": 0.7368754049183143
+      },
+      "paired_vs_dense": {
+        "partitioned@16": {
+          "mean_diff": -0.027835489898725974,
+          "p_value": 0.0008,
+          "n_queries": 300,
+          "n_changed": 25,
+          "n_helped": 9,
+          "n_hurt": 16
+        },
+        "partitioned@32": {
+          "mean_diff": -0.00042467852292768504,
+          "p_value": 1.0,
+          "n_queries": 300,
+          "n_changed": 3,
+          "n_helped": 2,
+          "n_hurt": 1
+        },
+        "faiss@100": {
+          "mean_diff": -0.008696449915729947,
+          "p_value": 0.061,
+          "n_queries": 300,
+          "n_changed": 9,
+          "n_helped": 4,
+          "n_hurt": 5
+        }
+      }
+    },
+    "nfcorpus": {
+      "n_queries": 323,
+      "mean_ndcg_at_10": {
+        "dense_fused": 0.37850741522453896,
+        "partitioned@16": 0.31539169801804184,
+        "partitioned@32": 0.35322398998632243,
+        "faiss@100": 0.36895236515172525
+      },
+      "paired_vs_dense": {
+        "partitioned@16": {
+          "mean_diff": -0.06311571720649709,
+          "p_value": 0.0,
+          "n_queries": 323,
+          "n_changed": 154,
+          "n_helped": 42,
+          "n_hurt": 112
+        },
+        "partitioned@32": {
+          "mean_diff": -0.025283425238216514,
+          "p_value": 0.0,
+          "n_queries": 323,
+          "n_changed": 88,
+          "n_helped": 34,
+          "n_hurt": 54
+        },
+        "faiss@100": {
+          "mean_diff": -0.009555050072813667,
+          "p_value": 0.01925,
+          "n_queries": 323,
+          "n_changed": 49,
+          "n_helped": 22,
+          "n_hurt": 27
+        }
+      }
+    },
+    "arguana": {
+      "n_queries": 200,
+      "mean_ndcg_at_10": {
+        "dense_fused": 0.31436352390317035,
+        "partitioned@16": 0.3156733051527274,
+        "partitioned@32": 0.3197165570686136,
+        "faiss@100": 0.30948902033693637
+      },
+      "paired_vs_dense": {
+        "partitioned@16": {
+          "mean_diff": 0.0013097812495570884,
+          "p_value": 0.8224,
+          "n_queries": 200,
+          "n_changed": 24,
+          "n_helped": 15,
+          "n_hurt": 9
+        },
+        "partitioned@32": {
+          "mean_diff": 0.0053530331654432625,
+          "p_value": 0.1268,
+          "n_queries": 200,
+          "n_changed": 15,
+          "n_helped": 11,
+          "n_hurt": 4
+        },
+        "faiss@100": {
+          "mean_diff": -0.004874503566233959,
+          "p_value": 0.007,
+          "n_queries": 200,
+          "n_changed": 11,
+          "n_helped": 1,
+          "n_hurt": 10
+        }
+      }
+    },
+    "scidocs": {
+      "n_queries": 200,
+      "mean_ndcg_at_10": {
+        "dense_fused": 0.1643580617146026,
+        "partitioned@16": 0.1613358394933596,
+        "partitioned@32": 0.16565880845684716,
+        "faiss@100": 0.16660217241934916
+      },
+      "paired_vs_dense": {
+        "partitioned@16": {
+          "mean_diff": -0.003022222221242986,
+          "p_value": 0.59015,
+          "n_queries": 200,
+          "n_changed": 30,
+          "n_helped": 23,
+          "n_hurt": 7
+        },
+        "partitioned@32": {
+          "mean_diff": 0.001300746742244566,
+          "p_value": 0.24895,
+          "n_queries": 200,
+          "n_changed": 10,
+          "n_helped": 9,
+          "n_hurt": 1
+        },
+        "faiss@100": {
+          "mean_diff": 0.0022441107047465906,
+          "p_value": 0.27875,
+          "n_queries": 200,
+          "n_changed": 21,
+          "n_helped": 19,
+          "n_hurt": 2
+        }
+      }
+    }
+  }
+}

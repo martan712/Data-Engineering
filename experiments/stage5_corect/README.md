@@ -34,6 +34,30 @@ uv run python -m experiments.stage5_corect.e01_ir_evaluation 0   # all cores
 uv run python -m experiments.stage5_corect.e01_ir_evaluation 1   # 1 thread
 ```
 
+## `e02_paired_significance.py`
+
+Companion analysis to e01: several approximate arms land marginally ABOVE the
+exact dense scan on nDCG@10 (partitioned on arguana; partitioned@32 and
+faiss@100 on scidocs). That is possible because exactness is defined w.r.t.
+the MaxSim score, not relevance: a document swapped in near rank 10 carries a
+marginally lower MaxSim score, which at that depth barely correlates with the
+qrels, so swaps help about as often as they hurt.
+
+The driver reproduces the e01 quality pass (untimed, same arms/parameters:
+dense_fused, partitioned@{16,32}, faiss@100) and runs a two-sided paired
+sign-flip permutation test on per-query nDCG@10 vs dense
+(`bondmaxsim.eval.significance`, 20k permutations, seed 0). Result (2026-07-10):
+no inversion is significant (p >= 0.13; scidocs partitioned@32 changes only
+10/200 queries), while the genuine nfcorpus losses reject at p < 0.001, so the
+test has power. The qrels metrics saturate before recall_vs_exact does; the
+paper cites these p-values in the E9 results subsection.
+
+```bash
+uv run python -m experiments.stage5_corect.e02_paired_significance
+```
+
+Output: `results/json/stage5_corect_e02_paired_significance.json`
+
 ## How extern/CoRECT is used (and what is deliberately not used)
 
 We execute the actual pinned checkout (`extern/CoRECT` @ `fedf8bb2`), never a

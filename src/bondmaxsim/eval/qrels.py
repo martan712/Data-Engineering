@@ -101,6 +101,38 @@ def mrr_at_10(
     return float(_evaluate(run, qrels, ["mrr@10"])["mrr@10"])
 
 
+def per_query_ndcg_at_10(
+    run: dict[str, dict[str, float]],
+    qrels: dict[str, dict[str, int]],
+) -> dict[str, float]:
+    """Compute nDCG@10 per query (no averaging) using ranx.
+
+    Needed by the paired significance test (stage5 e02): paired tests operate
+    on per-query metric differences, which the mean-only helpers throw away.
+
+    Parameters
+    ----------
+    run, qrels : same format as ndcg_at_10
+
+    Returns
+    -------
+    {query_id: nDCG@10} over the judged queries of the run
+    """
+    from ranx import Qrels, Run, evaluate  # [retrieval] extra
+
+    judged = {qid: docs for qid, docs in run.items() if qid in qrels}
+    if not judged:
+        raise ValueError(
+            "No overlap between run queries and qrels — check the ID sidecar "
+            "(bondmaxsim.data.beir_ids) and test-query encoding."
+        )
+    sub_qrels = {qid: qrels[qid] for qid in judged}
+    ranx_run = Run(judged)
+    scores = evaluate(Qrels(sub_qrels), ranx_run, "ndcg@10", return_mean=False)
+    return {qid: float(s)
+            for qid, s in zip(ranx_run.to_dict().keys(), scores)}
+
+
 def compute_quality_metrics(
     run: dict[str, dict[str, float]],
     qrels: dict[str, dict[str, int]],
