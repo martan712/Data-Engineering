@@ -1,0 +1,70 @@
+{
+  "embeddings_dir": "C:\\Users\\telle\\Desktop\\Cybersecurity & AI\\1. YEAR\\2nd Semester\\Data Engineering\\artifacts\\scifact_full_benchmark_embeddings",
+  "rotation": "pca",
+  "dim_order": "natural",
+  "seed_fraction": 0.02,
+  "checkpoints": [
+    8,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "dataset": {
+    "documents": 5183,
+    "queries": 50,
+    "total_document_token_vectors": 1193945,
+    "embedding_dimension": 128
+  },
+  "summaries_by_threshold_mode": {
+    "bound": {
+      "k": 10,
+      "mean_work_ratio": 0.8205495688662375,
+      "ceiling_speedup_vs_naive_full_scan": 1.21869541822039,
+      "mean_live_fraction_by_dim": {
+        "8": 1.0,
+        "16": 1.0,
+        "24": 1.0,
+        "32": 1.0,
+        "48": 1.0,
+        "64": 0.9995755354042061,
+        "96": 0.28598880956974726,
+        "128": 0.0019293845263360983
+      },
+      "mean_dims_to_prune": {
+        "50%": 103.04,
+        "90%": 116.48,
+        "99%": 127.36
+      },
+      "true_topk_wrongly_pruned_total": 0,
+      "simulation_seconds": 164.29135710000992
+    },
+    "oracle": {
+      "k": 10,
+      "mean_work_ratio": 0.5942432461294281,
+      "ceiling_speedup_vs_naive_full_scan": 1.6828125628914539,
+      "mean_live_fraction_by_dim": {
+        "8": 1.0,
+        "16": 1.0,
+        "24": 1.0,
+        "32": 0.9998456492378932,
+        "48": 0.8651090102257379,
+        "64": 0.4224426008103416,
+        "96": 0.021470191009068107,
+        "128": 0.0018869380667567042
+      },
+      "mean_dims_to_prune": {
+        "50%": 73.6,
+        "90%": 90.88,
+        "99%": 112.64
+      },
+      "true_topk_wrongly_pruned_total": 0,
+      "simulation_seconds": 165.81952719995752
+    }
+  },
+  "bound": "cauchy_schwarz_remainder_on_unit_norm_vectors",
+  "note": "work_ratio counts (doc-token, dimension) pairs scanned once across all query tokens (shared vertical scan). Provably exact: no true top-k document can be pruned. 'oracle' = upper bound on dimension-pruning potential given a perfect threshold; 'seed' = realistic cheap seed."
+}

@@ -1,0 +1,102 @@
+{
+  "note": "End-to-end baseline comparison on a single machine (Windows venv). Exact/FAISS/PLAID measured here; PDX-IVF row read from the saved WSL benchmark (different machine/env) for reference, so absolute PDX times are not directly comparable to the FAISS/PLAID times measured here.",
+  "embeddings_normalized": true,
+  "dataset": {
+    "documents": 3633,
+    "queries": 50,
+    "total_document_token_vectors": 864703,
+    "embedding_dimension": 128
+  },
+  "exact_reference": {
+    "seconds": 7.498682400211692,
+    "qrels_metrics": {
+      "recall@1": 0.07357636015117025,
+      "recall@3": 0.13498903920326621,
+      "recall@5": 0.16580079963460123,
+      "recall@10": 0.1941729747936308,
+      "mrr@10": 0.6852222222222221
+    }
+  },
+  "faiss_ivf": {
+    "build": {
+      "nbuckets": 1860,
+      "training_points": 93000,
+      "train_seconds": 3.6713066999800503,
+      "load_seconds": 3.7592912004329264,
+      "build_seconds": 7.430597900412977
+    },
+    "runs": [
+      {
+        "nprobe": 8,
+        "top_l": 100,
+        "top_c": 50,
+        "candidate_generation_seconds": 0.13423329917714,
+        "rerank_seconds": 0.0965646980330348,
+        "total_seconds": 0.2307979972101748,
+        "mean_candidate_pool_size": 388.78,
+        "pool_recall10_all": 0.94,
+        "exact_agreement_recall@10": 0.84,
+        "qrels_metrics": {
+          "recall@1": 0.07357636015117025,
+          "recall@3": 0.13498903920326621,
+          "recall@5": 0.16392850848489068,
+          "recall@10": 0.18823827142510394,
+          "mrr@10": 0.6852222222222221
+        }
+      },
+      {
+        "nprobe": 16,
+        "top_l": 100,
+        "top_c": 50,
+        "candidate_generation_seconds": 0.24633520049974322,
+        "rerank_seconds": 0.09749580314382911,
+        "total_seconds": 0.34383100364357233,
+        "mean_candidate_pool_size": 369.56,
+        "pool_recall10_all": 0.94,
+        "exact_agreement_recall@10": 0.84,
+        "qrels_metrics": {
+          "recall@1": 0.07357636015117025,
+          "recall@3": 0.1249890392032662,
+          "recall@5": 0.1536059278397294,
+          "recall@10": 0.177300306164558,
+          "mrr@10": 0.6885555555555556
+        }
+      },
+      {
+        "nprobe": 32,
+        "top_l": 100,
+        "top_c": 50,
+        "candidate_generation_seconds": 0.506512698251754,
+        "rerank_seconds": 0.09544339869171381,
+        "total_seconds": 0.6019560969434679,
+        "mean_candidate_pool_size": 362.22,
+        "pool_recall10_all": 0.94,
+        "exact_agreement_recall@10": 0.846,
+        "qrels_metrics": {
+          "recall@1": 0.07357636015117025,
+          "recall@3": 0.1249890392032662,
+          "recall@5": 0.1546230847024745,
+          "recall@10": 0.1780846198900482,
+          "mrr@10": 0.6885555555555556
+        }
+      }
+    ]
+  },
+  "plaid": {
+    "nbits": 4,
+    "n_ivf_probe": 8,
+    "n_full_scores": 8192,
+    "k": 100,
+    "build_seconds": 212.63601589994505,
+    "retrieve_seconds": 26.811726599931717,
+    "exact_agreement_recall@10": 0.4599999999999999,
+    "qrels_metrics": {
+      "recall@1": 0.057920037225729665,
+      "recall@3": 0.11395806423528139,
+      "recall@5": 0.13805212006933273,
+      "recall@10": 0.15352066495437355,
+      "mrr@10": 0.5238888888888888
+    }
+  },
+  "pdx_ivf_best_from_saved_result": null
+}

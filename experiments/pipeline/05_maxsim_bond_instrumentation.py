@@ -25,10 +25,10 @@ document* (true S in [L, U], and tau <= k-th largest true S).
 
 What we measure
 ---------------
-- work_ratio: (doc-token-dimension products actually scanned) / (all of them).
-  Counted ONCE per (doc token, dimension) regardless of m query tokens -- this is
-  the shared-scan advantage. 1 / work_ratio is the ceiling speedup vs a naive
-  multi-vector full scan.
+- scan_ratio: fraction of document-token dimensions visited before pruning.
+  This is a mechanism diagnostic. It does not include the per-query-token
+  arithmetic, bound maintenance, branching, or memory behavior of a real
+  kernel, so its inverse is not a speedup estimate.
 - live-document fraction vs dimensions scanned (the pruning curve).
 - dimensions needed to prune 50 / 90 / 99% of documents.
 - correctness: number of true top-k documents wrongly pruned (must be 0).
@@ -221,6 +221,10 @@ def summarize(per_query, num_documents, tokens_per_doc, total_tokens, dim, check
 
     return {
         "k": k,
+        "mean_dimension_scan_ratio": float(np.mean(work_ratios)),
+        "inverse_dimension_scan_ratio": float(1.0 / np.mean(work_ratios)),
+        # Retained so that the historical figure script can read old and new
+        # artifacts. Despite the legacy name, this is not a speedup.
         "mean_work_ratio": float(np.mean(work_ratios)),
         "ceiling_speedup_vs_naive_full_scan": float(1.0 / np.mean(work_ratios)),
         "mean_live_fraction_by_dim": {
@@ -312,8 +316,8 @@ def main() -> None:
         summary["simulation_seconds"] = elapsed
         summaries[mode] = summary
         print(
-            f"  mode={mode:<7} work_ratio={summary['mean_work_ratio']:.4f} "
-            f"ceiling_speedup={summary['ceiling_speedup_vs_naive_full_scan']:.2f}x "
+            f"  mode={mode:<7} scan_ratio={summary['mean_dimension_scan_ratio']:.4f} "
+            f"inverse_scan_ratio={summary['inverse_dimension_scan_ratio']:.2f}x "
             f"wrong_topk={summary['true_topk_wrongly_pruned_total']}"
         )
 
@@ -332,21 +336,22 @@ def main() -> None:
         "summaries_by_threshold_mode": summaries,
         "bound": "cauchy_schwarz_remainder_on_unit_norm_vectors",
         "note": (
-            "work_ratio counts (doc-token, dimension) pairs scanned once across all "
-            "query tokens (shared vertical scan). Provably exact: no true top-k "
-            "document can be pruned. 'oracle' = upper bound on dimension-pruning "
-            "potential given a perfect threshold; 'seed' = realistic cheap seed."
+            "mean_dimension_scan_ratio counts visited (document token, dimension) "
+            "pairs. Its inverse is not a speedup because query-token arithmetic and "
+            "bound overhead are omitted. The mathematical bounds are exact-safe; "
+            "the reported run also records any true top-k document pruned. 'oracle' "
+            "uses a perfect threshold and 'seed' uses a cheap deterministic seed."
         ),
     }
     save_json(output_path, output)
 
     print("\n=== MaxSim multi-vector BOND pruning (exhaustive, k=%d) ===" % args.k)
-    print(f"{'mode':<9}{'work_ratio':>12}{'ceiling_x':>12}{'wrong_topk':>12}")
+    print(f"{'mode':<9}{'scan_ratio':>12}{'inverse':>12}{'wrong_topk':>12}")
     for mode in args.threshold_modes:
         s = summaries[mode]
         print(
-            f"{mode:<9}{s['mean_work_ratio']:>12.4f}"
-            f"{s['ceiling_speedup_vs_naive_full_scan']:>11.2f}x{s['true_topk_wrongly_pruned_total']:>12}"
+            f"{mode:<9}{s['mean_dimension_scan_ratio']:>12.4f}"
+            f"{s['inverse_dimension_scan_ratio']:>11.2f}x{s['true_topk_wrongly_pruned_total']:>12}"
         )
     print("\nlive-document fraction by dimensions scanned:")
     header = "dim  " + "".join(f"{m:>10}" for m in args.threshold_modes)

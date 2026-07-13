@@ -1,0 +1,11 @@
+# Runtime used for the controlled Linux/WSL PDX benchmark.
+# Install PDX itself from the pinned source commit documented in the README.
+numpy==2.4.6
+faiss-cpu==1.14.2
+scikit-learn==1.6.1
+scipy==1.17.1
+h5py==3.16.0
+cmake==4.3.2
+pybind11==3.0.4
+setuptools==82.0.1
+wheel==0.47.0

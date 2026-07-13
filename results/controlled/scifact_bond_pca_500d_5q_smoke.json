@@ -1,0 +1,575 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T14:24:16.798495+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0,
+        1
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/scifact_full_benchmark",
+        "--embeddings-dir",
+        "../artifacts/scifact_full_benchmark_embeddings",
+        "--output",
+        "results/controlled/scifact_bond_pca_500d_5q_smoke.json",
+        "--max-documents",
+        "500",
+        "--query-start",
+        "0",
+        "--max-queries",
+        "5",
+        "--k",
+        "10",
+        "--seed-counts",
+        "200",
+        "--include-oracle-seeds",
+        "--rotation",
+        "pca",
+        "--threads",
+        "4",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "2"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "4",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark/qrels.json": {
+        "bytes": 1831,
+        "sha256": "e0af8355bd9bdc7dcad36f8b6d1dcfcd25b120b115d232d43ac9c652a7ff4939"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 571808088,
+        "sha256": "239aa14cb8ec8693fd1f1c63ddd0b485aa021c4533b4cb79f0376c63d0a3c192"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 459610,
+        "sha256": "b0a6c6d13a67cb207149706ca681897e544f2498851dca0a5d9eb1cc748e7239"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 37797,
+        "sha256": "29a23a4c06ed3886d81677ac6663ecfbd2d30a08eec6c1a958f81814833b15ff"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+    "query_start": 0,
+    "documents": 500,
+    "queries": 5,
+    "document_token_vectors": 114427,
+    "query_token_vectors": 86,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 6
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      200
+    ],
+    "include_oracle_seeds": true,
+    "skip_prefix_seeds": false,
+    "threads": 4,
+    "warmup_runs": 1,
+    "measured_runs": 2,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "uncentered PCA eigenvectors by descending eigenvalue",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs"
+  },
+  "offline_index_build": {
+    "preprocessing": {
+      "rotation": "uncentered_pca_descending_second_moment",
+      "fit_seconds": 0.0525018639999999,
+      "transform_seconds": 0.024420827000000145,
+      "batch_size": 32768,
+      "rotation_sha256": "40feb388b01d9163404802a8cbca53ebe5248654a01cc18cd8f2b5027b0ba949",
+      "float32_orthogonality_max_abs_error": 2.0573494241560297e-08,
+      "cumulative_energy_fraction": {
+        "8": 0.9088964925008675,
+        "16": 0.92569517662954,
+        "32": 0.9497951479390823,
+        "64": 0.977844678616946,
+        "96": 0.9927187135298361,
+        "128": 1.0
+      }
+    },
+    "bond_vertical_index_seconds": 0.15748178700000004,
+    "estimated_vertical_values_bytes": 58586624,
+    "estimated_residual_norm_bytes": 5492496
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed200",
+      "bond_oracle_topk_seeds"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed200",
+        "bond_oracle_topk_seeds"
+      ],
+      [
+        "bond_seed200",
+        "bond_oracle_topk_seeds",
+        "compiled_exact"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 2,
+      "end_to_end_seconds": [
+        0.0284190449999997,
+        0.02763112799999945
+      ],
+      "end_to_end_summary": {
+        "count": 2,
+        "min": 0.02763112799999945,
+        "p25": 0.027828107249999512,
+        "median": 0.028025086499999574,
+        "mean": 0.028025086499999574,
+        "p75": 0.028222065749999636,
+        "p95": 0.028379649149999686,
+        "max": 0.0284190449999997
+      },
+      "stage_seconds": {
+        "exact_score": [
+          0.02821031799999929,
+          0.02742946400000079
+        ],
+        "topk": [
+          0.0001974250000014166,
+          0.00018966100000028518
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 2,
+          "min": 0.02742946400000079,
+          "p25": 0.027624677500000416,
+          "median": 0.02781989100000004,
+          "mean": 0.02781989100000004,
+          "p75": 0.028015104499999666,
+          "p95": 0.028171275299999365,
+          "max": 0.02821031799999929
+        },
+        "topk": {
+          "count": 2,
+          "min": 0.00018966100000028518,
+          "p25": 0.00019160200000056804,
+          "median": 0.0001935430000008509,
+          "mean": 0.0001935430000008509,
+          "p75": 0.00019548400000113375,
+          "p95": 0.00019703680000136004,
+          "max": 0.0001974250000014166
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.5,
+      "recall@3": 0.6,
+      "recall@5": 0.6,
+      "recall@10": 0.8,
+      "mrr@10": 0.6333333333333333
+    },
+    "topk_rankings": {
+      "1": [
+        "1156322",
+        "803312",
+        "825728",
+        "8290953",
+        "1346695",
+        "2130391",
+        "1944452",
+        "1065627",
+        "927561",
+        "10582939"
+      ],
+      "3": [
+        "14717500",
+        "2107238",
+        "13519661",
+        "4414547",
+        "1388704",
+        "1544804",
+        "461550",
+        "1067605",
+        "18340282",
+        "263364"
+      ],
+      "5": [
+        "13734012",
+        "1292369",
+        "1583041",
+        "695938",
+        "834336",
+        "2052720",
+        "739734",
+        "437924",
+        "2015126",
+        "829646"
+      ],
+      "13": [
+        "17450673",
+        "1263446",
+        "23557241",
+        "27123743",
+        "16322674",
+        "1606628",
+        "356218",
+        "1958440",
+        "2425364",
+        "92308"
+      ],
+      "36": [
+        "11705328",
+        "5152028",
+        "275294",
+        "1360607",
+        "120626",
+        "520579",
+        "1941721",
+        "1887056",
+        "597790",
+        "1590744"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed200": {
+      "seed_count": 200,
+      "seed_policy": "deterministic_document_prefix",
+      "implementable_without_external_candidates": true,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 2,
+        "end_to_end_seconds": [
+          0.4322877250000001,
+          0.4242546600000008
+        ],
+        "end_to_end_summary": {
+          "count": 2,
+          "min": 0.4242546600000008,
+          "p25": 0.4262629262500006,
+          "median": 0.42827119250000045,
+          "mean": 0.42827119250000045,
+          "p75": 0.4302794587500003,
+          "p95": 0.43188607175000016,
+          "max": 0.4322877250000001
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            0.432272416,
+            0.4242409029999994
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 2,
+            "min": 0.4242409029999994,
+            "p25": 0.42624878124999954,
+            "median": 0.4282566594999997,
+            "mean": 0.4282566594999997,
+            "p75": 0.43026453774999984,
+            "p95": 0.43187084034999995,
+            "max": 0.432272416
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 5,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 5,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 5,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 5,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 4.4229626645631015e-06,
+        "mean_abs_error": 8.697226138565383e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.5,
+        "recall@3": 0.6,
+        "recall@5": 0.6,
+        "recall@10": 0.8,
+        "mrr@10": 0.6333333333333333
+      },
+      "work": {
+        "documents_pruned": 1124,
+        "documents_exactly_scored": 1376,
+        "total_query_document_pairs": 2500,
+        "pruned_document_fraction": 0.4496,
+        "component_products": 1097787456,
+        "full_component_products": 1259612416,
+        "component_product_ratio": 0.8715279732523691,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 107,
+          "96": 1017,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "1156322",
+          "803312",
+          "825728",
+          "8290953",
+          "1346695",
+          "2130391",
+          "1944452",
+          "1065627",
+          "927561",
+          "10582939"
+        ],
+        "3": [
+          "14717500",
+          "2107238",
+          "13519661",
+          "4414547",
+          "1388704",
+          "1544804",
+          "461550",
+          "1067605",
+          "18340282",
+          "263364"
+        ],
+        "5": [
+          "13734012",
+          "1292369",
+          "1583041",
+          "695938",
+          "834336",
+          "2052720",
+          "739734",
+          "437924",
+          "2015126",
+          "829646"
+        ],
+        "13": [
+          "17450673",
+          "1263446",
+          "23557241",
+          "27123743",
+          "16322674",
+          "1606628",
+          "356218",
+          "1958440",
+          "2425364",
+          "92308"
+        ],
+        "36": [
+          "11705328",
+          "5152028",
+          "275294",
+          "1360607",
+          "120626",
+          "520579",
+          "1941721",
+          "1887056",
+          "597790",
+          "1590744"
+        ]
+      }
+    },
+    "bond_oracle_topk_seeds": {
+      "seed_count": 10,
+      "seed_policy": "free_exact_topk_oracle",
+      "implementable_without_external_candidates": false,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 2,
+        "end_to_end_seconds": [
+          0.5617963699999997,
+          0.5601136529999984
+        ],
+        "end_to_end_summary": {
+          "count": 2,
+          "min": 0.5601136529999984,
+          "p25": 0.5605343322499987,
+          "median": 0.560955011499999,
+          "mean": 0.560955011499999,
+          "p75": 0.5613756907499994,
+          "p95": 0.5617122341499996,
+          "max": 0.5617963699999997
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            0.5617828839999994,
+            0.5601010080000002
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 2,
+            "min": 0.5601010080000002,
+            "p25": 0.560521477,
+            "median": 0.5609419459999998,
+            "mean": 0.5609419459999998,
+            "p75": 0.5613624149999996,
+            "p95": 0.5616987901999995,
+            "max": 0.5617828839999994
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 5,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 5,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 5,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 5,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 4.4229626645631015e-06,
+        "mean_abs_error": 8.697226138565383e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.5,
+        "recall@3": 0.6,
+        "recall@5": 0.6,
+        "recall@10": 0.8,
+        "mrr@10": 0.6333333333333333
+      },
+      "work": {
+        "documents_pruned": 2066,
+        "documents_exactly_scored": 434,
+        "total_query_document_pairs": 2500,
+        "pruned_document_fraction": 0.8264,
+        "component_products": 944277728,
+        "full_component_products": 1259612416,
+        "component_product_ratio": 0.7496573676199775,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 324,
+          "96": 1742,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "1156322",
+          "803312",
+          "825728",
+          "8290953",
+          "1346695",
+          "2130391",
+          "1944452",
+          "1065627",
+          "927561",
+          "10582939"
+        ],
+        "3": [
+          "14717500",
+          "2107238",
+          "13519661",
+          "4414547",
+          "1388704",
+          "1544804",
+          "461550",
+          "1067605",
+          "18340282",
+          "263364"
+        ],
+        "5": [
+          "13734012",
+          "1292369",
+          "1583041",
+          "695938",
+          "834336",
+          "2052720",
+          "739734",
+          "437924",
+          "2015126",
+          "829646"
+        ],
+        "13": [
+          "17450673",
+          "1263446",
+          "23557241",
+          "27123743",
+          "16322674",
+          "1606628",
+          "356218",
+          "1958440",
+          "2425364",
+          "92308"
+        ],
+        "36": [
+          "11705328",
+          "5152028",
+          "275294",
+          "1360607",
+          "120626",
+          "520579",
+          "1941721",
+          "1887056",
+          "597790",
+          "1590744"
+        ]
+      }
+    }
+  }
+}

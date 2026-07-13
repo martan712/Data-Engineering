@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "imported_on": "2026-07-13",
+  "source_directory": "../artifacts/results",
+  "status": "legacy_exploratory",
+  "wall_clock_claims_allowed": false,
+  "files": [
+    {
+      "name": "maxsim_bond_instrumentation_scifact_full.json",
+      "bytes": 1989,
+      "sha256": "bf982e7c86b948262d7a5f06a8c62b0644ecc2a2bc7b7fbd17cb4d196e43e8fb"
+    },
+    {
+      "name": "maxsim_bond_instrumentation_scifact_full_pca.json",
+      "bytes": 2115,
+      "sha256": "87e3d3a3502eb4900bdd01e64d74cb09c1e726aa4e64850818863424d98fdbea"
+    },
+    {
+      "name": "nfcorpus_baselines.json",
+      "bytes": 3393,
+      "sha256": "553188f4d11a35fb924e28586264ca5986e0530f988500fade908b7747c576c3"
+    },
+    {
+      "name": "nfcorpus_selector_gap_sweep.json",
+      "bytes": 10849,
+      "sha256": "cf6f06ac2e69dbe4937891d437f3bb2810bfb7d6ac8420f2fffb71d83121bbf6"
+    },
+    {
+      "name": "nfcorpus_selector_gap_sweep_np32.json",
+      "bytes": 4189,
+      "sha256": "b7277eab5dfa899f8c065a0880acb199b2fbb2e4558c34028d47015870c1b0fa"
+    },
+    {
+      "name": "scifact_full_baselines.json",
+      "bytes": 2858,
+      "sha256": "71e596d11bc13e6ce54faa3866ceeaff58e2285661b642b4e09fd8c9b49b252b"
+    },
+    {
+      "name": "scifact_full_ivf_benchmark.json",
+      "bytes": 51196,
+      "sha256": "6a91228ae7e9110e4b8814443b814b15d5d9bdd9c9be5ffba5a672b179345688"
+    },
+    {
+      "name": "scifact_full_selector_gap_sweep.json",
+      "bytes": 10134,
+      "sha256": "510cba0d9da701beb0499475663b97f25a838879ff7d6d0f0c63e73cfc5d6b44"
+    },
+    {
+      "name": "scifact_pdx_batch_search_benchmark.json",
+      "bytes": 8393,
+      "sha256": "046ba45ba871e5e713701dd6bd7de09a2d93a303f463014258f172cdaf24202d"
+    },
+    {
+      "name": "scifact_pdx_ivf_scaling_curve.json",
+      "bytes": 83240,
+      "sha256": "a3a73c64fdd377e7cbc5a329b772a64eb57c4c5a1136cc4651b80c3c38c53e46"
+    },
+    {
+      "name": "scifact_pdx_shared_scan_benchmark.json",
+      "bytes": 10133,
+      "sha256": "09826d1033e269648d426bf04ffd64de1ec3a8dc4dbe6ef34a30e50cb5e07be8"
+    },
+    {
+      "name": "scifact_scaling_curve.json",
+      "bytes": 134649,
+      "sha256": "177aeee35c129f07bf5275abbdbc92c321787a434913549118f55d1f89a01a4c"
+    },
+    {
+      "name": "scifact_timing_breakdown.json",
+      "bytes": 55262,
+      "sha256": "cfb642772ecb5dcbc92ace542033e821ab92f8dbd6d1f900a552d5f8505cb1ed"
+    }
+  ]
+}

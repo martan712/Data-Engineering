@@ -3,8 +3,8 @@
 Reads the result artifacts produced by experiments 28/31/32/33 and writes three
 PNG figures into docs/figures/:
 
-  fig1_ivf_scaling.png      - IVF candidate-gen vs exact MaxSim, and speedup
-                              growing with corpus size.
+  fig1_ivf_scaling.png      - Historical component timing and candidate-pool
+                              fraction as corpus size grows.
   fig2_baselines.png        - End-to-end latency and qrels recall@10 across
                               exact / FAISS-IVF / PLAID / PDX-IVF.
   fig3_bond_pruning.png     - MaxSim multi-vector BOND pruning curve: live
@@ -31,7 +31,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from _paths import PROJECT_ROOT
-RESULTS = PROJECT_ROOT / "artifacts" / "results"
+RESULTS = PROJECT_ROOT / "results" / "legacy"
 FIGURES = PROJECT_ROOT / "docs" / "figures"
 
 
@@ -53,20 +53,22 @@ def figure_scaling() -> None:
     scaling = load("scifact_pdx_ivf_scaling_curve.json")
     full = load("scifact_full_ivf_benchmark.json")
 
-    sizes, exact_s, ivf_s, speedup = [], [], [], []
+    sizes, exact_s, ivf_s, pool_fraction = [], [], [], []
     for subset in scaling["subsets"]:
         run = ivf_run(subset, nprobe=8, top_l=100)
         sizes.append(subset["documents"])
         exact_s.append(subset["exact"]["seconds"])
         ivf_s.append(run["candidate_generation_seconds"])
-        speedup.append(run["speedup_vs_exact"])
+        pool_fraction.append(run["pool_coverage"]["mean_candidate_pool_size"] / subset["documents"])
     # Append the full-corpus point (nprobe=8, L=100).
     for run in full["runs"]:
         if run["nprobe"] == 8 and run["top_l"] == 100:
             sizes.append(full["dataset"]["documents"])
             exact_s.append(full["exact_reference"]["seconds"])
             ivf_s.append(run["candidate_generation_seconds"])
-            speedup.append(run["speedup_vs_exact"])
+            pool_fraction.append(
+                run["pool_coverage"]["mean_candidate_pool_size"] / full["dataset"]["documents"]
+            )
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2))
     ax1.plot(sizes, exact_s, "o-", color="#c0392b", label="Exact MaxSim (NumPy)")
@@ -75,17 +77,17 @@ def figure_scaling() -> None:
     ax1.set_yscale("log")
     ax1.set_xlabel("corpus size (documents)")
     ax1.set_ylabel("time for 50 queries (s)")
-    ax1.set_title("Candidate generation vs exact MaxSim")
+    ax1.set_title("Historical component times (unmatched work)")
     ax1.grid(True, which="both", alpha=0.3)
     ax1.legend()
 
-    ax2.plot(sizes, speedup, "D-", color="#2c3e50")
-    for x, y in zip(sizes, speedup):
-        ax2.annotate(f"{y:.1f}x", (x, y), textcoords="offset points", xytext=(0, 8), ha="center")
+    ax2.plot(sizes, pool_fraction, "D-", color="#2c3e50")
+    for x, y in zip(sizes, pool_fraction):
+        ax2.annotate(f"{100 * y:.1f}%", (x, y), textcoords="offset points", xytext=(0, 8), ha="center")
     ax2.set_xscale("log")
     ax2.set_xlabel("corpus size (documents)")
-    ax2.set_ylabel("speedup vs exact (x)")
-    ax2.set_title("IVF speedup grows with corpus size")
+    ax2.set_ylabel("mean unique candidate pool / corpus")
+    ax2.set_title("Candidate-pool fraction decreases with scale")
     ax2.grid(True, which="both", alpha=0.3)
 
     fig.suptitle("IVF-on-PDX candidate generation (nprobe=8, L=100), SciFact", fontweight="bold")
@@ -156,13 +158,16 @@ def figure_pruning() -> None:
     fig, ax = plt.subplots(figsize=(7.5, 4.6))
     for label, summary, color, style in series:
         dims, live = curve(summary)
-        ceiling = summary["ceiling_speedup_vs_naive_full_scan"]
-        ax.plot(dims, live, style, color=color, marker="o", label=f"{label} ({ceiling:.2f}x)")
+        inverse = summary.get(
+            "inverse_dimension_scan_ratio",
+            1.0 / summary["mean_work_ratio"],
+        )
+        ax.plot(dims, live, style, color=color, marker="o", label=f"{label} ({inverse:.2f}x inverse scan ratio)")
     ax.set_xlabel("dimensions scanned (of 128)")
     ax.set_ylabel("fraction of documents still live")
     ax.set_title(
         "MaxSim multi-vector BOND pruning (full SciFact, k=10)\n"
-        "legend shows ceiling speedup = 1 / work-ratio"
+        "legend shows inverse dimension-scan ratio, not kernel speedup"
     )
     ax.grid(True, alpha=0.3)
     ax.legend(title="lower-left = more pruning")
@@ -187,15 +192,14 @@ def figure_selector_gap() -> None:
         rows.sort(key=lambda r: r["mean_selected_candidates"])
         times = [r["total_seconds"] for r in rows]
         agreement = [r["agreement@10"] for r in rows]
-        exact_seconds = data["exact_reference"]["seconds"]
-        speedups = [exact_seconds / t for t in times]
+        selected_counts = [r["mean_selected_candidates"] for r in rows]
 
         ax1.plot(times, agreement, "o-", color=color, label=label)
         for row, x, y in zip(rows, times, agreement):
             ax1.annotate(f"C={row['effective_c_label']}", (x, y),
                          textcoords="offset points", xytext=(4, -10), fontsize=8, color=color)
-        ax2.plot(speedups, agreement, "o-", color=color, label=label)
-        for row, x, y in zip(rows, speedups, agreement):
+        ax2.plot(selected_counts, agreement, "o-", color=color, label=label)
+        for row, x, y in zip(rows, selected_counts, agreement):
             ax2.annotate(f"C={row['effective_c_label']}", (x, y),
                          textcoords="offset points", xytext=(4, -10), fontsize=8, color=color)
 
@@ -207,9 +211,8 @@ def figure_selector_gap() -> None:
         ax.legend()
     ax1.set_xlabel("total time for 50 queries (s)")
     ax1.set_title("Quality vs latency as re-rank budget C grows")
-    ax2.set_xscale("log")
-    ax2.set_xlabel("speedup vs exact MaxSim (x, log)")
-    ax2.set_title("Quality vs speedup")
+    ax2.set_xlabel("mean documents reranked per query")
+    ax2.set_title("Quality vs rerank work")
 
     fig.suptitle(
         "Selector-gap sweep (FAISS-IVF nprobe=8, L=100; policy=approx_score)\n"

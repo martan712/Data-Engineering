@@ -1,0 +1,142 @@
+{
+  "dataset": "nfcorpus",
+  "config": {
+    "nprobe": 32,
+    "top_l": 100,
+    "c_values": [
+      200,
+      0
+    ],
+    "policies": [
+      "approx_score",
+      "retrieved_token_count",
+      "union_approx_and_count"
+    ],
+    "engine": "faiss_ivf_l2_on_l2_normalized_vectors",
+    "note": "C=0 means re-rank the entire candidate pool."
+  },
+  "dataset_stats": {
+    "documents": 3633,
+    "queries": 50,
+    "total_document_token_vectors": 864703
+  },
+  "exact_reference": {
+    "seconds": 7.249673200305551,
+    "qrels_metrics": {
+      "recall@1": 0.07357636015117025,
+      "recall@3": 0.13498903920326621,
+      "recall@5": 0.16580079963460123,
+      "recall@10": 0.1941729747936308,
+      "mrr@10": 0.6852222222222221
+    }
+  },
+  "candidate_generation": {
+    "seconds": 0.5777383986860514,
+    "mean_pool_size": 362.22,
+    "pool_coverage@10": 0.94
+  },
+  "sweep": [
+    {
+      "policy": "approx_score",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 197.76,
+      "rerank_seconds": 0.402960198931396,
+      "total_seconds": 0.9806985976174474,
+      "agreement@5": 1.0,
+      "agreement@10": 0.9840000000000001,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.1941729747936308,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 362.22,
+      "rerank_seconds": 0.787156097125262,
+      "total_seconds": 1.3648944958113134,
+      "agreement@5": 1.0,
+      "agreement@10": 0.992,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 197.76,
+      "rerank_seconds": 0.41387460194528103,
+      "total_seconds": 0.9916130006313324,
+      "agreement@5": 1.0,
+      "agreement@10": 0.99,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.1941729747936308,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 362.22,
+      "rerank_seconds": 0.7904550000093877,
+      "total_seconds": 1.368193398695439,
+      "agreement@5": 1.0,
+      "agreement@10": 0.992,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 197.76,
+      "rerank_seconds": 0.4032649975270033,
+      "total_seconds": 0.9810033962130547,
+      "agreement@5": 1.0,
+      "agreement@10": 0.9880000000000001,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.1941729747936308,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 362.22,
+      "rerank_seconds": 0.866683199070394,
+      "total_seconds": 1.4444215977564454,
+      "agreement@5": 1.0,
+      "agreement@10": 0.992,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "embeddings_dir": "C:\\Users\\telle\\Desktop\\Cybersecurity & AI\\1. YEAR\\2nd Semester\\Data Engineering\\artifacts\\scifact_full_benchmark_embeddings",
+  "dim_order": "query_energy",
+  "seed_fraction": 0.02,
+  "checkpoints": [
+    8,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "dataset": {
+    "documents": 5183,
+    "queries": 50,
+    "total_document_token_vectors": 1193945,
+    "embedding_dimension": 128
+  },
+  "summaries_by_threshold_mode": {
+    "bound": {
+      "k": 10,
+      "mean_work_ratio": 1.0,
+      "ceiling_speedup_vs_naive_full_scan": 1.0,
+      "mean_live_fraction_by_dim": {
+        "8": 1.0,
+        "16": 1.0,
+        "24": 1.0,
+        "32": 1.0,
+        "48": 1.0,
+        "64": 1.0,
+        "96": 1.0,
+        "128": 0.0019293845263360983
+      },
+      "mean_dims_to_prune": {
+        "50%": 128.0,
+        "90%": 128.0,
+        "99%": 128.0
+      },
+      "true_topk_wrongly_pruned_total": 0,
+      "simulation_seconds": 159.65887850010768
+    },
+    "oracle": {
+      "k": 10,
+      "mean_work_ratio": 0.9093453592920947,
+      "ceiling_speedup_vs_naive_full_scan": 1.0996922014079205,
+      "mean_live_fraction_by_dim": {
+        "8": 1.0,
+        "16": 1.0,
+        "24": 1.0,
+        "32": 1.0,
+        "48": 1.0,
+        "64": 1.0,
+        "96": 0.637221686282076,
+        "128": 0.0018830792977040322
+      },
+      "mean_dims_to_prune": {
+        "50%": 115.2,
+        "90%": 124.16,
+        "99%": 128.0
+      },
+      "true_topk_wrongly_pruned_total": 0,
+      "simulation_seconds": 166.08724619960412
+    }
+  },
+  "bound": "cauchy_schwarz_remainder_on_unit_norm_vectors",
+  "note": "work_ratio counts (doc-token, dimension) pairs scanned once across all query tokens (shared vertical scan). Provably exact: no true top-k document can be pruned. 'oracle' = upper bound on dimension-pruning potential given a perfect threshold; 'seed' = realistic cheap seed."
+}

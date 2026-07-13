@@ -12,4 +12,6 @@ external/PDX/
 *.pkl
 *.csv
 *.png 
+!docs/figures/
+!docs/figures/*.png
 Notes/

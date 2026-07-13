@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "status": "controlled_pilots_pending_clean_rerun",
+  "wall_clock_claims_allowed": false,
+  "reason": "The worktree was dirty while the runner was implemented and the runner gained additional provenance checks after these runs.",
+  "files": [
+    {
+      "name": "nfcorpus_bond_test_40q_pilot.json",
+      "role": "second_dataset_bond_prefix_seed_heldout_pilot",
+      "bytes": 29453,
+      "sha256": "380f320313efc32e19c229a74f22df75a8f1d39a5376aaf0eb5cd8c876d9f806"
+    },
+    {
+      "name": "nfcorpus_ivf_test_40q_pilot.json",
+      "role": "second_dataset_ivf_heldout_decision_pilot",
+      "bytes": 103217,
+      "sha256": "37adb6d04c338cc88d6f31fed28aaa915f53ab3265a59778b70e763dfafde495"
+    },
+    {
+      "name": "scifact_bond_smoke.json",
+      "role": "bond_integration_smoke",
+      "bytes": 12612,
+      "sha256": "3ff98cd3bf3cbd907f4a5c171d972ae5326b41adb09d274dabe9c37d930c9c97"
+    },
+    {
+      "name": "scifact_bond_500d_5q_pilot.json",
+      "role": "bond_small_scale_pilot",
+      "bytes": 18562,
+      "sha256": "d45a29cfbc5a7b9896d5e1cdcb320da338d1874531ac9e6fd3ea761c856cfa73"
+    },
+    {
+      "name": "scifact_bond_full_1q_seed_pilot.json",
+      "role": "bond_seed_policy_probe",
+      "bytes": 17508,
+      "sha256": "6f33fd8ea5d032f52f6235715dee021a1c1d21539ed5971ca882e02a54b8395b"
+    },
+    {
+      "name": "scifact_bond_validation_10q_pilot.json",
+      "role": "bond_prefix_seed_validation",
+      "bytes": 14178,
+      "sha256": "09b5adf2dd4c409f225a7c8c8d588877ce6d3c1ff67a931f4f29792b5635aef6"
+    },
+    {
+      "name": "scifact_bond_test_40q_pilot.json",
+      "role": "bond_prefix_seed_heldout_pilot",
+      "bytes": 28076,
+      "sha256": "68af949188743c46603db47631774a8632951ed41931f8db77d506e16e64f885"
+    },
+    {
+      "name": "scifact_bond_oracle_smoke.json",
+      "role": "bond_explicit_seed_api_smoke",
+      "bytes": 12923,
+      "sha256": "9a2dd1b224ec6e36cc09385dbc26e392a0aef59a33503a3be5a1c0cf3afc9b34"
+    },
+    {
+      "name": "scifact_bond_oracle_test_40q_pilot.json",
+      "role": "bond_free_oracle_seed_diagnostic",
+      "bytes": 28307,
+      "sha256": "3960b1e660edfe6e47360b36ee972a51f47c154975e8f3df7a5705ed7241d81f"
+    },
+    {
+      "name": "scifact_bond_pca_500d_5q_smoke.json",
+      "role": "bond_pca_integration_smoke",
+      "bytes": 15693,
+      "sha256": "f0bef80b0b06f55f134c22d0044d1b1b85e1fd805df13e981b83e97e26c0a1dc"
+    },
+    {
+      "name": "scifact_bond_pca_validation_10q_pilot.json",
+      "role": "bond_pca_validation",
+      "bytes": 19609,
+      "sha256": "2b2130e755b2072409b85bf7f2e6e1373183ce827f80b2ea0d3e3d3164b29155"
+    },
+    {
+      "name": "scifact_bond_pca_test_40q_pilot.json",
+      "role": "bond_pca_heldout_pilot",
+      "bytes": 41493,
+      "sha256": "de9115ebc966f35ebdec3c984035f36a9690eb4879c9b97b0971dd7bc0d69160"
+    },
+    {
+      "name": "scifact_smoke.json",
+      "role": "integration_smoke",
+      "bytes": 22406,
+      "sha256": "36341185bb7f94b56a83018379142659085d8cae60f7f86b8e431b6991c21580"
+    },
+    {
+      "name": "scifact_pilot_500d_5q.json",
+      "role": "small_scale_pilot",
+      "bytes": 28647,
+      "sha256": "6bec4b401d872ddd6dd3acc4637fa62e3882656c031acadc9f2d4d450409e7c9"
+    },
+    {
+      "name": "scifact_validation_10q_pilot.json",
+      "role": "selector_budget_validation",
+      "bytes": 58036,
+      "sha256": "892073055d763d0dc742349d4c333d0b588e39f74c993738df9ec731dd76ef3a"
+    },
+    {
+      "name": "scifact_validation_high_c_10q_pilot.json",
+      "role": "full_pool_upper_bound_validation",
+      "bytes": 45416,
+      "sha256": "3cecaabcc074408f03865ca9bf5dbc3425e7e2a77bd64e2b5bcac29d79d09a9c"
+    },
+    {
+      "name": "scifact_validation_union_10q_pilot.json",
+      "role": "selector_policy_validation",
+      "bytes": 61445,
+      "sha256": "d9a7335f3eef70d90a5b577131a540042e9cb7040e475b4286439af1edcd994f"
+    },
+    {
+      "name": "scifact_test_40q_controlled_pilot.json",
+      "role": "heldout_decision_pilot",
+      "bytes": 154094,
+      "sha256": "393238aa7a1763867eda2482f629c942879ad18a17486d609c90b0a9c90c28ec"
+    },
+    {
+      "name": "scifact_test_40q_1t_pilot.json",
+      "role": "single_thread_scaling_and_engine_agreement_pilot",
+      "bytes": 43811,
+      "sha256": "67fdbc6ea4942b1b869d46d0fb1aaa43dbfc5dd897dc785dcb99be4cb3ea9491"
+    }
+  ]
+}

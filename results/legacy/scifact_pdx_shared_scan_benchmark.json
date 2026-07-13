@@ -1,0 +1,344 @@
+{
+  "experiment": "scifact_pdx_shared_scan_benchmark",
+  "note": "search_batch_shared_scan is an exact full scan over PDX vectorgroups. It shares the document-token block scan across query tokens but does not use BOND pruning.",
+  "metric": "l2sq_on_l2_normalized_colbert_token_vectors",
+  "dataset": {
+    "documents": 1000,
+    "queries": 50,
+    "document_token_vectors": 229838,
+    "query_token_vectors": 960,
+    "embedding_dim": 128,
+    "full_exact_document_comparisons": 50000
+  },
+  "timings": {
+    "normalization_seconds": 0.15012851099999125,
+    "pdx_index_build_seconds": 0.5622633090000022
+  },
+  "l_values": [
+    10,
+    20,
+    50,
+    100
+  ],
+  "runs": [
+    {
+      "top_l": 10,
+      "wall_seconds": 14.978860903999987,
+      "bond_batch": {
+        "search_seconds": 3.086949503000028,
+        "aggregation_seconds": 0.00808363199993778,
+        "measured_component_seconds": 3.095033134999966,
+        "pool_summary": {
+          "mean_candidate_pool_size": 64.28,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9666666666666666,
+            "5": 0.94,
+            "10": 0.8419999999999999
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 45,
+            "5": 36,
+            "10": 9
+          }
+        }
+      },
+      "shared_scan": {
+        "search_seconds": 11.867462661000047,
+        "aggregation_seconds": 0.002441868000090608,
+        "measured_component_seconds": 11.869904529000138,
+        "pool_summary": {
+          "mean_candidate_pool_size": 64.28,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9666666666666666,
+            "5": 0.94,
+            "10": 0.8419999999999999
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 45,
+            "5": 36,
+            "10": 9
+          }
+        }
+      },
+      "speedups_bond_over_shared": {
+        "search_seconds": 0.2601187457825039,
+        "measured_component_seconds": 0.26074625347139807
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_top_l_sets_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "top_l_set_failure_count": 0,
+        "failures": [],
+        "top_l_set_failures": []
+      }
+    },
+    {
+      "top_l": 20,
+      "wall_seconds": 14.488994797000004,
+      "bond_batch": {
+        "search_seconds": 3.129447112000122,
+        "aggregation_seconds": 0.007050774000020965,
+        "measured_component_seconds": 3.136497886000143,
+        "pool_summary": {
+          "mean_candidate_pool_size": 115.08,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9933333333333333,
+            "5": 0.9840000000000001,
+            "10": 0.9480000000000001
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 49,
+            "5": 46,
+            "10": 32
+          }
+        }
+      },
+      "shared_scan": {
+        "search_seconds": 11.334978643000085,
+        "aggregation_seconds": 0.00459816799994428,
+        "measured_component_seconds": 11.339576811000029,
+        "pool_summary": {
+          "mean_candidate_pool_size": 115.08,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9933333333333333,
+            "5": 0.9840000000000001,
+            "10": 0.9480000000000001
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 49,
+            "5": 46,
+            "10": 32
+          }
+        }
+      },
+      "speedups_bond_over_shared": {
+        "search_seconds": 0.27608760550534533,
+        "measured_component_seconds": 0.2765974373009726
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_top_l_sets_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "top_l_set_failure_count": 0,
+        "failures": [],
+        "top_l_set_failures": []
+      }
+    },
+    {
+      "top_l": 50,
+      "wall_seconds": 19.93346354799999,
+      "bond_batch": {
+        "search_seconds": 5.302383180999982,
+        "aggregation_seconds": 0.020163958000011917,
+        "measured_component_seconds": 5.322547138999994,
+        "pool_summary": {
+          "mean_candidate_pool_size": 239.34,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 0.996
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 48
+          }
+        }
+      },
+      "shared_scan": {
+        "search_seconds": 14.576837135000005,
+        "aggregation_seconds": 0.014100852999916924,
+        "measured_component_seconds": 14.590937987999922,
+        "pool_summary": {
+          "mean_candidate_pool_size": 239.34,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 0.996
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 48
+          }
+        }
+      },
+      "speedups_bond_over_shared": {
+        "search_seconds": 0.36375402509427707,
+        "measured_component_seconds": 0.3647844397239873
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": false,
+        "all_top_l_sets_equal": false,
+        "all_candidate_pools_equal": true,
+        "failure_count": 4,
+        "top_l_set_failure_count": 1,
+        "failures": [
+          {
+            "query_id": "3",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": false,
+            "top_l_set_mismatch_query_token_rows": 1
+          },
+          {
+            "query_id": "94",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "115",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "127",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          }
+        ],
+        "top_l_set_failures": [
+          {
+            "query_id": "3",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": false,
+            "top_l_set_mismatch_query_token_rows": 1
+          }
+        ]
+      }
+    },
+    {
+      "top_l": 100,
+      "wall_seconds": 17.456812372,
+      "bond_batch": {
+        "search_seconds": 4.7960033229999794,
+        "aggregation_seconds": 0.03235265900008244,
+        "measured_component_seconds": 4.828355982000062,
+        "pool_summary": {
+          "mean_candidate_pool_size": 384.68,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 50
+          }
+        }
+      },
+      "shared_scan": {
+        "search_seconds": 12.577335148999879,
+        "aggregation_seconds": 0.02539571199997681,
+        "measured_component_seconds": 12.602730860999856,
+        "pool_summary": {
+          "mean_candidate_pool_size": 384.68,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 50
+          }
+        }
+      },
+      "speedups_bond_over_shared": {
+        "search_seconds": 0.38132110388911333,
+        "measured_component_seconds": 0.3831198202400553
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": false,
+        "all_top_l_sets_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 11,
+        "top_l_set_failure_count": 0,
+        "failures": [
+          {
+            "query_id": "3",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "42",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "57",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "94",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 1,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          },
+          {
+            "query_id": "115",
+            "indices_equal": false,
+            "distances_allclose": true,
+            "mismatch_query_token_rows": 2,
+            "top_l_sets_equal": true,
+            "top_l_set_mismatch_query_token_rows": 0
+          }
+        ],
+        "top_l_set_failures": []
+      }
+    }
+  ]
+}

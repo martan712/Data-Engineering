@@ -1,0 +1,281 @@
+{
+  "experiment": "scifact_pdx_batch_search_benchmark",
+  "note": "The prototype search_batch binding loops over the existing PDX Search implementation in C++. It reduces Python/PyBind call and object parsing overhead, but it is not a synchronized multi-token search algorithm.",
+  "metric": "l2sq_on_l2_normalized_colbert_token_vectors",
+  "dataset": {
+    "documents": 1000,
+    "queries": 50,
+    "document_token_vectors": 229838,
+    "query_token_vectors": 960,
+    "embedding_dim": 128,
+    "full_exact_document_comparisons": 50000
+  },
+  "timings": {
+    "normalization_seconds": 0.14030779900000034,
+    "pdx_index_build_seconds": 0.5594675819999999
+  },
+  "l_values": [
+    10,
+    20,
+    50,
+    100
+  ],
+  "runs": [
+    {
+      "top_l": 10,
+      "loop": {
+        "wall_seconds": 2.777724619999999,
+        "search_seconds": 2.7437479149999877,
+        "parse_seconds": 0.015941744999996565,
+        "aggregation_seconds": 0.013496033000000907,
+        "measured_component_seconds": 2.773185692999985,
+        "pool_summary": {
+          "mean_candidate_pool_size": 64.28,
+          "min_candidate_pool_size": 24,
+          "max_candidate_pool_size": 141,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9666666666666666,
+            "5": 0.94,
+            "10": 0.8419999999999999
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 45,
+            "5": 36,
+            "10": 9
+          }
+        }
+      },
+      "batch": {
+        "wall_seconds": 2.7253610879999997,
+        "search_seconds": 2.7104749990000023,
+        "parse_seconds": 0.00047172399999340087,
+        "aggregation_seconds": 0.013969136000007154,
+        "measured_component_seconds": 2.724915859000003,
+        "pool_summary": {
+          "mean_candidate_pool_size": 64.28,
+          "min_candidate_pool_size": 24,
+          "max_candidate_pool_size": 141,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9666666666666666,
+            "5": 0.94,
+            "10": 0.8419999999999999
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 45,
+            "5": 36,
+            "10": 9
+          }
+        }
+      },
+      "speedups_loop_over_batch": {
+        "search_seconds": 1.012275677145984,
+        "wall_seconds": 1.0192134290867219,
+        "measured_component_seconds": 1.017714247520911
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "failures": []
+      }
+    },
+    {
+      "top_l": 20,
+      "loop": {
+        "wall_seconds": 3.0801148319999996,
+        "search_seconds": 3.0354344000000193,
+        "parse_seconds": 0.020281365000000662,
+        "aggregation_seconds": 0.020039342000004012,
+        "measured_component_seconds": 3.075755107000024,
+        "pool_summary": {
+          "mean_candidate_pool_size": 115.08,
+          "min_candidate_pool_size": 51,
+          "max_candidate_pool_size": 239,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9933333333333333,
+            "5": 0.9840000000000001,
+            "10": 0.9480000000000001
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 49,
+            "5": 46,
+            "10": 32
+          }
+        }
+      },
+      "batch": {
+        "wall_seconds": 3.131088520999999,
+        "search_seconds": 3.1086456949999857,
+        "parse_seconds": 0.0005329949999790529,
+        "aggregation_seconds": 0.02137099099999773,
+        "measured_component_seconds": 3.1305496809999624,
+        "pool_summary": {
+          "mean_candidate_pool_size": 115.08,
+          "min_candidate_pool_size": 51,
+          "max_candidate_pool_size": 239,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 0.9933333333333333,
+            "5": 0.9840000000000001,
+            "10": 0.9480000000000001
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 49,
+            "5": 46,
+            "10": 32
+          }
+        }
+      },
+      "speedups_loop_over_batch": {
+        "search_seconds": 0.9764491350308203,
+        "wall_seconds": 0.983720138010113,
+        "measured_component_seconds": 0.982496820180654
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "failures": []
+      }
+    },
+    {
+      "top_l": 50,
+      "loop": {
+        "wall_seconds": 3.715918348999999,
+        "search_seconds": 3.633771947999989,
+        "parse_seconds": 0.0362293529999711,
+        "aggregation_seconds": 0.04101162800002811,
+        "measured_component_seconds": 3.7110129289999882,
+        "pool_summary": {
+          "mean_candidate_pool_size": 239.34,
+          "min_candidate_pool_size": 102,
+          "max_candidate_pool_size": 449,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 0.996
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 48
+          }
+        }
+      },
+      "batch": {
+        "wall_seconds": 3.555820948000001,
+        "search_seconds": 3.5137439560000168,
+        "parse_seconds": 0.000436587999992355,
+        "aggregation_seconds": 0.041223548000001387,
+        "measured_component_seconds": 3.5554040920000105,
+        "pool_summary": {
+          "mean_candidate_pool_size": 239.34,
+          "min_candidate_pool_size": 102,
+          "max_candidate_pool_size": 449,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 0.996
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 48
+          }
+        }
+      },
+      "speedups_loop_over_batch": {
+        "search_seconds": 1.0341595726675001,
+        "wall_seconds": 1.045024033364235,
+        "measured_component_seconds": 1.0437668498357506
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "failures": []
+      }
+    },
+    {
+      "top_l": 100,
+      "loop": {
+        "wall_seconds": 4.191211964999997,
+        "search_seconds": 4.052025128,
+        "parse_seconds": 0.05971130299995764,
+        "aggregation_seconds": 0.07427227399999836,
+        "measured_component_seconds": 4.186008704999956,
+        "pool_summary": {
+          "mean_candidate_pool_size": 384.68,
+          "min_candidate_pool_size": 172,
+          "max_candidate_pool_size": 661,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 50
+          }
+        }
+      },
+      "batch": {
+        "wall_seconds": 4.0296717420000014,
+        "search_seconds": 3.9538690859999797,
+        "parse_seconds": 0.0004442039999901226,
+        "aggregation_seconds": 0.07492796600001128,
+        "measured_component_seconds": 4.029241255999981,
+        "pool_summary": {
+          "mean_candidate_pool_size": 384.68,
+          "min_candidate_pool_size": 172,
+          "max_candidate_pool_size": 661,
+          "mean_exact_recall_at_k": {
+            "1": 1.0,
+            "3": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "exact_topk_all_recovered_count": {
+            "1": 50,
+            "3": 50,
+            "5": 50,
+            "10": 50
+          }
+        }
+      },
+      "speedups_loop_over_batch": {
+        "search_seconds": 1.0248253141075347,
+        "wall_seconds": 1.040087687867057,
+        "measured_component_seconds": 1.0389074366709938
+      },
+      "validation": {
+        "query_count": 50,
+        "query_token_count": 960,
+        "all_indices_equal": true,
+        "all_candidate_pools_equal": true,
+        "failure_count": 0,
+        "failures": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,444 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T13:45:21.039860+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0,
+        1
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/scifact_full_benchmark",
+        "--embeddings-dir",
+        "../artifacts/scifact_full_benchmark_embeddings",
+        "--output",
+        "results/controlled/scifact_bond_smoke.json",
+        "--max-documents",
+        "100",
+        "--query-start",
+        "0",
+        "--max-queries",
+        "2",
+        "--k",
+        "10",
+        "--seed-counts",
+        "10",
+        "50",
+        "--threads",
+        "2",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "2"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "2",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "2",
+        "MKL_NUM_THREADS": "2",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark/qrels.json": {
+        "bytes": 1831,
+        "sha256": "e0af8355bd9bdc7dcad36f8b6d1dcfcd25b120b115d232d43ac9c652a7ff4939"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 571808088,
+        "sha256": "239aa14cb8ec8693fd1f1c63ddd0b485aa021c4533b4cb79f0376c63d0a3c192"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 459610,
+        "sha256": "b0a6c6d13a67cb207149706ca681897e544f2498851dca0a5d9eb1cc748e7239"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 33360,
+        "sha256": "39f17545b67da198a7f6ae56d138c2dddc06a14ef654cadb35fe2c364d691086"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+    "query_start": 0,
+    "documents": 100,
+    "queries": 2,
+    "document_token_vectors": 23777,
+    "query_token_vectors": 39,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 2
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      10,
+      50
+    ],
+    "threads": 2,
+    "warmup_runs": 1,
+    "measured_runs": 2,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "natural model order",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs"
+  },
+  "offline_index_build": {
+    "bond_vertical_index_seconds": 0.030815545999999472,
+    "estimated_vertical_values_bytes": 12173824,
+    "estimated_residual_norm_bytes": 1141296
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed10",
+      "bond_seed50"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed10",
+        "bond_seed50"
+      ],
+      [
+        "bond_seed10",
+        "bond_seed50",
+        "compiled_exact"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 2,
+      "end_to_end_seconds": [
+        0.0051714320000009195,
+        0.005172824999998937
+      ],
+      "end_to_end_summary": {
+        "count": 2,
+        "min": 0.0051714320000009195,
+        "p25": 0.005171780250000424,
+        "median": 0.005172128499999928,
+        "mean": 0.005172128499999928,
+        "p75": 0.005172476749999433,
+        "p95": 0.005172755349999036,
+        "max": 0.005172824999998937
+      },
+      "stage_seconds": {
+        "exact_score": [
+          0.005088475000000869,
+          0.005091710999998611
+        ],
+        "topk": [
+          7.240800000118952e-05,
+          7.084399999968127e-05
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 2,
+          "min": 0.005088475000000869,
+          "p25": 0.005089284000000305,
+          "median": 0.00509009299999974,
+          "mean": 0.00509009299999974,
+          "p75": 0.005090901999999176,
+          "p95": 0.005091549199998724,
+          "max": 0.005091710999998611
+        },
+        "topk": {
+          "count": 2,
+          "min": 7.084399999968127e-05,
+          "p25": 7.123500000005833e-05,
+          "median": 7.16260000004354e-05,
+          "mean": 7.16260000004354e-05,
+          "p75": 7.201700000081246e-05,
+          "p95": 7.23298000011141e-05,
+          "max": 7.240800000118952e-05
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.5,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "mrr@10": 0.6666666666666666
+    },
+    "topk_rankings": {
+      "1": [
+        "8290953",
+        "10582939",
+        "31715818",
+        "6076903",
+        "45638119",
+        "169264",
+        "72159",
+        "4983",
+        "104130",
+        "106301"
+      ],
+      "3": [
+        "14717500",
+        "13519661",
+        "4414547",
+        "18340282",
+        "263364",
+        "18670",
+        "279052",
+        "54440",
+        "5956380",
+        "175735"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed10": {
+      "seed_count": 10,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 2,
+        "end_to_end_seconds": [
+          0.08562047899999925,
+          0.08546138699999872
+        ],
+        "end_to_end_summary": {
+          "count": 2,
+          "min": 0.08546138699999872,
+          "p25": 0.08550115999999885,
+          "median": 0.08554093299999899,
+          "mean": 0.08554093299999899,
+          "p75": 0.08558070599999912,
+          "p95": 0.08561252439999922,
+          "max": 0.08562047899999925
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            0.08560794499999957,
+            0.08544746000000103
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 2,
+            "min": 0.08544746000000103,
+            "p25": 0.08548758125000067,
+            "median": 0.0855277025000003,
+            "mean": 0.0855277025000003,
+            "p75": 0.08556782374999994,
+            "p95": 0.08559992074999964,
+            "max": 0.08560794499999957
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 2,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 2,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 2,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 2,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 4.266229336025162e-06,
+        "mean_abs_error": 1.1768710802328996e-06
+      },
+      "qrels_metrics": {
+        "recall@1": 0.5,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr@10": 0.6666666666666666
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 200,
+        "total_query_document_pairs": 200,
+        "pruned_document_fraction": 0.0,
+        "component_products": 118694784,
+        "full_component_products": 118694784,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "8290953",
+          "10582939",
+          "31715818",
+          "6076903",
+          "45638119",
+          "169264",
+          "72159",
+          "4983",
+          "104130",
+          "106301"
+        ],
+        "3": [
+          "14717500",
+          "13519661",
+          "4414547",
+          "18340282",
+          "263364",
+          "18670",
+          "279052",
+          "54440",
+          "5956380",
+          "175735"
+        ]
+      }
+    },
+    "bond_seed50": {
+      "seed_count": 50,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 2,
+        "end_to_end_seconds": [
+          0.05948531700000004,
+          0.059642205999999476
+        ],
+        "end_to_end_summary": {
+          "count": 2,
+          "min": 0.05948531700000004,
+          "p25": 0.0595245392499999,
+          "median": 0.05956376149999976,
+          "mean": 0.05956376149999976,
+          "p75": 0.059602983749999616,
+          "p95": 0.0596343615499995,
+          "max": 0.059642205999999476
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            0.05947373499999742,
+            0.05963038299999823
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 2,
+            "min": 0.05947373499999742,
+            "p25": 0.05951289699999762,
+            "median": 0.059552058999997826,
+            "mean": 0.059552058999997826,
+            "p75": 0.05959122099999803,
+            "p95": 0.05962255059999819,
+            "max": 0.05963038299999823
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 2,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 2,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 2,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 2,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 4.266229336025162e-06,
+        "mean_abs_error": 1.1768710802328996e-06
+      },
+      "qrels_metrics": {
+        "recall@1": 0.5,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr@10": 0.6666666666666666
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 200,
+        "total_query_document_pairs": 200,
+        "pruned_document_fraction": 0.0,
+        "component_products": 118694784,
+        "full_component_products": 118694784,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "8290953",
+          "10582939",
+          "31715818",
+          "6076903",
+          "45638119",
+          "169264",
+          "72159",
+          "4983",
+          "104130",
+          "106301"
+        ],
+        "3": [
+          "14717500",
+          "13519661",
+          "4414547",
+          "18340282",
+          "263364",
+          "18670",
+          "279052",
+          "54440",
+          "5956380",
+          "175735"
+        ]
+      }
+    }
+  }
+}

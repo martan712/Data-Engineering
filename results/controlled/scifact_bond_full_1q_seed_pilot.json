@@ -1,0 +1,619 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T13:47:02.827141+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/scifact_full_benchmark",
+        "--embeddings-dir",
+        "../artifacts/scifact_full_benchmark_embeddings",
+        "--output",
+        "results/controlled/scifact_bond_full_1q_seed_pilot.json",
+        "--max-documents",
+        "0",
+        "--query-start",
+        "0",
+        "--max-queries",
+        "1",
+        "--k",
+        "10",
+        "--seed-counts",
+        "10",
+        "50",
+        "200",
+        "500",
+        "--threads",
+        "1",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "3"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark/qrels.json": {
+        "bytes": 1831,
+        "sha256": "e0af8355bd9bdc7dcad36f8b6d1dcfcd25b120b115d232d43ac9c652a7ff4939"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 571808088,
+        "sha256": "239aa14cb8ec8693fd1f1c63ddd0b485aa021c4533b4cb79f0376c63d0a3c192"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 459610,
+        "sha256": "b0a6c6d13a67cb207149706ca681897e544f2498851dca0a5d9eb1cc748e7239"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 33360,
+        "sha256": "39f17545b67da198a7f6ae56d138c2dddc06a14ef654cadb35fe2c364d691086"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+    "query_start": 0,
+    "documents": 5183,
+    "queries": 1,
+    "document_token_vectors": 1193945,
+    "query_token_vectors": 12,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 1
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      10,
+      50,
+      200,
+      500
+    ],
+    "threads": 1,
+    "warmup_runs": 1,
+    "measured_runs": 3,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "natural model order",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs"
+  },
+  "offline_index_build": {
+    "bond_vertical_index_seconds": 1.6970170679999939,
+    "estimated_vertical_values_bytes": 611299840,
+    "estimated_residual_norm_bytes": 57309360
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed10",
+      "bond_seed50",
+      "bond_seed200",
+      "bond_seed500"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed10",
+        "bond_seed50",
+        "bond_seed200",
+        "bond_seed500"
+      ],
+      [
+        "bond_seed10",
+        "bond_seed50",
+        "bond_seed200",
+        "bond_seed500",
+        "compiled_exact"
+      ],
+      [
+        "bond_seed50",
+        "bond_seed200",
+        "bond_seed500",
+        "compiled_exact",
+        "bond_seed10"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 3,
+      "end_to_end_seconds": [
+        0.12294019899999853,
+        0.12324080700000195,
+        0.12337154400000827
+      ],
+      "end_to_end_summary": {
+        "count": 3,
+        "min": 0.12294019899999853,
+        "p25": 0.12309050300000024,
+        "median": 0.12324080700000195,
+        "mean": 0.12318418333333625,
+        "p75": 0.12330617550000511,
+        "p95": 0.12335847030000764,
+        "max": 0.12337154400000827
+      },
+      "stage_seconds": {
+        "exact_score": [
+          0.12253284599999859,
+          0.1228373710000028,
+          0.12295961099999886
+        ],
+        "topk": [
+          0.00039573200000120323,
+          0.00039065199999299693,
+          0.00040018999999347216
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 3,
+          "min": 0.12253284599999859,
+          "p25": 0.1226851085000007,
+          "median": 0.1228373710000028,
+          "mean": 0.12277660933333341,
+          "p75": 0.12289849100000083,
+          "p95": 0.12294738699999926,
+          "max": 0.12295961099999886
+        },
+        "topk": {
+          "count": 3,
+          "min": 0.00039065199999299693,
+          "p25": 0.0003931919999971001,
+          "median": 0.00039573200000120323,
+          "mean": 0.0003955246666625574,
+          "p75": 0.0003979609999973377,
+          "p95": 0.0003997441999942453,
+          "max": 0.00040018999999347216
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.0,
+      "recall@3": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "mrr@10": 0.0
+    },
+    "topk_rankings": {
+      "1": [
+        "40212412",
+        "18953920",
+        "16532419",
+        "4346436",
+        "38037690",
+        "10931595",
+        "1156322",
+        "27049238",
+        "11674288",
+        "21456232"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed10": {
+      "seed_count": 10,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          2.0774255460000006,
+          1.9977131670000006,
+          2.0819166609999797
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 1.9977131670000006,
+          "p25": 2.0375693565000006,
+          "median": 2.0774255460000006,
+          "mean": 2.052351791333327,
+          "p75": 2.07967110349999,
+          "p95": 2.081467549499982,
+          "max": 2.0819166609999797
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            2.0774119910000053,
+            1.9976995109999933,
+            2.0819030849999933
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 1.9976995109999933,
+            "p25": 2.0375557509999993,
+            "median": 2.0774119910000053,
+            "mean": 2.052338195666664,
+            "p75": 2.0796575379999993,
+            "p95": 2.0814539755999943,
+            "max": 2.0819030849999933
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 1,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 1,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 1,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 1,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 1.5403566955285442e-06,
+        "mean_abs_error": 5.325321145832618e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 5183,
+        "total_query_document_pairs": 5183,
+        "pruned_document_fraction": 0.0,
+        "component_products": 1833899520,
+        "full_component_products": 1833899520,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ]
+      }
+    },
+    "bond_seed50": {
+      "seed_count": 50,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          2.036018557999995,
+          2.007659001999997,
+          2.0713492229999986
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 2.007659001999997,
+          "p25": 2.021838779999996,
+          "median": 2.036018557999995,
+          "mean": 2.038342260999997,
+          "p75": 2.053683890499997,
+          "p95": 2.0678161564999984,
+          "max": 2.0713492229999986
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            2.036006053999998,
+            2.007646237000003,
+            2.0713360780000016
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 2.007646237000003,
+            "p25": 2.0218261455000004,
+            "median": 2.036006053999998,
+            "mean": 2.0383294563333343,
+            "p75": 2.0536710659999997,
+            "p95": 2.0678030756000014,
+            "max": 2.0713360780000016
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 1,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 1,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 1,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 1,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 1.5403566955285442e-06,
+        "mean_abs_error": 5.325321145832618e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 5183,
+        "total_query_document_pairs": 5183,
+        "pruned_document_fraction": 0.0,
+        "component_products": 1833899520,
+        "full_component_products": 1833899520,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ]
+      }
+    },
+    "bond_seed200": {
+      "seed_count": 200,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          1.9099438079999942,
+          1.9957672609999975,
+          2.0407351090000105
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 1.9099438079999942,
+          "p25": 1.9528555344999958,
+          "median": 1.9957672609999975,
+          "mean": 1.9821487260000008,
+          "p75": 2.018251185000004,
+          "p95": 2.036238324200009,
+          "max": 2.0407351090000105
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            1.9099318260000047,
+            1.995754986999998,
+            2.040722384999995
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 1.9099318260000047,
+            "p25": 1.9528434065000013,
+            "median": 1.995754986999998,
+            "mean": 1.9821363993333325,
+            "p75": 2.0182386859999966,
+            "p95": 2.0362256451999956,
+            "max": 2.040722384999995
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 1,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 1,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 1,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 1,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 1.5403566955285442e-06,
+        "mean_abs_error": 5.325321145832618e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 5183,
+        "total_query_document_pairs": 5183,
+        "pruned_document_fraction": 0.0,
+        "component_products": 1833899520,
+        "full_component_products": 1833899520,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ]
+      }
+    },
+    "bond_seed500": {
+      "seed_count": 500,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          1.832872774000009,
+          1.9504422629999993,
+          1.9550417359999983
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 1.832872774000009,
+          "p25": 1.8916575185000042,
+          "median": 1.9504422629999993,
+          "mean": 1.9127855910000022,
+          "p75": 1.9527419994999988,
+          "p95": 1.9545817886999983,
+          "max": 1.9550417359999983
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            1.8328582859999898,
+            1.9504296500000038,
+            1.9550290329999882
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 1.8328582859999898,
+            "p25": 1.8916439679999968,
+            "median": 1.9504296500000038,
+            "mean": 1.912772322999994,
+            "p75": 1.952729341499996,
+            "p95": 1.9545690946999899,
+            "max": 1.9550290329999882
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 1,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 1,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 1,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 1,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 1.5403566955285442e-06,
+        "mean_abs_error": 5.325321145832618e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr@10": 0.0
+      },
+      "work": {
+        "documents_pruned": 0,
+        "documents_exactly_scored": 5183,
+        "total_query_document_pairs": 5183,
+        "pruned_document_fraction": 0.0,
+        "component_products": 1833899520,
+        "full_component_products": 1833899520,
+        "component_product_ratio": 1.0,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 0,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ]
+      }
+    }
+  }
+}

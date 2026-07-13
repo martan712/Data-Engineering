@@ -1,0 +1,350 @@
+{
+  "dataset": "nfcorpus",
+  "config": {
+    "nprobe": 8,
+    "top_l": 100,
+    "c_values": [
+      20,
+      50,
+      100,
+      200,
+      400,
+      0
+    ],
+    "policies": [
+      "approx_score",
+      "retrieved_token_count",
+      "union_approx_and_count"
+    ],
+    "engine": "faiss_ivf_l2_on_l2_normalized_vectors",
+    "note": "C=0 means re-rank the entire candidate pool."
+  },
+  "dataset_stats": {
+    "documents": 3633,
+    "queries": 50,
+    "total_document_token_vectors": 864703
+  },
+  "exact_reference": {
+    "seconds": 7.933378000278026,
+    "qrels_metrics": {
+      "recall@1": 0.07357636015117025,
+      "recall@3": 0.13498903920326621,
+      "recall@5": 0.16580079963460123,
+      "recall@10": 0.1941729747936308,
+      "mrr@10": 0.6852222222222221
+    }
+  },
+  "candidate_generation": {
+    "seconds": 0.14116199919953942,
+    "mean_pool_size": 388.78,
+    "pool_coverage@10": 0.94
+  },
+  "sweep": [
+    {
+      "policy": "approx_score",
+      "top_c": 20,
+      "effective_c_label": "20",
+      "mean_selected_candidates": 20.0,
+      "rerank_seconds": 0.03612140007317066,
+      "total_seconds": 0.17728339927271008,
+      "agreement@5": 0.7440000000000001,
+      "agreement@10": 0.632,
+      "qrels_metrics": {
+        "recall@1": 0.06707636015117024,
+        "recall@3": 0.1106319888611352,
+        "recall@5": 0.14046211279171608,
+        "recall@10": 0.16123833082790814,
+        "mrr@10": 0.654
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 50,
+      "effective_c_label": "50",
+      "mean_selected_candidates": 50.0,
+      "rerank_seconds": 0.08823689771816134,
+      "total_seconds": 0.22939889691770077,
+      "agreement@5": 0.92,
+      "agreement@10": 0.84,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16392850848489068,
+        "recall@10": 0.18823827142510394,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 100,
+      "effective_c_label": "100",
+      "mean_selected_candidates": 100.0,
+      "rerank_seconds": 0.18815100146457553,
+      "total_seconds": 0.32931300066411495,
+      "agreement@5": 0.9640000000000001,
+      "agreement@10": 0.9159999999999999,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.1661233802797625,
+        "recall@10": 0.19142957966883148,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 198.34,
+      "rerank_seconds": 0.35925110103562474,
+      "total_seconds": 0.5004131002351642,
+      "agreement@5": 0.976,
+      "agreement@10": 0.96,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.1661233802797625,
+        "recall@10": 0.19147859927667463,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 400,
+      "effective_c_label": "400",
+      "mean_selected_candidates": 342.88,
+      "rerank_seconds": 0.643268502317369,
+      "total_seconds": 0.7844305015169084,
+      "agreement@5": 0.98,
+      "agreement@10": 0.97,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19231193261000798,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "approx_score",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 388.78,
+      "rerank_seconds": 0.749314998742193,
+      "total_seconds": 0.8904769979417324,
+      "agreement@5": 0.9840000000000001,
+      "agreement@10": 0.978,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 20,
+      "effective_c_label": "20",
+      "mean_selected_candidates": 20.0,
+      "rerank_seconds": 0.038217499386519194,
+      "total_seconds": 0.17937949858605862,
+      "agreement@5": 0.7599999999999999,
+      "agreement@10": 0.6399999999999999,
+      "qrels_metrics": {
+        "recall@1": 0.07235841143322153,
+        "recall@3": 0.12020124948659715,
+        "recall@5": 0.14696668237271396,
+        "recall@10": 0.1673789498434719,
+        "mrr@10": 0.6510476190476189
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 50,
+      "effective_c_label": "50",
+      "mean_selected_candidates": 50.0,
+      "rerank_seconds": 0.09263339964672923,
+      "total_seconds": 0.23379539884626865,
+      "agreement@5": 0.9159999999999999,
+      "agreement@10": 0.852,
+      "qrels_metrics": {
+        "recall@1": 0.07274302681783691,
+        "recall@3": 0.13415570586993286,
+        "recall@5": 0.16496746630126785,
+        "recall@10": 0.18997230038536478,
+        "mrr@10": 0.6755
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 100,
+      "effective_c_label": "100",
+      "mean_selected_candidates": 100.0,
+      "rerank_seconds": 0.18344209995120764,
+      "total_seconds": 0.32460409915074706,
+      "agreement@5": 0.9719999999999999,
+      "agreement@10": 0.9359999999999999,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.1661233802797625,
+        "recall@10": 0.19147859927667463,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 198.34,
+      "rerank_seconds": 0.3650782974436879,
+      "total_seconds": 0.5062402966432273,
+      "agreement@5": 0.98,
+      "agreement@10": 0.966,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19301706081513614,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 400,
+      "effective_c_label": "400",
+      "mean_selected_candidates": 342.88,
+      "rerank_seconds": 0.6564710005186498,
+      "total_seconds": 0.7976329997181892,
+      "agreement@5": 0.9840000000000001,
+      "agreement@10": 0.976,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "retrieved_token_count",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 388.78,
+      "rerank_seconds": 0.7563420026563108,
+      "total_seconds": 0.8975040018558502,
+      "agreement@5": 0.9840000000000001,
+      "agreement@10": 0.978,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 20,
+      "effective_c_label": "20",
+      "mean_selected_candidates": 20.0,
+      "rerank_seconds": 0.03745339810848236,
+      "total_seconds": 0.17861539730802178,
+      "agreement@5": 0.784,
+      "agreement@10": 0.664,
+      "qrels_metrics": {
+        "recall@1": 0.06274302681783692,
+        "recall@3": 0.11138487253659952,
+        "recall@5": 0.1413539829708728,
+        "recall@10": 0.16274888759823716,
+        "mrr@10": 0.649190476190476
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 50,
+      "effective_c_label": "50",
+      "mean_selected_candidates": 50.0,
+      "rerank_seconds": 0.08990140119567513,
+      "total_seconds": 0.23106340039521456,
+      "agreement@5": 0.912,
+      "agreement@10": 0.858,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.1249890392032662,
+        "recall@5": 0.1543285084848907,
+        "recall@10": 0.17803042828784899,
+        "mrr@10": 0.6885555555555556
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 100,
+      "effective_c_label": "100",
+      "mean_selected_candidates": 100.0,
+      "rerank_seconds": 0.17871869821101427,
+      "total_seconds": 0.3198806974105537,
+      "agreement@5": 0.956,
+      "agreement@10": 0.922,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.1661233802797625,
+        "recall@10": 0.19147859927667463,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 200,
+      "effective_c_label": "200",
+      "mean_selected_candidates": 198.34,
+      "rerank_seconds": 0.3604744002223015,
+      "total_seconds": 0.5016363994218409,
+      "agreement@5": 0.976,
+      "agreement@10": 0.96,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.1661233802797625,
+        "recall@10": 0.19147859927667463,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 400,
+      "effective_c_label": "400",
+      "mean_selected_candidates": 342.88,
+      "rerank_seconds": 0.6463858019560575,
+      "total_seconds": 0.787547801155597,
+      "agreement@5": 0.98,
+      "agreement@10": 0.972,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19231193261000798,
+        "mrr@10": 0.6852222222222221
+      }
+    },
+    {
+      "policy": "union_approx_and_count",
+      "top_c": 0,
+      "effective_c_label": "pool",
+      "mean_selected_candidates": 388.78,
+      "rerank_seconds": 0.7479900009930134,
+      "total_seconds": 0.8891520001925528,
+      "agreement@5": 0.9840000000000001,
+      "agreement@10": 0.978,
+      "qrels_metrics": {
+        "recall@1": 0.07357636015117025,
+        "recall@3": 0.13498903920326621,
+        "recall@5": 0.16580079963460123,
+        "recall@10": 0.19263451325516925,
+        "mrr@10": 0.6852222222222221
+      }
+    }
+  ]
+}

@@ -1,0 +1,1293 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T19:51:43.747186+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0,
+        1
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/nfcorpus_benchmark",
+        "--embeddings-dir",
+        "../artifacts/nfcorpus_benchmark_embeddings",
+        "--output",
+        "results/controlled/nfcorpus_bond_test_40q_pilot.json",
+        "--max-documents",
+        "0",
+        "--query-start",
+        "10",
+        "--max-queries",
+        "0",
+        "--k",
+        "10",
+        "--seed-counts",
+        "500",
+        "--threads",
+        "4",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "5"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "4",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/nfcorpus_benchmark/qrels.json": {
+        "bytes": 30680,
+        "sha256": "879624172d5bb1a73297be3f2fa9fb7d6e31dfc6908e6827a692d336f934de8b"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/nfcorpus_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 414241270,
+        "sha256": "9e59ea6f56da5f22d09308ccef7701201d52c09476433c1eee746e53f01379ec"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/nfcorpus_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 282189,
+        "sha256": "6763e565c8064914c5f025ba02ef751c5ee020b4909a6b469749c2991b6371de"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 37797,
+        "sha256": "29a23a4c06ed3886d81677ac6663ecfbd2d30a08eec6c1a958f81814833b15ff"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/nfcorpus_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/nfcorpus_benchmark_embeddings",
+    "query_start": 10,
+    "documents": 3633,
+    "queries": 40,
+    "document_token_vectors": 864703,
+    "query_token_vectors": 461,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 1250
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      500
+    ],
+    "include_oracle_seeds": false,
+    "skip_prefix_seeds": false,
+    "threads": 4,
+    "warmup_runs": 1,
+    "measured_runs": 5,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "natural model order",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs",
+    "float_tie_atol": 1e-05
+  },
+  "offline_index_build": {
+    "preprocessing": {
+      "rotation": "none"
+    },
+    "bond_vertical_index_seconds": 1.3492636900000008,
+    "estimated_vertical_values_bytes": 442727936,
+    "estimated_residual_norm_bytes": 41505744
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed500"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ],
+      [
+        "bond_seed500",
+        "compiled_exact"
+      ],
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ],
+      [
+        "bond_seed500",
+        "compiled_exact"
+      ],
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 5,
+      "end_to_end_seconds": [
+        1.2993417849999958,
+        1.2212442390000149,
+        1.2953842230000134,
+        1.2279484169999932,
+        1.300511116000024
+      ],
+      "end_to_end_summary": {
+        "count": 5,
+        "min": 1.2212442390000149,
+        "p25": 1.2279484169999932,
+        "median": 1.2953842230000134,
+        "mean": 1.2688859560000083,
+        "p75": 1.2993417849999958,
+        "p95": 1.3002772498000184,
+        "max": 1.300511116000024
+      },
+      "stage_seconds": {
+        "exact_score": [
+          1.2908593390000078,
+          1.212839047999978,
+          1.286963792999984,
+          1.2196109449999994,
+          1.2917912869999952
+        ],
+        "topk": [
+          0.0084677189999951,
+          0.0083891900000026,
+          0.008405812000006563,
+          0.008323745999973653,
+          0.008698038000005681
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 5,
+          "min": 1.212839047999978,
+          "p25": 1.2196109449999994,
+          "median": 1.286963792999984,
+          "mean": 1.260412882399993,
+          "p75": 1.2908593390000078,
+          "p95": 1.2916048973999978,
+          "max": 1.2917912869999952
+        },
+        "topk": {
+          "count": 5,
+          "min": 0.008323745999973653,
+          "p25": 0.0083891900000026,
+          "median": 0.008405812000006563,
+          "mean": 0.008456900999996719,
+          "p75": 0.0084677189999951,
+          "p95": 0.008651974200003566,
+          "max": 0.008698038000005681
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.08776069640108401,
+      "recall@3": 0.1561613505835594,
+      "recall@5": 0.1915232733449504,
+      "recall@10": 0.21907565897585327,
+      "mrr@10": 0.664861111111111
+    },
+    "topk_rankings": {
+      "PLAIN-112": [
+        "MED-3380",
+        "MED-3382",
+        "MED-5063",
+        "MED-3381",
+        "MED-2618",
+        "MED-5062",
+        "MED-4604",
+        "MED-1153",
+        "MED-906",
+        "MED-3351"
+      ],
+      "PLAIN-123": [
+        "MED-2803",
+        "MED-3483",
+        "MED-4392",
+        "MED-2083",
+        "MED-2707",
+        "MED-2713",
+        "MED-4414",
+        "MED-2451",
+        "MED-3473",
+        "MED-2271"
+      ],
+      "PLAIN-133": [
+        "MED-3554",
+        "MED-4464",
+        "MED-2923",
+        "MED-4116",
+        "MED-4690",
+        "MED-2604",
+        "MED-2134",
+        "MED-4239",
+        "MED-3548",
+        "MED-4224"
+      ],
+      "PLAIN-143": [
+        "MED-3621",
+        "MED-3618",
+        "MED-3619",
+        "MED-2093",
+        "MED-1858",
+        "MED-1625",
+        "MED-2090",
+        "MED-5097",
+        "MED-4036",
+        "MED-872"
+      ],
+      "PLAIN-153": [
+        "MED-3679",
+        "MED-3692",
+        "MED-3690",
+        "MED-3695",
+        "MED-3680",
+        "MED-3677",
+        "MED-3688",
+        "MED-3675",
+        "MED-3681",
+        "MED-3683"
+      ],
+      "PLAIN-165": [
+        "MED-4445",
+        "MED-3762",
+        "MED-3696",
+        "MED-3766",
+        "MED-3767",
+        "MED-3768",
+        "MED-3765",
+        "MED-2437",
+        "MED-3697",
+        "MED-1564"
+      ],
+      "PLAIN-175": [
+        "MED-4627",
+        "MED-5107",
+        "MED-4600",
+        "MED-2437",
+        "MED-836",
+        "MED-3434",
+        "MED-3791",
+        "MED-2117",
+        "MED-3816",
+        "MED-1678"
+      ],
+      "PLAIN-186": [
+        "MED-3904",
+        "MED-2203",
+        "MED-2054",
+        "MED-949",
+        "MED-1016",
+        "MED-1014",
+        "MED-1017",
+        "MED-2292",
+        "MED-2059",
+        "MED-2057"
+      ],
+      "PLAIN-196": [
+        "MED-3969",
+        "MED-3970",
+        "MED-3963",
+        "MED-3960",
+        "MED-3964",
+        "MED-3966",
+        "MED-1961",
+        "MED-1162",
+        "MED-5063",
+        "MED-2659"
+      ],
+      "PLAIN-207": [
+        "MED-5197",
+        "MED-4482",
+        "MED-4451",
+        "MED-4060",
+        "MED-4057",
+        "MED-3000",
+        "MED-4493",
+        "MED-5326",
+        "MED-4485",
+        "MED-4073"
+      ],
+      "PLAIN-217": [
+        "MED-1991",
+        "MED-4831",
+        "MED-4255",
+        "MED-4613",
+        "MED-4349",
+        "MED-1489",
+        "MED-3931",
+        "MED-2111",
+        "MED-3243",
+        "MED-4389"
+      ],
+      "PLAIN-227": [
+        "MED-4150",
+        "MED-4281",
+        "MED-1466",
+        "MED-1752",
+        "MED-3466",
+        "MED-3157",
+        "MED-4405",
+        "MED-3534",
+        "MED-5233",
+        "MED-1474"
+      ],
+      "PLAIN-238": [
+        "MED-2494",
+        "MED-2493",
+        "MED-3027",
+        "MED-4739",
+        "MED-2391",
+        "MED-5101",
+        "MED-4205",
+        "MED-4932",
+        "MED-1774",
+        "MED-4168"
+      ],
+      "PLAIN-248": [
+        "MED-4234",
+        "MED-3243",
+        "MED-4239",
+        "MED-4233",
+        "MED-3244",
+        "MED-3874",
+        "MED-4885",
+        "MED-3877",
+        "MED-4230",
+        "MED-3878"
+      ],
+      "PLAIN-259": [
+        "MED-4295",
+        "MED-4296",
+        "MED-2430",
+        "MED-4573",
+        "MED-1428",
+        "MED-3555",
+        "MED-2439",
+        "MED-2152",
+        "MED-3989",
+        "MED-1258"
+      ],
+      "PLAIN-270": [
+        "MED-4331",
+        "MED-5245",
+        "MED-4439",
+        "MED-4776",
+        "MED-5123",
+        "MED-4774",
+        "MED-2167",
+        "MED-1645",
+        "MED-5156",
+        "MED-870"
+      ],
+      "PLAIN-280": [
+        "MED-5097",
+        "MED-4739",
+        "MED-4376",
+        "MED-3034",
+        "MED-4948",
+        "MED-3023",
+        "MED-2906",
+        "MED-3025",
+        "MED-2904",
+        "MED-3026"
+      ],
+      "PLAIN-291": [
+        "MED-4639",
+        "MED-4517",
+        "MED-3858",
+        "MED-3856",
+        "MED-2437",
+        "MED-4643",
+        "MED-3697",
+        "MED-2107",
+        "MED-4741",
+        "MED-4641"
+      ],
+      "PLAIN-307": [
+        "MED-716",
+        "MED-4575",
+        "MED-714",
+        "MED-4872",
+        "MED-919",
+        "MED-4573",
+        "MED-4570",
+        "MED-920",
+        "MED-3991",
+        "MED-3985"
+      ],
+      "PLAIN-320": [
+        "MED-2437",
+        "MED-2423",
+        "MED-3862",
+        "MED-5066",
+        "MED-3791",
+        "MED-2417",
+        "MED-4450",
+        "MED-2424",
+        "MED-3858",
+        "MED-5111"
+      ],
+      "PLAIN-332": [
+        "MED-760",
+        "MED-5265",
+        "MED-5084",
+        "MED-2951",
+        "MED-4689",
+        "MED-2970",
+        "MED-2972",
+        "MED-5263",
+        "MED-1383",
+        "MED-5305"
+      ],
+      "PLAIN-344": [
+        "MED-2394",
+        "MED-2405",
+        "MED-2395",
+        "MED-2388",
+        "MED-4735",
+        "MED-1961",
+        "MED-2756",
+        "MED-4732",
+        "MED-5238",
+        "MED-1962"
+      ],
+      "PLAIN-358": [
+        "MED-3788",
+        "MED-1257",
+        "MED-1885",
+        "MED-1366",
+        "MED-5333",
+        "MED-2528",
+        "MED-1489",
+        "MED-1398",
+        "MED-1399",
+        "MED-5151"
+      ],
+      "PLAIN-371": [
+        "MED-4618",
+        "MED-4619",
+        "MED-4620",
+        "MED-5010",
+        "MED-5011",
+        "MED-1291",
+        "MED-5009",
+        "MED-1666",
+        "MED-3245",
+        "MED-1146"
+      ],
+      "PLAIN-383": [
+        "MED-4469",
+        "MED-1479",
+        "MED-4299",
+        "MED-1478",
+        "MED-2124",
+        "MED-2117",
+        "MED-4600",
+        "MED-2572",
+        "MED-728",
+        "MED-2220"
+      ],
+      "PLAIN-395": [
+        "MED-2783",
+        "MED-2816",
+        "MED-2794",
+        "MED-2815",
+        "MED-2810",
+        "MED-2831",
+        "MED-2811",
+        "MED-2824",
+        "MED-2820",
+        "MED-2818"
+      ],
+      "PLAIN-407": [
+        "MED-906",
+        "MED-2618",
+        "MED-957",
+        "MED-4870",
+        "MED-2994",
+        "MED-5063",
+        "MED-4604",
+        "MED-2619",
+        "MED-2817",
+        "MED-2202"
+      ],
+      "PLAIN-418": [
+        "MED-917",
+        "MED-3714",
+        "MED-3738",
+        "MED-2453",
+        "MED-2285",
+        "MED-3375",
+        "MED-2068",
+        "MED-4414",
+        "MED-2074",
+        "MED-4496"
+      ],
+      "PLAIN-430": [
+        "MED-928",
+        "MED-927",
+        "MED-1620",
+        "MED-2750",
+        "MED-4631",
+        "MED-4366",
+        "MED-4936",
+        "MED-4731",
+        "MED-5095",
+        "MED-2753"
+      ],
+      "PLAIN-441": [
+        "MED-942",
+        "MED-941",
+        "MED-4701",
+        "MED-4703",
+        "MED-4702",
+        "MED-5019",
+        "MED-4600",
+        "MED-4554",
+        "MED-4590",
+        "MED-840"
+      ],
+      "PLAIN-457": [
+        "MED-2716",
+        "MED-4602",
+        "MED-1513",
+        "MED-1751",
+        "MED-4156",
+        "MED-2710",
+        "MED-1486",
+        "MED-1625",
+        "MED-4255",
+        "MED-4613"
+      ],
+      "PLAIN-468": [
+        "MED-4573",
+        "MED-3990",
+        "MED-3988",
+        "MED-3991",
+        "MED-961",
+        "MED-3987",
+        "MED-962",
+        "MED-3989",
+        "MED-4566",
+        "MED-919"
+      ],
+      "PLAIN-478": [
+        "MED-2400",
+        "MED-3630",
+        "MED-3622",
+        "MED-5173",
+        "MED-2309",
+        "MED-3636",
+        "MED-2082",
+        "MED-4096",
+        "MED-4983",
+        "MED-1523"
+      ],
+      "PLAIN-488": [
+        "MED-1798",
+        "MED-1808",
+        "MED-1804",
+        "MED-1796",
+        "MED-1799",
+        "MED-1800",
+        "MED-1810",
+        "MED-1806",
+        "MED-4766",
+        "MED-1803"
+      ],
+      "PLAIN-499": [
+        "MED-5198",
+        "MED-1417",
+        "MED-1747",
+        "MED-5201",
+        "MED-2900",
+        "MED-1475",
+        "MED-2213",
+        "MED-4095",
+        "MED-1115",
+        "MED-1464"
+      ],
+      "PLAIN-510": [
+        "MED-2940",
+        "MED-3627",
+        "MED-5320",
+        "MED-1281",
+        "MED-4884",
+        "MED-1020",
+        "MED-5313",
+        "MED-3527",
+        "MED-4555",
+        "MED-5317"
+      ],
+      "PLAIN-520": [
+        "MED-3111",
+        "MED-1950",
+        "MED-3107",
+        "MED-4055",
+        "MED-4047",
+        "MED-910",
+        "MED-1953",
+        "MED-4908",
+        "MED-5034",
+        "MED-1560"
+      ],
+      "PLAIN-531": [
+        "MED-1017",
+        "MED-4371",
+        "MED-4156",
+        "MED-4374",
+        "MED-2472",
+        "MED-4372",
+        "MED-866",
+        "MED-2441",
+        "MED-3607",
+        "MED-3726"
+      ],
+      "PLAIN-541": [
+        "MED-3619",
+        "MED-3618",
+        "MED-4036",
+        "MED-872",
+        "MED-3621",
+        "MED-4028",
+        "MED-4791",
+        "MED-2096",
+        "MED-1988",
+        "MED-3692"
+      ],
+      "PLAIN-551": [
+        "MED-4381",
+        "MED-4380",
+        "MED-4663",
+        "MED-3537",
+        "MED-1283",
+        "MED-1506",
+        "MED-2214",
+        "MED-982",
+        "MED-3772",
+        "MED-991"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed500": {
+      "seed_count": 500,
+      "seed_policy": "deterministic_document_prefix",
+      "implementable_without_external_candidates": true,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 5,
+        "end_to_end_seconds": [
+          17.189624588,
+          17.311404776000003,
+          17.120258610999997,
+          17.615476657999977,
+          17.540282483999988
+        ],
+        "end_to_end_summary": {
+          "count": 5,
+          "min": 17.120258610999997,
+          "p25": 17.189624588,
+          "median": 17.311404776000003,
+          "mean": 17.355409423399994,
+          "p75": 17.540282483999988,
+          "p95": 17.60043782319998,
+          "max": 17.615476657999977
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            17.189607916,
+            17.311386642000016,
+            17.12024237,
+            17.615461640000007,
+            17.540266504000016
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 5,
+            "min": 17.12024237,
+            "p25": 17.189607916,
+            "median": 17.311386642000016,
+            "mean": 17.355393014400008,
+            "p75": 17.540266504000016,
+            "p95": 17.60042261280001,
+            "max": 17.615461640000007
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 40,
+        "mean_recall@3": 0.9916666666666666,
+        "all_top3_recovered_queries": 39,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 40,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 40,
+        "rankings_identical": false,
+        "topk_sets_identical": true
+      },
+      "numerical_order_validation": {
+        "float_tie_atol": 1e-05,
+        "rankings_identical": false,
+        "topk_sets_identical": true,
+        "tie_equivalent_order": true,
+        "mismatched_query_rows": [
+          10
+        ],
+        "non_tie_inversions": []
+      },
+      "score_validation": {
+        "max_abs_error": 2.72638993337182e-06,
+        "mean_abs_error": 4.864578914531847e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.08776069640108401,
+        "recall@3": 0.1561613505835594,
+        "recall@5": 0.1915232733449504,
+        "recall@10": 0.21907565897585327,
+        "mrr@10": 0.664861111111111
+      },
+      "work": {
+        "documents_pruned": 33940,
+        "documents_exactly_scored": 111380,
+        "total_query_document_pairs": 145320,
+        "pruned_document_fraction": 0.2335535370217451,
+        "component_products": 48046750528,
+        "full_component_products": 51024394624,
+        "component_product_ratio": 0.9416427354416974,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 730,
+          "96": 33210,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "PLAIN-112": [
+          "MED-3380",
+          "MED-3382",
+          "MED-5063",
+          "MED-3381",
+          "MED-2618",
+          "MED-5062",
+          "MED-4604",
+          "MED-1153",
+          "MED-906",
+          "MED-3351"
+        ],
+        "PLAIN-123": [
+          "MED-2803",
+          "MED-3483",
+          "MED-4392",
+          "MED-2083",
+          "MED-2707",
+          "MED-2713",
+          "MED-4414",
+          "MED-2451",
+          "MED-3473",
+          "MED-2271"
+        ],
+        "PLAIN-133": [
+          "MED-3554",
+          "MED-4464",
+          "MED-2923",
+          "MED-4116",
+          "MED-4690",
+          "MED-2604",
+          "MED-2134",
+          "MED-4239",
+          "MED-3548",
+          "MED-4224"
+        ],
+        "PLAIN-143": [
+          "MED-3621",
+          "MED-3618",
+          "MED-3619",
+          "MED-2093",
+          "MED-1858",
+          "MED-1625",
+          "MED-2090",
+          "MED-5097",
+          "MED-4036",
+          "MED-872"
+        ],
+        "PLAIN-153": [
+          "MED-3679",
+          "MED-3692",
+          "MED-3690",
+          "MED-3695",
+          "MED-3680",
+          "MED-3677",
+          "MED-3688",
+          "MED-3675",
+          "MED-3681",
+          "MED-3683"
+        ],
+        "PLAIN-165": [
+          "MED-4445",
+          "MED-3762",
+          "MED-3696",
+          "MED-3766",
+          "MED-3767",
+          "MED-3768",
+          "MED-3765",
+          "MED-2437",
+          "MED-3697",
+          "MED-1564"
+        ],
+        "PLAIN-175": [
+          "MED-4627",
+          "MED-5107",
+          "MED-4600",
+          "MED-2437",
+          "MED-836",
+          "MED-3434",
+          "MED-3791",
+          "MED-2117",
+          "MED-3816",
+          "MED-1678"
+        ],
+        "PLAIN-186": [
+          "MED-3904",
+          "MED-2203",
+          "MED-2054",
+          "MED-949",
+          "MED-1016",
+          "MED-1014",
+          "MED-1017",
+          "MED-2292",
+          "MED-2059",
+          "MED-2057"
+        ],
+        "PLAIN-196": [
+          "MED-3969",
+          "MED-3970",
+          "MED-3963",
+          "MED-3960",
+          "MED-3964",
+          "MED-3966",
+          "MED-1961",
+          "MED-1162",
+          "MED-5063",
+          "MED-2659"
+        ],
+        "PLAIN-207": [
+          "MED-5197",
+          "MED-4482",
+          "MED-4451",
+          "MED-4060",
+          "MED-4057",
+          "MED-3000",
+          "MED-4493",
+          "MED-5326",
+          "MED-4485",
+          "MED-4073"
+        ],
+        "PLAIN-217": [
+          "MED-1991",
+          "MED-4831",
+          "MED-4613",
+          "MED-4255",
+          "MED-4349",
+          "MED-1489",
+          "MED-3931",
+          "MED-2111",
+          "MED-3243",
+          "MED-4389"
+        ],
+        "PLAIN-227": [
+          "MED-4150",
+          "MED-4281",
+          "MED-1466",
+          "MED-1752",
+          "MED-3466",
+          "MED-3157",
+          "MED-4405",
+          "MED-3534",
+          "MED-5233",
+          "MED-1474"
+        ],
+        "PLAIN-238": [
+          "MED-2494",
+          "MED-2493",
+          "MED-3027",
+          "MED-4739",
+          "MED-2391",
+          "MED-5101",
+          "MED-4205",
+          "MED-4932",
+          "MED-1774",
+          "MED-4168"
+        ],
+        "PLAIN-248": [
+          "MED-4234",
+          "MED-3243",
+          "MED-4239",
+          "MED-4233",
+          "MED-3244",
+          "MED-3874",
+          "MED-4885",
+          "MED-3877",
+          "MED-4230",
+          "MED-3878"
+        ],
+        "PLAIN-259": [
+          "MED-4295",
+          "MED-4296",
+          "MED-2430",
+          "MED-4573",
+          "MED-1428",
+          "MED-3555",
+          "MED-2439",
+          "MED-2152",
+          "MED-3989",
+          "MED-1258"
+        ],
+        "PLAIN-270": [
+          "MED-4331",
+          "MED-5245",
+          "MED-4439",
+          "MED-4776",
+          "MED-5123",
+          "MED-4774",
+          "MED-2167",
+          "MED-1645",
+          "MED-5156",
+          "MED-870"
+        ],
+        "PLAIN-280": [
+          "MED-5097",
+          "MED-4739",
+          "MED-4376",
+          "MED-3034",
+          "MED-4948",
+          "MED-3023",
+          "MED-2906",
+          "MED-3025",
+          "MED-2904",
+          "MED-3026"
+        ],
+        "PLAIN-291": [
+          "MED-4639",
+          "MED-4517",
+          "MED-3858",
+          "MED-3856",
+          "MED-2437",
+          "MED-4643",
+          "MED-3697",
+          "MED-2107",
+          "MED-4741",
+          "MED-4641"
+        ],
+        "PLAIN-307": [
+          "MED-716",
+          "MED-4575",
+          "MED-714",
+          "MED-4872",
+          "MED-919",
+          "MED-4573",
+          "MED-4570",
+          "MED-920",
+          "MED-3991",
+          "MED-3985"
+        ],
+        "PLAIN-320": [
+          "MED-2437",
+          "MED-2423",
+          "MED-3862",
+          "MED-5066",
+          "MED-3791",
+          "MED-2417",
+          "MED-4450",
+          "MED-2424",
+          "MED-3858",
+          "MED-5111"
+        ],
+        "PLAIN-332": [
+          "MED-760",
+          "MED-5265",
+          "MED-5084",
+          "MED-2951",
+          "MED-4689",
+          "MED-2970",
+          "MED-2972",
+          "MED-5263",
+          "MED-1383",
+          "MED-5305"
+        ],
+        "PLAIN-344": [
+          "MED-2394",
+          "MED-2405",
+          "MED-2395",
+          "MED-2388",
+          "MED-4735",
+          "MED-1961",
+          "MED-2756",
+          "MED-4732",
+          "MED-5238",
+          "MED-1962"
+        ],
+        "PLAIN-358": [
+          "MED-3788",
+          "MED-1257",
+          "MED-1885",
+          "MED-1366",
+          "MED-5333",
+          "MED-2528",
+          "MED-1489",
+          "MED-1398",
+          "MED-1399",
+          "MED-5151"
+        ],
+        "PLAIN-371": [
+          "MED-4618",
+          "MED-4619",
+          "MED-4620",
+          "MED-5010",
+          "MED-5011",
+          "MED-1291",
+          "MED-5009",
+          "MED-1666",
+          "MED-3245",
+          "MED-1146"
+        ],
+        "PLAIN-383": [
+          "MED-4469",
+          "MED-1479",
+          "MED-4299",
+          "MED-1478",
+          "MED-2124",
+          "MED-2117",
+          "MED-4600",
+          "MED-2572",
+          "MED-728",
+          "MED-2220"
+        ],
+        "PLAIN-395": [
+          "MED-2783",
+          "MED-2816",
+          "MED-2794",
+          "MED-2815",
+          "MED-2810",
+          "MED-2831",
+          "MED-2811",
+          "MED-2824",
+          "MED-2820",
+          "MED-2818"
+        ],
+        "PLAIN-407": [
+          "MED-906",
+          "MED-2618",
+          "MED-957",
+          "MED-4870",
+          "MED-2994",
+          "MED-5063",
+          "MED-4604",
+          "MED-2619",
+          "MED-2817",
+          "MED-2202"
+        ],
+        "PLAIN-418": [
+          "MED-917",
+          "MED-3714",
+          "MED-3738",
+          "MED-2453",
+          "MED-2285",
+          "MED-3375",
+          "MED-2068",
+          "MED-4414",
+          "MED-2074",
+          "MED-4496"
+        ],
+        "PLAIN-430": [
+          "MED-928",
+          "MED-927",
+          "MED-1620",
+          "MED-2750",
+          "MED-4631",
+          "MED-4366",
+          "MED-4936",
+          "MED-4731",
+          "MED-5095",
+          "MED-2753"
+        ],
+        "PLAIN-441": [
+          "MED-942",
+          "MED-941",
+          "MED-4701",
+          "MED-4703",
+          "MED-4702",
+          "MED-5019",
+          "MED-4600",
+          "MED-4554",
+          "MED-4590",
+          "MED-840"
+        ],
+        "PLAIN-457": [
+          "MED-2716",
+          "MED-4602",
+          "MED-1513",
+          "MED-1751",
+          "MED-4156",
+          "MED-2710",
+          "MED-1486",
+          "MED-1625",
+          "MED-4255",
+          "MED-4613"
+        ],
+        "PLAIN-468": [
+          "MED-4573",
+          "MED-3990",
+          "MED-3988",
+          "MED-3991",
+          "MED-961",
+          "MED-3987",
+          "MED-962",
+          "MED-3989",
+          "MED-4566",
+          "MED-919"
+        ],
+        "PLAIN-478": [
+          "MED-2400",
+          "MED-3630",
+          "MED-3622",
+          "MED-5173",
+          "MED-2309",
+          "MED-3636",
+          "MED-2082",
+          "MED-4096",
+          "MED-4983",
+          "MED-1523"
+        ],
+        "PLAIN-488": [
+          "MED-1798",
+          "MED-1808",
+          "MED-1804",
+          "MED-1796",
+          "MED-1799",
+          "MED-1800",
+          "MED-1810",
+          "MED-1806",
+          "MED-4766",
+          "MED-1803"
+        ],
+        "PLAIN-499": [
+          "MED-5198",
+          "MED-1417",
+          "MED-1747",
+          "MED-5201",
+          "MED-2900",
+          "MED-1475",
+          "MED-2213",
+          "MED-4095",
+          "MED-1115",
+          "MED-1464"
+        ],
+        "PLAIN-510": [
+          "MED-2940",
+          "MED-3627",
+          "MED-5320",
+          "MED-1281",
+          "MED-4884",
+          "MED-1020",
+          "MED-5313",
+          "MED-3527",
+          "MED-4555",
+          "MED-5317"
+        ],
+        "PLAIN-520": [
+          "MED-3111",
+          "MED-1950",
+          "MED-3107",
+          "MED-4055",
+          "MED-4047",
+          "MED-910",
+          "MED-1953",
+          "MED-4908",
+          "MED-5034",
+          "MED-1560"
+        ],
+        "PLAIN-531": [
+          "MED-1017",
+          "MED-4371",
+          "MED-4156",
+          "MED-4374",
+          "MED-2472",
+          "MED-4372",
+          "MED-866",
+          "MED-2441",
+          "MED-3607",
+          "MED-3726"
+        ],
+        "PLAIN-541": [
+          "MED-3619",
+          "MED-3618",
+          "MED-4036",
+          "MED-872",
+          "MED-3621",
+          "MED-4028",
+          "MED-4791",
+          "MED-2096",
+          "MED-1988",
+          "MED-3692"
+        ],
+        "PLAIN-551": [
+          "MED-4381",
+          "MED-4380",
+          "MED-4663",
+          "MED-3537",
+          "MED-1283",
+          "MED-1506",
+          "MED-2214",
+          "MED-982",
+          "MED-3772",
+          "MED-991"
+        ]
+      }
+    }
+  }
+}

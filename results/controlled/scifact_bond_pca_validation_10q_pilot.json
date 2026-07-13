@@ -1,0 +1,767 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T14:26:15.644370+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0,
+        1
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/scifact_full_benchmark",
+        "--embeddings-dir",
+        "../artifacts/scifact_full_benchmark_embeddings",
+        "--output",
+        "results/controlled/scifact_bond_pca_validation_10q_pilot.json",
+        "--max-documents",
+        "0",
+        "--query-start",
+        "0",
+        "--max-queries",
+        "10",
+        "--k",
+        "10",
+        "--seed-counts",
+        "500",
+        "--include-oracle-seeds",
+        "--rotation",
+        "pca",
+        "--threads",
+        "4",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "3"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "4",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark/qrels.json": {
+        "bytes": 1831,
+        "sha256": "e0af8355bd9bdc7dcad36f8b6d1dcfcd25b120b115d232d43ac9c652a7ff4939"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 571808088,
+        "sha256": "239aa14cb8ec8693fd1f1c63ddd0b485aa021c4533b4cb79f0376c63d0a3c192"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 459610,
+        "sha256": "b0a6c6d13a67cb207149706ca681897e544f2498851dca0a5d9eb1cc748e7239"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 37797,
+        "sha256": "29a23a4c06ed3886d81677ac6663ecfbd2d30a08eec6c1a958f81814833b15ff"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+    "query_start": 0,
+    "documents": 5183,
+    "queries": 10,
+    "document_token_vectors": 1193945,
+    "query_token_vectors": 180,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 11
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      500
+    ],
+    "include_oracle_seeds": true,
+    "skip_prefix_seeds": false,
+    "threads": 4,
+    "warmup_runs": 1,
+    "measured_runs": 3,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "uncentered PCA eigenvectors by descending eigenvalue",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs"
+  },
+  "offline_index_build": {
+    "preprocessing": {
+      "rotation": "uncentered_pca_descending_second_moment",
+      "fit_seconds": 0.44363148699999755,
+      "transform_seconds": 0.21995645799999863,
+      "batch_size": 32768,
+      "rotation_sha256": "e473f8a7236556ece4c539c0662da3920bfb4c73717ad0086589b3f538e7a9fb",
+      "float32_orthogonality_max_abs_error": 2.5305115003426693e-08,
+      "cumulative_energy_fraction": {
+        "8": 0.909120904436657,
+        "16": 0.9255741512737703,
+        "32": 0.9495903621402101,
+        "64": 0.977644415657152,
+        "96": 0.992604608915683,
+        "128": 1.0
+      }
+    },
+    "bond_vertical_index_seconds": 1.6577051900000015,
+    "estimated_vertical_values_bytes": 611299840,
+    "estimated_residual_norm_bytes": 57309360
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed500",
+      "bond_oracle_topk_seeds"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed500",
+        "bond_oracle_topk_seeds"
+      ],
+      [
+        "bond_seed500",
+        "bond_oracle_topk_seeds",
+        "compiled_exact"
+      ],
+      [
+        "bond_oracle_topk_seeds",
+        "compiled_exact",
+        "bond_seed500"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 3,
+      "end_to_end_seconds": [
+        0.6800520880000107,
+        0.6839609670000044,
+        0.7199156550000083
+      ],
+      "end_to_end_summary": {
+        "count": 3,
+        "min": 0.6800520880000107,
+        "p25": 0.6820065275000076,
+        "median": 0.6839609670000044,
+        "mean": 0.6946429033333411,
+        "p75": 0.7019383110000064,
+        "p95": 0.7163201862000079,
+        "max": 0.7199156550000083
+      },
+      "stage_seconds": {
+        "exact_score": [
+          0.6764517649999959,
+          0.6803745309999982,
+          0.7162991430000005
+        ],
+        "topk": [
+          0.003586937000008561,
+          0.003572559999994951,
+          0.0036000909999955866
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 3,
+          "min": 0.6764517649999959,
+          "p25": 0.6784131479999971,
+          "median": 0.6803745309999982,
+          "mean": 0.6910418129999982,
+          "p75": 0.6983368369999994,
+          "p95": 0.7127066818000003,
+          "max": 0.7162991430000005
+        },
+        "topk": {
+          "count": 3,
+          "min": 0.003572559999994951,
+          "p25": 0.003579748500001756,
+          "median": 0.003586937000008561,
+          "mean": 0.003586529333333033,
+          "p75": 0.0035935140000020738,
+          "p95": 0.003598775599996884,
+          "max": 0.0036000909999955866
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.4,
+      "recall@3": 0.6,
+      "recall@5": 0.6,
+      "recall@10": 0.75,
+      "mrr@10": 0.5076190476190476
+    },
+    "topk_rankings": {
+      "1": [
+        "40212412",
+        "18953920",
+        "16532419",
+        "4346436",
+        "38037690",
+        "10931595",
+        "1156322",
+        "27049238",
+        "11674288",
+        "21456232"
+      ],
+      "3": [
+        "2739854",
+        "23389795",
+        "14717500",
+        "2107238",
+        "19058822",
+        "4632921",
+        "4378885",
+        "13519661",
+        "3672261",
+        "4414547"
+      ],
+      "5": [
+        "13734012",
+        "18617259",
+        "23124332",
+        "21550246",
+        "1292369",
+        "1583041",
+        "695938",
+        "19140422",
+        "23531592",
+        "24512064"
+      ],
+      "13": [
+        "7662395",
+        "17450673",
+        "35714909",
+        "26611834",
+        "4791384",
+        "16204011",
+        "25182647",
+        "1263446",
+        "23557241",
+        "33740844"
+      ],
+      "36": [
+        "42441846",
+        "33409100",
+        "18256197",
+        "37424881",
+        "3215494",
+        "4442799",
+        "16252863",
+        "18557974",
+        "21636085",
+        "11705328"
+      ],
+      "42": [
+        "18174210",
+        "40913091",
+        "45218443",
+        "27889071",
+        "6315132",
+        "2460304",
+        "25420421",
+        "4449524",
+        "8083310",
+        "27162821"
+      ],
+      "48": [
+        "11349166",
+        "18617259",
+        "27063470",
+        "23203102",
+        "24512064",
+        "3078080",
+        "13734012",
+        "3716075",
+        "29955650",
+        "23531592"
+      ],
+      "49": [
+        "5953485",
+        "5702790",
+        "7029990",
+        "86602746",
+        "12652963",
+        "5409325",
+        "23913146",
+        "950306",
+        "15590539",
+        "12582729"
+      ],
+      "50": [
+        "18488986",
+        "12580014",
+        "25738896",
+        "13989491",
+        "4561402",
+        "39559521",
+        "15405204",
+        "29785642",
+        "1583134",
+        "17844478"
+      ],
+      "51": [
+        "45638119",
+        "8963413",
+        "23830488",
+        "24341590",
+        "29366489",
+        "4429932",
+        "16734530",
+        "7821634",
+        "25973484",
+        "8512633"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed500": {
+      "seed_count": 500,
+      "seed_policy": "deterministic_document_prefix",
+      "implementable_without_external_candidates": true,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          8.655744004999988,
+          9.073990878999993,
+          8.765850179999987
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 8.655744004999988,
+          "p25": 8.710797092499988,
+          "median": 8.765850179999987,
+          "mean": 8.83186168799999,
+          "p75": 8.91992052949999,
+          "p95": 9.043176809099993,
+          "max": 9.073990878999993
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            8.655726582,
+            9.073975699000002,
+            8.76583594200001
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 8.655726582,
+            "p25": 8.710781262000005,
+            "median": 8.76583594200001,
+            "mean": 8.831846074333336,
+            "p75": 8.919905820500006,
+            "p95": 9.043161723300003,
+            "max": 9.073975699000002
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 10,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 10,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 10,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 10,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 2.5882760574802433e-06,
+        "mean_abs_error": 8.246190573402146e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.4,
+        "recall@3": 0.6,
+        "recall@5": 0.6,
+        "recall@10": 0.75,
+        "mrr@10": 0.5076190476190476
+      },
+      "work": {
+        "documents_pruned": 44195,
+        "documents_exactly_scored": 7635,
+        "total_query_document_pairs": 51830,
+        "pruned_document_fraction": 0.8526914914142388,
+        "component_products": 18908559616,
+        "full_component_products": 27508492800,
+        "component_product_ratio": 0.6873717056573888,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 20272,
+          "96": 23923,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ],
+        "3": [
+          "2739854",
+          "23389795",
+          "14717500",
+          "2107238",
+          "19058822",
+          "4632921",
+          "4378885",
+          "13519661",
+          "3672261",
+          "4414547"
+        ],
+        "5": [
+          "13734012",
+          "18617259",
+          "23124332",
+          "21550246",
+          "1292369",
+          "1583041",
+          "695938",
+          "19140422",
+          "23531592",
+          "24512064"
+        ],
+        "13": [
+          "7662395",
+          "17450673",
+          "35714909",
+          "26611834",
+          "4791384",
+          "16204011",
+          "25182647",
+          "1263446",
+          "23557241",
+          "33740844"
+        ],
+        "36": [
+          "42441846",
+          "33409100",
+          "18256197",
+          "37424881",
+          "3215494",
+          "4442799",
+          "16252863",
+          "18557974",
+          "21636085",
+          "11705328"
+        ],
+        "42": [
+          "18174210",
+          "40913091",
+          "45218443",
+          "27889071",
+          "6315132",
+          "2460304",
+          "25420421",
+          "4449524",
+          "8083310",
+          "27162821"
+        ],
+        "48": [
+          "11349166",
+          "18617259",
+          "27063470",
+          "23203102",
+          "24512064",
+          "3078080",
+          "13734012",
+          "3716075",
+          "29955650",
+          "23531592"
+        ],
+        "49": [
+          "5953485",
+          "5702790",
+          "7029990",
+          "86602746",
+          "12652963",
+          "5409325",
+          "23913146",
+          "950306",
+          "15590539",
+          "12582729"
+        ],
+        "50": [
+          "18488986",
+          "12580014",
+          "25738896",
+          "13989491",
+          "4561402",
+          "39559521",
+          "15405204",
+          "29785642",
+          "1583134",
+          "17844478"
+        ],
+        "51": [
+          "45638119",
+          "8963413",
+          "23830488",
+          "24341590",
+          "29366489",
+          "4429932",
+          "16734530",
+          "7821634",
+          "25973484",
+          "8512633"
+        ]
+      }
+    },
+    "bond_oracle_topk_seeds": {
+      "seed_count": 10,
+      "seed_policy": "free_exact_topk_oracle",
+      "implementable_without_external_candidates": false,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 3,
+        "end_to_end_seconds": [
+          9.553518018000005,
+          8.951532337999993,
+          9.188761016
+        ],
+        "end_to_end_summary": {
+          "count": 3,
+          "min": 8.951532337999993,
+          "p25": 9.070146676999997,
+          "median": 9.188761016,
+          "mean": 9.231270457333332,
+          "p75": 9.371139517000003,
+          "p95": 9.517042317800005,
+          "max": 9.553518018000005
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            9.553499934000001,
+            8.951517478999989,
+            9.188730016999997
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 3,
+            "min": 8.951517478999989,
+            "p25": 9.070123747999993,
+            "median": 9.188730016999997,
+            "mean": 9.23124914333333,
+            "p75": 9.3711149755,
+            "p95": 9.5170229423,
+            "max": 9.553499934000001
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 10,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 10,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 10,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 10,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 2.5882760574802433e-06,
+        "mean_abs_error": 8.246190573402146e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.4,
+        "recall@3": 0.6,
+        "recall@5": 0.6,
+        "recall@10": 0.75,
+        "mrr@10": 0.5076190476190476
+      },
+      "work": {
+        "documents_pruned": 50598,
+        "documents_exactly_scored": 1232,
+        "total_query_document_pairs": 51830,
+        "pruned_document_fraction": 0.9762299826355393,
+        "component_products": 17040967808,
+        "full_component_products": 27508492800,
+        "component_product_ratio": 0.6194802431342221,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 28468,
+          "96": 22130,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ],
+        "3": [
+          "2739854",
+          "23389795",
+          "14717500",
+          "2107238",
+          "19058822",
+          "4632921",
+          "4378885",
+          "13519661",
+          "3672261",
+          "4414547"
+        ],
+        "5": [
+          "13734012",
+          "18617259",
+          "23124332",
+          "21550246",
+          "1292369",
+          "1583041",
+          "695938",
+          "19140422",
+          "23531592",
+          "24512064"
+        ],
+        "13": [
+          "7662395",
+          "17450673",
+          "35714909",
+          "26611834",
+          "4791384",
+          "16204011",
+          "25182647",
+          "1263446",
+          "23557241",
+          "33740844"
+        ],
+        "36": [
+          "42441846",
+          "33409100",
+          "18256197",
+          "37424881",
+          "3215494",
+          "4442799",
+          "16252863",
+          "18557974",
+          "21636085",
+          "11705328"
+        ],
+        "42": [
+          "18174210",
+          "40913091",
+          "45218443",
+          "27889071",
+          "6315132",
+          "2460304",
+          "25420421",
+          "4449524",
+          "8083310",
+          "27162821"
+        ],
+        "48": [
+          "11349166",
+          "18617259",
+          "27063470",
+          "23203102",
+          "24512064",
+          "3078080",
+          "13734012",
+          "3716075",
+          "29955650",
+          "23531592"
+        ],
+        "49": [
+          "5953485",
+          "5702790",
+          "7029990",
+          "86602746",
+          "12652963",
+          "5409325",
+          "23913146",
+          "950306",
+          "15590539",
+          "12582729"
+        ],
+        "50": [
+          "18488986",
+          "12580014",
+          "25738896",
+          "13989491",
+          "4561402",
+          "39559521",
+          "15405204",
+          "29785642",
+          "1583134",
+          "17844478"
+        ],
+        "51": [
+          "45638119",
+          "8963413",
+          "23830488",
+          "24341590",
+          "29366489",
+          "4429932",
+          "16734530",
+          "7821634",
+          "25973484",
+          "8512633"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,554 @@
+{
+  "schema_version": "controlled_bond_pilot_v1",
+  "status": "pilot_not_final_claim",
+  "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
+  "metadata": {
+    "captured_at_utc": "2026-07-13T13:49:47.227520+00:00",
+    "git": {
+      "commit": "a3fb47aa5cab9acb137699cb90c0b63e84e1eb30",
+      "dirty": true
+    },
+    "runtime": {
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "system": "Linux",
+      "release": "6.6.87.2-microsoft-standard-WSL2",
+      "machine": "x86_64",
+      "processor": "AMD Ryzen 7 5800H with Radeon Graphics",
+      "logical_cpu_count": 16,
+      "process_cpu_affinity": [
+        0,
+        1
+      ],
+      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "command": [
+        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "experiments/pipeline/10_controlled_bond_pilot.py",
+        "--corpus-dir",
+        "../artifacts/scifact_full_benchmark",
+        "--embeddings-dir",
+        "../artifacts/scifact_full_benchmark_embeddings",
+        "--output",
+        "results/controlled/scifact_bond_validation_10q_pilot.json",
+        "--max-documents",
+        "0",
+        "--query-start",
+        "0",
+        "--max-queries",
+        "10",
+        "--k",
+        "10",
+        "--seed-counts",
+        "500",
+        "--threads",
+        "4",
+        "--warmup-runs",
+        "1",
+        "--measured-runs",
+        "5"
+      ],
+      "working_directory": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering",
+      "thread_environment": {
+        "OMP_NUM_THREADS": "4",
+        "OMP_DYNAMIC": "FALSE",
+        "OMP_PROC_BIND": "TRUE",
+        "OMP_PLACES": "cores",
+        "OPENBLAS_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "NUMEXPR_NUM_THREADS": null,
+        "VECLIB_MAXIMUM_THREADS": null,
+        "GOMP_CPU_AFFINITY": null
+      },
+      "packages": {
+        "numpy": "2.4.6",
+        "faiss-cpu": "1.14.2",
+        "pylate": null,
+        "pdxearch": "0.1"
+      }
+    },
+    "inputs": {
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark/qrels.json": {
+        "bytes": 1831,
+        "sha256": "e0af8355bd9bdc7dcad36f8b6d1dcfcd25b120b115d232d43ac9c652a7ff4939"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/documents_packed.npz": {
+        "bytes": 571808088,
+        "sha256": "239aa14cb8ec8693fd1f1c63ddd0b485aa021c4533b4cb79f0376c63d0a3c192"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings/queries_packed.npz": {
+        "bytes": 459610,
+        "sha256": "b0a6c6d13a67cb207149706ca681897e544f2498851dca0a5d9eb1cc748e7239"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/exact_maxsim/exact_maxsim.cpp": {
+        "bytes": 6746,
+        "sha256": "458e3e28e8398064299d5330985afaca5bb686011327619107d3bd9d78fe6664"
+      },
+      "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/Data-Engineering/cpp/bond_maxsim/bond_maxsim.cpp": {
+        "bytes": 33360,
+        "sha256": "39f17545b67da198a7f6ae56d138c2dddc06a14ef654cadb35fe2c364d691086"
+      }
+    }
+  },
+  "dataset": {
+    "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+    "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+    "query_start": 0,
+    "documents": 5183,
+    "queries": 10,
+    "document_token_vectors": 1193945,
+    "query_token_vectors": 180,
+    "embedding_dimension": 128,
+    "retained_qrels_labels": 11
+  },
+  "config": {
+    "k": 10,
+    "checkpoints": [
+      8,
+      16,
+      32,
+      64,
+      96,
+      128
+    ],
+    "seed_counts": [
+      500
+    ],
+    "threads": 4,
+    "warmup_runs": 1,
+    "measured_runs": 5,
+    "metric": "inner product on independently L2-normalized token vectors",
+    "dimension_order": "natural model order",
+    "threshold": "kth-largest conservative lower bound from exactly scored docs"
+  },
+  "offline_index_build": {
+    "bond_vertical_index_seconds": 1.564395404999999,
+    "estimated_vertical_values_bytes": 611299840,
+    "estimated_residual_norm_bytes": 57309360
+  },
+  "interleaving": {
+    "arm_order": [
+      "compiled_exact",
+      "bond_seed500"
+    ],
+    "measured_execution_order": [
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ],
+      [
+        "bond_seed500",
+        "compiled_exact"
+      ],
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ],
+      [
+        "bond_seed500",
+        "compiled_exact"
+      ],
+      [
+        "compiled_exact",
+        "bond_seed500"
+      ]
+    ]
+  },
+  "exact_reference": {
+    "timing": {
+      "warmup_runs": 1,
+      "measured_runs": 5,
+      "end_to_end_seconds": [
+        0.6099355389999914,
+        0.61003082000002,
+        0.798126198000034,
+        0.6199127299999532,
+        0.6293197030000215
+      ],
+      "end_to_end_summary": {
+        "count": 5,
+        "min": 0.6099355389999914,
+        "p25": 0.61003082000002,
+        "median": 0.6199127299999532,
+        "mean": 0.653464998000004,
+        "p75": 0.6293197030000215,
+        "p95": 0.7643648990000315,
+        "max": 0.798126198000034
+      },
+      "stage_seconds": {
+        "exact_score": [
+          0.6066176049999967,
+          0.606488598999988,
+          0.7946752400000037,
+          0.6164853270000208,
+          0.6258804679999912
+        ],
+        "topk": [
+          0.0033055510000110644,
+          0.0035274330000447662,
+          0.0034373519999917335,
+          0.003414437000003545,
+          0.003426560999969297
+        ]
+      },
+      "stage_summaries": {
+        "exact_score": {
+          "count": 5,
+          "min": 0.606488598999988,
+          "p25": 0.6066176049999967,
+          "median": 0.6164853270000208,
+          "mean": 0.6500294478,
+          "p75": 0.6258804679999912,
+          "p95": 0.7609162856000011,
+          "max": 0.7946752400000037
+        },
+        "topk": {
+          "count": 5,
+          "min": 0.0033055510000110644,
+          "p25": 0.003414437000003545,
+          "median": 0.003426560999969297,
+          "mean": 0.0034222668000040814,
+          "p75": 0.0034373519999917335,
+          "p95": 0.0035094168000341596,
+          "max": 0.0035274330000447662
+        }
+      }
+    },
+    "qrels_metrics": {
+      "recall@1": 0.4,
+      "recall@3": 0.6,
+      "recall@5": 0.6,
+      "recall@10": 0.75,
+      "mrr@10": 0.5076190476190476
+    },
+    "topk_rankings": {
+      "1": [
+        "40212412",
+        "18953920",
+        "16532419",
+        "4346436",
+        "38037690",
+        "10931595",
+        "1156322",
+        "27049238",
+        "11674288",
+        "21456232"
+      ],
+      "3": [
+        "2739854",
+        "23389795",
+        "14717500",
+        "2107238",
+        "19058822",
+        "4632921",
+        "4378885",
+        "13519661",
+        "3672261",
+        "4414547"
+      ],
+      "5": [
+        "13734012",
+        "18617259",
+        "23124332",
+        "21550246",
+        "1292369",
+        "1583041",
+        "695938",
+        "19140422",
+        "23531592",
+        "24512064"
+      ],
+      "13": [
+        "7662395",
+        "17450673",
+        "35714909",
+        "26611834",
+        "4791384",
+        "16204011",
+        "25182647",
+        "1263446",
+        "23557241",
+        "33740844"
+      ],
+      "36": [
+        "42441846",
+        "33409100",
+        "18256197",
+        "37424881",
+        "3215494",
+        "4442799",
+        "16252863",
+        "18557974",
+        "21636085",
+        "11705328"
+      ],
+      "42": [
+        "18174210",
+        "40913091",
+        "45218443",
+        "27889071",
+        "6315132",
+        "2460304",
+        "25420421",
+        "4449524",
+        "8083310",
+        "27162821"
+      ],
+      "48": [
+        "11349166",
+        "18617259",
+        "27063470",
+        "23203102",
+        "24512064",
+        "3078080",
+        "13734012",
+        "3716075",
+        "29955650",
+        "23531592"
+      ],
+      "49": [
+        "5953485",
+        "5702790",
+        "7029990",
+        "86602746",
+        "12652963",
+        "5409325",
+        "23913146",
+        "950306",
+        "15590539",
+        "12582729"
+      ],
+      "50": [
+        "18488986",
+        "12580014",
+        "25738896",
+        "13989491",
+        "4561402",
+        "39559521",
+        "15405204",
+        "29785642",
+        "1583134",
+        "17844478"
+      ],
+      "51": [
+        "45638119",
+        "8963413",
+        "23830488",
+        "24341590",
+        "29366489",
+        "4429932",
+        "16734530",
+        "7821634",
+        "25973484",
+        "8512633"
+      ]
+    }
+  },
+  "bond_arms": {
+    "bond_seed500": {
+      "seed_count": 500,
+      "timing": {
+        "warmup_runs": 1,
+        "measured_runs": 5,
+        "end_to_end_seconds": [
+          11.132053556000017,
+          10.265445591999992,
+          11.05347332499997,
+          10.338116064000019,
+          11.098700083999972
+        ],
+        "end_to_end_summary": {
+          "count": 5,
+          "min": 10.265445591999992,
+          "p25": 10.338116064000019,
+          "median": 11.05347332499997,
+          "mean": 10.777557724199994,
+          "p75": 11.098700083999972,
+          "p95": 11.125382861600007,
+          "max": 11.132053556000017
+        },
+        "stage_seconds": {
+          "bond_search_topk": [
+            11.132037175000022,
+            10.265431015000019,
+            11.053458035999995,
+            10.33810080500001,
+            11.09868506600003
+          ]
+        },
+        "stage_summaries": {
+          "bond_search_topk": {
+            "count": 5,
+            "min": 10.265431015000019,
+            "p25": 10.33810080500001,
+            "median": 11.053458035999995,
+            "mean": 10.777542419400016,
+            "p75": 11.09868506600003,
+            "p95": 11.125366753200023,
+            "max": 11.132037175000022
+          }
+        }
+      },
+      "exact_recovery": {
+        "mean_recall@1": 1.0,
+        "all_top1_recovered_queries": 10,
+        "mean_recall@3": 1.0,
+        "all_top3_recovered_queries": 10,
+        "mean_recall@5": 1.0,
+        "all_top5_recovered_queries": 10,
+        "mean_recall@10": 1.0,
+        "all_top10_recovered_queries": 10,
+        "rankings_identical": true
+      },
+      "score_validation": {
+        "max_abs_error": 3.4156160744203135e-06,
+        "mean_abs_error": 8.73122713596075e-07
+      },
+      "qrels_metrics": {
+        "recall@1": 0.4,
+        "recall@3": 0.6,
+        "recall@5": 0.6,
+        "recall@10": 0.75,
+        "mrr@10": 0.5076190476190476
+      },
+      "work": {
+        "documents_pruned": 5005,
+        "documents_exactly_scored": 46825,
+        "total_query_document_pairs": 51830,
+        "pruned_document_fraction": 0.09656569554312175,
+        "component_products": 26845951808,
+        "full_component_products": 27508492800,
+        "component_product_ratio": 0.975915038427696,
+        "pruned_by_checkpoint": {
+          "8": 0,
+          "16": 0,
+          "32": 0,
+          "64": 0,
+          "96": 5005,
+          "128": 0
+        }
+      },
+      "topk_rankings": {
+        "1": [
+          "40212412",
+          "18953920",
+          "16532419",
+          "4346436",
+          "38037690",
+          "10931595",
+          "1156322",
+          "27049238",
+          "11674288",
+          "21456232"
+        ],
+        "3": [
+          "2739854",
+          "23389795",
+          "14717500",
+          "2107238",
+          "19058822",
+          "4632921",
+          "4378885",
+          "13519661",
+          "3672261",
+          "4414547"
+        ],
+        "5": [
+          "13734012",
+          "18617259",
+          "23124332",
+          "21550246",
+          "1292369",
+          "1583041",
+          "695938",
+          "19140422",
+          "23531592",
+          "24512064"
+        ],
+        "13": [
+          "7662395",
+          "17450673",
+          "35714909",
+          "26611834",
+          "4791384",
+          "16204011",
+          "25182647",
+          "1263446",
+          "23557241",
+          "33740844"
+        ],
+        "36": [
+          "42441846",
+          "33409100",
+          "18256197",
+          "37424881",
+          "3215494",
+          "4442799",
+          "16252863",
+          "18557974",
+          "21636085",
+          "11705328"
+        ],
+        "42": [
+          "18174210",
+          "40913091",
+          "45218443",
+          "27889071",
+          "6315132",
+          "2460304",
+          "25420421",
+          "4449524",
+          "8083310",
+          "27162821"
+        ],
+        "48": [
+          "11349166",
+          "18617259",
+          "27063470",
+          "23203102",
+          "24512064",
+          "3078080",
+          "13734012",
+          "3716075",
+          "29955650",
+          "23531592"
+        ],
+        "49": [
+          "5953485",
+          "5702790",
+          "7029990",
+          "86602746",
+          "12652963",
+          "5409325",
+          "23913146",
+          "950306",
+          "15590539",
+          "12582729"
+        ],
+        "50": [
+          "18488986",
+          "12580014",
+          "25738896",
+          "13989491",
+          "4561402",
+          "39559521",
+          "15405204",
+          "29785642",
+          "1583134",
+          "17844478"
+        ],
+        "51": [
+          "45638119",
+          "8963413",
+          "23830488",
+          "24341590",
+          "29366489",
+          "4429932",
+          "16734530",
+          "7821634",
+          "25973484",
+          "8512633"
+        ]
+      }
+    }
+  }
+}
