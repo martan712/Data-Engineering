@@ -1,7 +1,7 @@
 # Accelerating ColBERT Multi-Vector Search with PDX/BOND
 
-Draft project report. The core compiled comparisons are complete as pilots;
-timings remain pending a frozen clean-worktree release run.
+Final project report. The core compiled comparisons were rerun from clean commit
+`0cc6145`; raw artifacts and integrity metadata are under `results/final/`.
 
 ## Abstract
 
@@ -23,35 +23,35 @@ An audit found that the first wall-clock comparisons used an inefficient NumPy
 exact baseline, unmatched rerank budgets, incomplete timing boundaries, and
 cross-machine values. Those speedup claims were withdrawn. A new independently
 implemented C++ exact MaxSim kernel and a controlled same-process runner now
-measure complete FAISS-IVF and PDX-IVF pipelines. On a held-out SciFact pilot,
+measure complete FAISS-IVF and PDX-IVF pipelines. On held-out SciFact,
 both engines have identical ranking-recovery curves. Reranking 200 documents per
 query recovers 0.975 of the exact top-10 while evaluating 3.86% of all
 query-document pairs; reranking the complete candidate pool recovers the exact
-top-10 with about 12% of the comparisons. PDX search is slower than FAISS at low
-rerank budgets on the tested system.
+top-10 with about 12% of the comparisons. Engine latency ordering changes across
+budgets and datasets, so no consistent PDX-specific advantage is observed.
 
 The independently implemented exact-safe BOND-MaxSim kernel also reproduces the
 exact top-10 on all 40 held-out queries. It prunes 22.4% of query-document pairs,
 but all pruning occurs after 96 of 128 dimensions and it evaluates 95.47% of
-exhaustive component products. Its median latency is 42.07 seconds versus 3.40
-seconds for compiled exhaustive MaxSim in the same interleaved runner. The
+exhaustive component products. Its median latency is 46.49 seconds versus 4.27
+seconds for precision-matched compiled exhaustive MaxSim in the same interleaved runner. The
 result supports a negative answer for raw ColBERT dimensions: the bounds become
 useful too late to offset their runtime overhead.
 
 A free exact-top-10 oracle seed policy reduces raw work only to 92.43%. A global
 PCA rotation concentrates 90.91% of token energy in the first eight components
 and reduces work to 69.02% with deterministic seeds or 61.53% with oracle seeds.
-Despite that real arithmetic reduction, both PCA BOND arms remain more than 12
+Despite that real arithmetic reduction, both PCA BOND arms remain about 8.7
 times slower than their same-run exhaustive reference. Dimension ordering helps
 the bound, but current bound-maintenance and partial-state costs dominate.
 
 The same raw-order configuration was transferred to NFCorpus. It preserves the
 exact top-10 set for all 40 held-out queries but evaluates 94.16% of exhaustive
-component products and has 13.36 times the same-run exhaustive median. The IVF
+component products and has 9.99 times the same-run exhaustive median. The IVF
 transfer is less forgiving than SciFact: full-pool reranking reaches 0.975 exact
 recall@10, demonstrating a candidate-retrieval coverage limit. FAISS and PDX
-again have the same recovery curve, with PDX slightly slower in every matched
-NFCorpus arm.
+again have the same recovery curve, with the PDX token-search stage slightly
+slower in every matched NFCorpus arm.
 
 ## 1. Research objective
 
@@ -154,7 +154,7 @@ bound for selection at fixed L.
 
 ### 3.3 Candidate engines
 
-The controlled pilot uses:
+The controlled release uses:
 
 - FAISS `IndexIVFFlat` with normalized squared L2;
 - PDX `IndexPDXBONDIVFFlat` at pinned commit
@@ -228,33 +228,32 @@ threshold only from conservative lower bounds of fully scored seed documents.
 Partial-dot rounding error is bounded, residual terms are rounded upward, and a
 document is pruned only when its upper bound is strictly below the threshold.
 
-With `seed_count=500`, the first 10 SciFact queries were used as validation and
-the remaining 40 were held out. Both arms used four pinned CPUs, one warm-up,
-five measured interleaved repetitions, and one complete online timer.
+With `seed_count=500`, the first 10 SciFact queries were used during pilot
+validation and the remaining 40 were held out. Final arms use four pinned
+physical cores, float64 products and accumulation, one warm-up, five measured
+interleaved repetitions, and one complete online timer.
 
 | split/arm | median (s) | p95 (s) | exact top-10 | pruned pairs | component ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| validation exact | 0.6199 | 0.7644 | 10/10 | - | 1.0000 |
-| validation BOND | 11.0535 | 11.1254 | 10/10 | 9.7% | 0.9759 |
-| held-out exact | 3.4043 | 3.6615 | 40/40 | - | 1.0000 |
-| held-out BOND | 42.0728 | 44.5968 | 40/40 | 22.4% | 0.9547 |
+| held-out exact | 4.2740 | 4.4105 | 40/40 | - | 1.0000 |
+| held-out BOND | 46.4861 | 48.1111 | 40/40 | 22.4% | 0.9547 |
 
 Every held-out prune occurred at dimension 96. BOND therefore avoided only
 4.53% of component products while paying for residual norms, upper bounds,
 threshold maintenance, branches, and partial-state writes. Its held-out median
-latency was 12.36 times the exhaustive latency. This is a controlled slowdown,
+latency was 10.88 times the exhaustive latency. This is a controlled slowdown,
 not a speedup claim.
 
-The exact kernel accumulates in float while BOND accumulates scores in double;
-their held-out top-k IDs were identical and the maximum reported score
-difference was `7.34e-6`.
+Both kernels use float64 products and accumulation over the same float32 inputs.
+Their held-out ordered top-k IDs are identical and the maximum reported score
+difference is `1.78e-14`.
 
 ### 6.2 Oracle seeds and PCA
 
 Supplying the exact top-10 as free seed IDs removes seed-selection quality as a
 confounder. On raw held-out embeddings, this prunes 36.3% of query-document
 pairs but still evaluates 92.43% of component products because all pruning is at
-dimension 96. Oracle BOND takes 47.2189 seconds versus 2.6676 seconds for its
+dimension 96. Oracle BOND takes 48.1283 seconds versus 4.2740 seconds for its
 same-run exact arm.
 
 Uncentered PCA is fitted offline on document token vectors and applied to both
@@ -263,24 +262,26 @@ arithmetic and has a float32 orthogonality error of `2.53e-8` here.
 
 | held-out arm | BOND median (s) | same-run exact (s) | latency ratio | pruned pairs | component ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| raw, prefix seed=500 | 42.0728 | 3.4043 | 12.36x | 22.4% | 0.9547 |
-| raw, free oracle seeds | 47.2189 | 2.6676 | 17.70x | 36.3% | 0.9243 |
-| PCA, prefix seed=500 | 37.1335 | 2.9804 | 12.46x | 86.3% | 0.6902 |
-| PCA, free oracle seeds | 36.6227 | 2.9804 | 12.29x | 97.9% | 0.6153 |
+| raw, prefix seed=500 | 46.4861 | 4.2740 | 10.88x | 22.4% | 0.9547 |
+| raw, free oracle seeds | 48.1283 | 4.2740 | 11.26x | 36.3% | 0.9243 |
+| PCA, prefix seed=500 | 35.5169 | 4.0591 | 8.75x | 86.3% | 0.6902 |
+| PCA, free oracle seeds | 35.4903 | 4.0591 | 8.74x | 97.9% | 0.6153 |
 
 Absolute timings from separate runs are not compared directly; every latency
 ratio uses the exhaustive arm interleaved in the same run. PCA fit,
 transformation, and vertical index construction are offline and separately
-recorded as 0.536, 0.297, and 1.687 seconds.
+recorded as 0.513, 0.230, and 1.681 seconds.
 
-## 7. Controlled SciFact pilot
+![Exact-safe BOND work and latency](figures/fig7_controlled_bond.png)
+
+## 7. Controlled SciFact release result
 
 ### 7.1 Setup
 
 - 5,183 documents and 1,193,945 document token vectors.
 - First 10 queries used for selector validation.
-- Remaining 40 queries used for the held-out decision pilot.
-- `L=100`, `nprobe=8`, four pinned CPUs and four OpenMP/BLAS threads.
+- Remaining 40 queries used for the held-out release comparison.
+- `L=100`, `nprobe=8`, four pinned physical cores and four OpenMP/BLAS threads.
 - One warm-up and five measured interleaved repetitions.
 - Fixed `approx_score` selector after validation.
 
@@ -291,33 +292,38 @@ recorded as 0.536, 0.297, and 1.687 seconds.
 
 | arm | median (s) | p95 (s) | exact recall@10 | mean C | comparison ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Compiled exact | 2.7766 | 3.1541 | 1.0000 | 5,183 | 1.0000 |
-| FAISS-IVF C=50 | 0.3018 | 0.3822 | 0.8600 | 50.0 | 0.0096 |
-| PDX-IVF C=50 | 0.3425 | 0.4112 | 0.8600 | 50.0 | 0.0096 |
-| FAISS-IVF C=100 | 0.3455 | 0.4309 | 0.9325 | 100.0 | 0.0193 |
-| PDX-IVF C=100 | 0.4307 | 0.5770 | 0.9325 | 100.0 | 0.0193 |
-| FAISS-IVF C=200 | 0.4968 | 0.5608 | 0.9750 | 200.0 | 0.0386 |
-| PDX-IVF C=200 | 0.5664 | 0.6215 | 0.9750 | 200.0 | 0.0386 |
-| FAISS-IVF C=400 | 0.8158 | 0.9364 | 0.9900 | 390.9 | 0.0754 |
-| PDX-IVF C=400 | 0.7961 | 0.9730 | 0.9900 | 390.9 | 0.0754 |
-| FAISS-IVF full pool | 1.2129 | 1.3157 | 1.0000 | 619.3 | 0.1195 |
-| PDX-IVF full pool | 1.1142 | 1.4212 | 1.0000 | 619.3 | 0.1195 |
+| Compiled exact | 2.9333 | 3.1010 | 1.0000 | 5,183 | 1.0000 |
+| FAISS-IVF C=50 | 0.3810 | 0.4003 | 0.8600 | 50.0 | 0.0096 |
+| PDX-IVF C=50 | 0.3495 | 0.3575 | 0.8600 | 50.0 | 0.0096 |
+| FAISS-IVF C=100 | 0.3814 | 0.4025 | 0.9325 | 100.0 | 0.0193 |
+| PDX-IVF C=100 | 0.3973 | 0.4757 | 0.9325 | 100.0 | 0.0193 |
+| FAISS-IVF C=200 | 0.5051 | 0.5885 | 0.9750 | 200.0 | 0.0386 |
+| PDX-IVF C=200 | 0.5411 | 0.5541 | 0.9750 | 200.0 | 0.0386 |
+| FAISS-IVF C=400 | 0.8483 | 0.9233 | 0.9900 | 390.9 | 0.0754 |
+| PDX-IVF C=400 | 0.8820 | 0.9127 | 0.9900 | 390.9 | 0.0754 |
+| FAISS-IVF full pool | 1.2908 | 1.7934 | 1.0000 | 619.3 | 0.1195 |
+| PDX-IVF full pool | 1.2467 | 1.5615 | 1.0000 | 619.3 | 0.1195 |
 
 Every candidate pool contained the complete exact top-10. Quality loss at finite
 C is therefore selector loss. FAISS and PDX have identical recovery values and
-pool sizes. At C=50, PDX token search took a median 0.225 s versus 0.195 s for
-FAISS. At large C, reranking dominates and small total-time reversals are not
-interpreted as an engine advantage.
+pool sizes. Token-search medians differ by at most about 0.02 seconds across the
+reported SciFact arms, and the latency winner changes with budget. At large C,
+reranking dominates. These differences are not interpreted as an engine
+advantage.
 
 Qrels Recall@10 and MRR@10 were identical for every arm despite exact-ranking
 recall ranging from 0.86 to 1.00. This confirms that incomplete qrels cannot
 diagnose the architecture loss on this small query set.
 
-A one-thread follow-up measured 8.068 s for compiled exact, 1.824 s for FAISS
+A historical dirty-worktree one-thread follow-up measured 8.068 s for compiled exact, 1.824 s for FAISS
 full-pool reranking, and 1.912 s for PDX full-pool reranking. Candidate pools,
 selected documents, hit counts, and rankings were identical between engines.
 The exact kernel obtained 2.91x throughput scaling from one to four threads; the
 one-thread samples were more stable.
+
+![SciFact quality-latency frontier](figures/fig5_controlled_quality_latency.png)
+
+![SciFact online stage breakdown](figures/fig6_controlled_stage_breakdown.png)
 
 ### 7.3 NFCorpus transfer check
 
@@ -328,27 +334,27 @@ interleaved repetitions.
 
 | arm | median (s) | p95 (s) | exact recall@10 | mean C | comparison ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Compiled exact | 1.2874 | 1.4739 | 1.0000 | 3,633 | 1.0000 |
-| FAISS-IVF C=50 | 0.2060 | 0.2404 | 0.8275 | 50.0 | 0.0138 |
-| PDX-IVF C=50 | 0.2218 | 0.2582 | 0.8275 | 50.0 | 0.0138 |
-| FAISS-IVF C=200 | 0.3330 | 0.3356 | 0.9650 | 198.0 | 0.0545 |
-| PDX-IVF C=200 | 0.3615 | 0.3728 | 0.9650 | 198.0 | 0.0545 |
-| FAISS-IVF full pool | 0.6564 | 0.6842 | 0.9750 | 388.1 | 0.1068 |
-| PDX-IVF full pool | 0.6586 | 0.7142 | 0.9750 | 388.1 | 0.1068 |
+| Compiled exact | 1.4328 | 1.6469 | 1.0000 | 3,633 | 1.0000 |
+| FAISS-IVF C=50 | 0.2114 | 0.2541 | 0.8275 | 50.0 | 0.0138 |
+| PDX-IVF C=50 | 0.2365 | 0.2712 | 0.8275 | 50.0 | 0.0138 |
+| FAISS-IVF C=200 | 0.3615 | 0.4032 | 0.9650 | 198.0 | 0.0545 |
+| PDX-IVF C=200 | 0.3610 | 0.4265 | 0.9650 | 198.0 | 0.0545 |
+| FAISS-IVF full pool | 0.7019 | 0.7163 | 0.9750 | 388.1 | 0.1068 |
+| PDX-IVF full pool | 0.6952 | 0.7510 | 0.9750 | 388.1 | 0.1068 |
 
 Candidate pools and final rankings agree between FAISS and PDX. Unlike
 SciFact, reranking every retrieved candidate does not recover the full exact
 top-10: the remaining 0.025 loss is candidate-pool coverage, not selector loss.
-PDX token search remains slower than FAISS at C=50 (0.135 s versus 0.117 s
-median), and no PDX-specific advantage is observed.
+PDX token search is slower than FAISS at C=50 (0.145 s versus 0.128 s median),
+but total latency is nearly tied at C=200 and full pool. No consistent
+PDX-specific advantage is observed.
 
-Raw-order BOND with 500 deterministic prefix seeds takes 17.3114 seconds versus
-1.2954 seconds for its interleaved exact arm. It prunes 23.36% of document pairs
+Raw-order BOND with 500 deterministic prefix seeds takes 20.3855 seconds versus
+2.0397 seconds for its interleaved precision-matched exact arm. It prunes 23.36% of document pairs
 but evaluates 94.16% of component products; most pruning occurs at dimension
-96. Every top-10 set is exact. One query changes the order of two documents tied
-by the float exact reference; the double-precision score gap is `5.1e-8`, and
-the runner records this as a numerical tie rather than silently calling the
-rankings identical.
+96. Every ordered top-10 ranking is exact, with maximum score error `7.11e-15`.
+
+![SciFact-to-NFCorpus transfer](figures/fig8_controlled_transfer.png)
 
 ## 8. Current conclusions
 
@@ -359,7 +365,7 @@ rankings identical.
 3. Selector budget controls the quality-work trade-off once pool coverage is
    high.
 4. PDX-IVF and FAISS-IVF show the same candidate quality in the controlled
-   pilot. PDX does not currently provide a PDX-specific retrieval advantage.
+   release. PDX does not currently provide a PDX-specific retrieval advantage.
 5. The candidate architecture is practically useful, but it is standard IVF and
    is not the primary research novelty.
 6. Exact-safe BOND dimension pruning is ineffective on the tested raw ColBERT
@@ -371,14 +377,14 @@ rankings identical.
 
 ## 9. Limitations and threats to validity
 
-- The controlled JSON was generated from a dirty worktree and must be repeated
-  after the implementation is frozen.
+- Release JSON files were generated from one clean commit and one WSL machine;
+  hardware and system generality remain untested.
 - The exact kernel is compiled and tested, but it is an independent baseline,
   not a claim to be the fastest possible MaxSim implementation.
 - SciFact and NFCorpus are small. Results may change at larger corpus sizes and
   on different query/document length distributions.
 - Only one candidate configuration (`L=100`, `nprobe=8`) is used in the held-out
-  pilot.
+  release comparison; the curve varies only rerank budget `C`.
 - IVF parameters originate from earlier exploration; the validation/test split
   prevents new selector tuning but cannot erase all historical knowledge.
 - Qrels are incomplete and the query sample is small.
@@ -401,7 +407,7 @@ The repository now contains:
 - the independent exact C++ source and build script;
 - automated utility, manifest, candidate, and kernel tests;
 - a controlled runner with raw interleaved samples and complete stage timing;
-- tracked historical and controlled-pilot result JSON files with integrity
+- tracked historical, pilot, and clean-release result JSON files with integrity
   manifests;
 - figures generated directly from the controlled result;
 - an explicit benchmark protocol and evidence audit.
@@ -411,11 +417,11 @@ controlled result artifact.
 
 ## 11. Remaining work
 
-1. Freeze the worktree and repeat the held-out SciFact matrix.
-2. Repeat the same frozen configurations on NFCorpus.
-3. Regenerate final figures and replace pilot labels.
-4. Add a matched-budget PLAID point if time permits.
-5. Finalize proofreading and artifact provenance for submission.
+1. Add a quality-matched PLAID point if time permits.
+2. Test a larger real corpus with a predeclared scaling protocol.
+3. Profile or redesign the BOND bound kernel only if further optimization is in
+   scope; the current result already answers the tested implementation question.
+4. Finalize submission formatting and supervisor-specific requirements.
 
 ## References
 

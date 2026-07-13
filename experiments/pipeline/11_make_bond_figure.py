@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-RESULTS = PROJECT_ROOT / "results" / "controlled"
+RESULTS = PROJECT_ROOT / "results" / "final"
 OUTPUT = PROJECT_ROOT / "docs" / "figures" / "fig7_controlled_bond.png"
 
 
@@ -40,12 +40,11 @@ def arm(data: dict, name: str, label: str) -> dict:
 
 
 def main() -> None:
-    raw = load("scifact_bond_test_40q_pilot.json")
-    raw_oracle = load("scifact_bond_oracle_test_40q_pilot.json")
-    pca = load("scifact_bond_pca_test_40q_pilot.json")
+    raw = load("scifact_bond_raw_test_40q_final.json")
+    pca = load("scifact_bond_pca_test_40q_final.json")
     rows = [
         arm(raw, "bond_seed500", "Raw\nprefix-500"),
-        arm(raw_oracle, "bond_oracle_topk_seeds", "Raw\nfree oracle"),
+        arm(raw, "bond_oracle_topk_seeds", "Raw\nfree oracle"),
         arm(pca, "bond_seed500", "PCA\nprefix-500"),
         arm(pca, "bond_oracle_topk_seeds", "PCA\nfree oracle"),
     ]
@@ -116,7 +115,7 @@ def main() -> None:
 
     fig.suptitle(
         "Exact-safe BOND-MaxSim on held-out SciFact: PCA improves pruning, not latency\n"
-        "5,183 documents; 40 queries; 4 pinned CPUs; median of 5 interleaved runs; oracle seeds are free",
+        "5,183 documents; 40 queries; 4 pinned physical cores; median of 5 interleaved runs; oracle seeds are free",
         fontsize=11,
         fontweight="bold",
     )

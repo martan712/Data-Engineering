@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-RESULTS = PROJECT_ROOT / "results" / "controlled"
+RESULTS = PROJECT_ROOT / "results" / "final"
 OUTPUT = PROJECT_ROOT / "docs" / "figures" / "fig8_controlled_transfer.png"
 DATASETS = ("SciFact", "NFCorpus")
 COLORS = {"SciFact": "#187a8c", "NFCorpus": "#d17a22"}
@@ -38,21 +38,21 @@ def latency_ratio(result: dict, arm_name: str) -> float:
 def main() -> None:
     ivf = {
         "SciFact": load(
-            "scifact_test_40q_controlled_pilot.json",
+            "scifact_ivf_test_40q_final.json",
             "controlled_ivf_pilot_v1",
         ),
         "NFCorpus": load(
-            "nfcorpus_ivf_test_40q_pilot.json",
+            "nfcorpus_ivf_test_40q_final.json",
             "controlled_ivf_pilot_v1",
         ),
     }
     bond = {
         "SciFact": load(
-            "scifact_bond_test_40q_pilot.json",
+            "scifact_bond_raw_test_40q_final.json",
             "controlled_bond_pilot_v1",
         ),
         "NFCorpus": load(
-            "nfcorpus_bond_test_40q_pilot.json",
+            "nfcorpus_bond_raw_test_40q_final.json",
             "controlled_bond_pilot_v1",
         ),
     }
@@ -156,7 +156,7 @@ def main() -> None:
         0.5,
         0.01,
         "40 held-out queries per dataset; L=100, nprobe=8; BOND prefix seeds=500; "
-        "same WSL stack and online boundary. Pilot, not a final speedup claim.",
+        "same WSL stack, four pinned physical cores, and online boundary.",
         ha="center",
         fontsize=8,
         color="#555555",

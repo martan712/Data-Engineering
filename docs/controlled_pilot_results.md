@@ -1,10 +1,14 @@
-# Controlled Candidate-Generation Pilot Results
+# Historical Controlled Candidate-Generation Pilots
+
+> This document preserves the dirty-worktree decision pilots. It is not the
+> source for release numbers. See `docs/final_results.md` and `results/final/`
+> for clean-commit results and figures.
 
 ## Status
 
 These are decision-making pilot results, not final submission claims. They were
 produced from a dirty `Mikel` worktree while the controlled runner was being
-implemented. The result must be repeated after the implementation is committed.
+implemented. They have since been replaced by the clean release.
 
 The preserved artifact is:
 
@@ -14,7 +18,8 @@ The transfer artifact is:
 
 `results/controlled/nfcorpus_ivf_test_40q_pilot.json`
 
-Figures regenerated from that artifact:
+Figures 5 and 6 originally used the SciFact artifact below. They have since been
+regenerated from `results/final/scifact_ivf_test_40q_final.json`:
 
 - `docs/figures/fig5_controlled_quality_latency.png`
 - `docs/figures/fig6_controlled_stage_breakdown.png`

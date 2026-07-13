@@ -108,16 +108,17 @@ Before corpus timing, the implementation must match a float64 NumPy oracle on:
 4. a constructed workload where pruning must occur;
 5. invalid dtypes, layouts, offsets, checkpoints, and non-finite values.
 
-No wall-clock result is accepted if top-k IDs differ from exhaustive MaxSim.
+No wall-clock result is accepted if the top-k set differs from exhaustive
+MaxSim or an ordering difference exceeds the declared numerical tolerance.
 
 ## Controlled comparison
 
-The BOND and exhaustive arms will run in one WSL process with the same packed
+The BOND and exhaustive arms run in one WSL process with the same packed
 inputs, CPU affinity, thread count, `k`, warm-up count, and interleaved measured
 repetitions. The outer timer starts with resident query embeddings and ends with
 ranked document IDs. BOND index construction remains outside the online timer
 and is reported separately.
 
-The first decision run uses the existing SciFact validation/test split. A
-second dataset is only justified after correctness and a stable SciFact verdict.
-
+The release uses the existing SciFact validation/test split and repeats the
+frozen raw configuration on NFCorpus. Both datasets pass the exact ordered
+top-10 gate; final evidence is recorded in `docs/final_results.md`.

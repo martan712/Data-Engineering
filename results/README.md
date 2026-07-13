@@ -7,11 +7,10 @@ measurements.
   benchmark protocol was adopted. They are useful for correctness, candidate
   coverage, and mechanism analysis. Their wall-clock values are not final
   cross-method comparisons.
-- `controlled/` is reserved for results that satisfy
-  `docs/benchmark_protocol.md`. Final tables and speedup claims must use only
-  this directory.
+- `controlled/` preserves dirty-worktree integration and decision pilots.
+- `final/` contains the five clean-commit release artifacts accepted by
+  `docs/benchmark_protocol.md`. Final tables and figures use only this directory.
 
 Large embeddings and indexes remain outside Git. Controlled result JSON files
 must contain immutable input identifiers or SHA-256 hashes so they can be tied
 back to the exact inputs used.
-

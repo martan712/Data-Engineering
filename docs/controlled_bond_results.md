@@ -1,10 +1,14 @@
-# Controlled BOND-MaxSim Pilot Results
+# Historical Controlled BOND-MaxSim Pilots
+
+> This document preserves mechanism-development pilots from a dirty worktree.
+> It is not the source for release numbers. See `docs/final_results.md` and
+> `results/final/` for precision-matched clean-commit results.
 
 ## Status
 
-These are decision-making pilot results from the current dirty worktree. They
-are reproducible from tracked scripts and JSON files, but they are not yet a
-frozen final-release claim.
+These decision-making pilots were generated from the then-dirty worktree. They
+remain reproducible from tracked scripts and JSON files but are not the frozen
+release claim.
 
 The experiment compares two independently authored C++17 pybind11 kernels in
 one WSL process:
@@ -29,10 +33,10 @@ IDs as exhaustive MaxSim. The maximum score difference between double-accumulate
 BOND output and the existing float-accumulated exact kernel was `7.34e-6` on the
 held-out queries.
 
-On NFCorpus, all 40 top-10 sets are identical. One query swaps two IDs whose
-float exact scores are equal; their double-precision BOND scores differ by only
-`5.1e-8`. The runner reports this numerical tie explicitly and rejects any
-set-changing or non-tie mismatch.
+On NFCorpus, all 40 top-10 sets are identical. The pilot runner classified one
+ordering change as tie-equivalent at its recorded `1e-5` tolerance. The artifact
+does not retain the score pair, so no narrower gap is claimed from this pilot.
+The clean float64 release removes the discrepancy entirely.
 
 ## Progressive pilots
 
@@ -44,7 +48,7 @@ set-changing or non-tie mismatch.
 | 5,183 docs, 40 held-out queries | 3.4043 | seed=500 | 42.0728 | 22.4% | 0.9547 |
 
 The seed count was increased on the validation portion and then fixed at 500
-for the 40 held-out queries. All pruning in both full-corpus runs occurred at
+for the 40 held-out queries. All pruning in both SciFact full-corpus runs occurred at
 dimension 96. No documents were pruned at dimensions 8, 16, 32, or 64.
 
 ## Held-out timing detail

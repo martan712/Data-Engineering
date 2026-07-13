@@ -16,7 +16,6 @@ claims remain auditable while the final benchmark is rebuilt.
 | `*_selector_gap_sweep*` | Effect of rerank budget on exact-ranking recovery | End-to-end speedup until aggregation and selection are timed |
 | `scifact_scaling_curve.json`, `scifact_timing_breakdown.json` | Historical scaling and component diagnosis | Final same-stack wall-clock comparison |
 
-The current README figures were generated from related local artifacts. They
-must be regenerated from `results/controlled/` before final submission, or
-explicitly labeled as exploratory evidence.
-
+README Figures 1-4 are generated from these files and explicitly labeled as
+exploratory evidence. Figures 5-8 and all release tables are generated from
+`results/final/`.

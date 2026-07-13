@@ -20,14 +20,15 @@ and evidence audit are recorded in:
 - [`docs/benchmark_protocol.md`](docs/benchmark_protocol.md)
 - [`docs/audit_findings.md`](docs/audit_findings.md)
 - [`docs/bond_kernel_design.md`](docs/bond_kernel_design.md)
-- [`docs/controlled_bond_results.md`](docs/controlled_bond_results.md)
+- [`docs/final_results.md`](docs/final_results.md)
+- [`docs/controlled_bond_results.md`](docs/controlled_bond_results.md) (pilot history)
 - [`results/`](results/README.md)
 
 ---
 
 ## TL;DR - current evidence and re-evaluation
 
-The controlled compiled pilot now provides direct evidence that BOND dimension
+The controlled clean release provides direct evidence that BOND dimension
 pruning is a poor fit for the tested 128-dimensional ColBERT embeddings.
 
 1. **Flat PDX-BOND (`IndexPDXBONDFlat`) was slower than the historical NumPy
@@ -35,18 +36,18 @@ pruning is a poor fit for the tested 128-dimensional ColBERT embeddings.
    performance comparison.
 2. **An independently authored exact-safe C++ BOND-MaxSim kernel preserves the
    exact top-10 but prunes too late.** On 40 held-out SciFact queries it evaluates
-   95.47% of exhaustive component products and has 12.36 times the median
+   95.47% of exhaustive component products and has 10.88 times the median
    latency of the compiled exact kernel.
 3. **Batch-call and shared-scan prototypes did not solve the observed
    bottleneck.** Their historical timings are retained as diagnostics and will
    not be used as headline ratios.
 4. **The raw-order BOND conclusion transfers to NFCorpus.** It evaluates 94.16%
-   of component products and has 13.36 times the same-run exact median while
+   of component products and has 9.99 times the same-run exact median while
    preserving the exact top-10 set for all 40 held-out queries.
 
 The comparison uses identical inputs, timing boundaries, thread budgets,
-warm-ups, and repeated interleaved runs. It is still labeled a pilot because the
-worktree must be frozen and rerun before release.
+warm-ups, and repeated interleaved runs. All release artifacts point to clean
+commit `0cc6145` and preserve raw samples and input hashes.
 
 **Historical BOND mechanism figure (exploratory operation counts):**
 
@@ -76,49 +77,48 @@ axes remain useful, while their cross-method latency bars are not final results.
 
 ---
 
-### First controlled pilot
+### Final controlled IVF comparison
 
-A new same-stack SciFact pilot now compares a compiled exact kernel, FAISS-IVF,
+A same-stack SciFact run compares a compiled exact kernel, FAISS-IVF,
 and PDX-IVF under one complete online timing boundary. On 5,183 documents and
 40 held-out queries:
 
 | configuration | median (s) | exact recall@10 | reranked document ratio |
 | --- | ---: | ---: | ---: |
-| Compiled exact | 2.7766 | 1.0000 | 1.0000 |
-| FAISS-IVF, C=200 | 0.4968 | 0.9750 | 0.0386 |
-| PDX-IVF, C=200 | 0.5664 | 0.9750 | 0.0386 |
-| FAISS-IVF, full candidate pool | 1.2129 | 1.0000 | 0.1195 |
-| PDX-IVF, full candidate pool | 1.1142 | 1.0000 | 0.1195 |
+| Compiled exact | 2.9333 | 1.0000 | 1.0000 |
+| FAISS-IVF, C=200 | 0.5051 | 0.9750 | 0.0386 |
+| PDX-IVF, C=200 | 0.5411 | 0.9750 | 0.0386 |
+| FAISS-IVF, full candidate pool | 1.2908 | 1.0000 | 0.1195 |
+| PDX-IVF, full candidate pool | 1.2467 | 1.0000 | 0.1195 |
 
-The PDX and FAISS quality curves are identical in this pilot. PDX has no
-observed search-quality advantage, and its search stage is slower at low `C`.
-These values are decision-making pilots from a dirty worktree, not final speedup
-claims. See [`docs/controlled_pilot_results.md`](docs/controlled_pilot_results.md)
-and the raw JSON under `results/controlled/`.
+The PDX and FAISS quality curves are identical. Their latency ordering changes
+across budgets and datasets, so there is no consistent PDX-specific advantage.
+See [`docs/final_results.md`](docs/final_results.md) and the raw JSON under
+`results/final/`.
 
-![Controlled quality-latency pilot](docs/figures/fig5_controlled_quality_latency.png)
+![Controlled quality-latency result](docs/figures/fig5_controlled_quality_latency.png)
 ![Controlled stage breakdown](docs/figures/fig6_controlled_stage_breakdown.png)
 
 ---
 
-### Compiled exact-safe BOND pilot
+### Compiled exact-safe BOND result
 
 The primary held-out decision run uses 5,183 documents, 40 queries, four pinned
 CPUs, and five interleaved measured repetitions:
 
 | arm | median (s) | p95 (s) | exact top-10 | component-product ratio |
 | --- | ---: | ---: | ---: | ---: |
-| Compiled exhaustive MaxSim | 3.4043 | 3.6615 | 40/40 | 1.0000 |
-| Exact-safe BOND-MaxSim, seed=500 | 42.0728 | 44.5968 | 40/40 | 0.9547 |
+| Compiled exhaustive MaxSim (float64 accumulation) | 4.2740 | 4.4105 | 40/40 | 1.0000 |
+| Exact-safe BOND-MaxSim, seed=500 | 46.4861 | 48.1111 | 40/40 | 0.9547 |
 
 BOND prunes 22.4% of query-document pairs, but every prune occurs at dimension
 96 of 128. The 4.53% arithmetic reduction does not offset bound maintenance,
 branching, and less regular memory access. See
-[`docs/controlled_bond_results.md`](docs/controlled_bond_results.md).
+[`docs/final_results.md`](docs/final_results.md).
 
 A free exact-top-10 oracle seed policy still evaluates 92.43% of products. PCA
 rotation improves the component-product ratio to 0.6902 with prefix seeds and
-0.6153 with free oracle seeds, but both PCA arms retain more than 12 times the
+0.6153 with free oracle seeds, but both PCA arms retain about 8.7 times the
 same-run exhaustive median latency. This demonstrates why inverse operation
 count cannot be reported as speedup.
 
@@ -128,7 +128,7 @@ count cannot be reported as speedup.
 
 ### Controlled transfer check
 
-The pilot configuration was also run on 3,633 NFCorpus documents, 864,703
+The same configuration was also run on 3,633 NFCorpus documents, 864,703
 document token vectors, and 40 held-out queries. Candidate quality is more
 difficult than on SciFact: reranking the complete retrieved pool reaches 0.975
 exact recall@10 rather than 1.000, so some loss is in IVF candidate retrieval
@@ -143,12 +143,11 @@ Raw-order BOND behaves similarly on both datasets:
 
 | dataset | products evaluated | document pairs pruned | BOND/exact median |
 | --- | ---: | ---: | ---: |
-| SciFact | 95.47% | 22.44% | 12.36x |
-| NFCorpus | 94.16% | 23.36% | 13.36x |
+| SciFact | 95.47% | 22.44% | 10.88x |
+| NFCorpus | 94.16% | 23.36% | 9.99x |
 
-One NFCorpus query reordered two documents tied by the float exact reference;
-the top-10 set was unchanged and the double-precision score gap was `5.1e-8`.
-All non-tie or set-changing mismatches remain hard failures in the runner.
+Both BOND runs use the same float64 products and accumulation as their exact
+arms and return identical ordered top-10 rankings for all 40 queries.
 
 ![Controlled transfer check](docs/figures/fig8_controlled_transfer.png)
 
@@ -185,7 +184,8 @@ All non-tie or set-changing mismatches remain hard failures in the runner.
 |   `-- archive/                  # earlier experiments grouped by phase
 |-- results/
 |   |-- legacy/                   # preserved exploratory JSON
-|   `-- controlled/               # same-stack pilot/final JSON
+|   |-- controlled/               # dirty-worktree decision pilots
+|   `-- final/                    # clean-commit release JSON + manifest
 `-- tests/
 ```
 
@@ -282,20 +282,21 @@ We convert back with `cosine = 1 - l2sq/2`. l2/IP/cosine orderings all coincide.
 
 ---
 
-## Run the controlled pilot
+## Reproduce the controlled release
 
 Run every compared method in the clean WSL environment. This example uses the
 held-out SciFact queries and the frozen selector policy:
 
 ```bash
 cd "$PROJECT_REPO"
-taskset -c 0-3 env \
-  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=cores \
+mkdir -p ../artifacts/reproduction
+taskset -c 0,2,4,6 env \
+  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=threads \
   OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 \
   "$WORK/.venv-pdx/bin/python" experiments/pipeline/08_controlled_ivf_pilot.py \
   --corpus-dir ../artifacts/scifact_full_benchmark \
   --embeddings-dir ../artifacts/scifact_full_benchmark_embeddings \
-  --output results/controlled/scifact_test_40q_controlled_pilot.json \
+  --output ../artifacts/reproduction/scifact_ivf_test_40q.json \
   --max-documents 0 --query-start 10 --max-queries 0 \
   --top-l 100 --nprobe 8 --c-values 50 100 200 400 0 \
   --selection-policy approx_score --threads 4 \
@@ -306,18 +307,18 @@ The runner refuses a dirty or unexpected PDX checkout. It records raw samples,
 stage timings, CPU affinity, package versions, input hashes, Git state,
 candidate work, exact-ranking recovery, and qrels metrics.
 
-Run the compiled exact-versus-BOND held-out pilot with the frozen seed policy:
+Run the precision-matched exact-versus-BOND held-out comparison:
 
 ```bash
-taskset -c 0-3 env \
-  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=cores \
+taskset -c 0,2,4,6 env \
+  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=threads \
   OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 \
   "$WORK/.venv-pdx/bin/python" experiments/pipeline/10_controlled_bond_pilot.py \
   --corpus-dir ../artifacts/scifact_full_benchmark \
   --embeddings-dir ../artifacts/scifact_full_benchmark_embeddings \
-  --output results/controlled/scifact_bond_test_40q_pilot.json \
+  --output ../artifacts/reproduction/scifact_bond_raw_test_40q.json \
   --max-documents 0 --query-start 10 --max-queries 0 \
-  --k 10 --seed-counts 500 --threads 4 \
+  --k 10 --seed-counts 500 --include-oracle-seeds --threads 4 \
   --warmup-runs 1 --measured-runs 5
 ```
 
@@ -350,8 +351,9 @@ wsl -e /bin/bash -lc "cd '<repo path>' && /home/<user>/data-engineering-pdx/.ven
 .\.venv\Scripts\python experiments/pipeline/06_make_figures.py
 ```
 
-Historical JSON inputs are preserved under `results/legacy/`. New measurements
-that satisfy the controlled protocol will be written to `results/controlled/`.
+Historical JSON inputs are preserved under `results/legacy/`. Dirty-worktree
+pilots are under `results/controlled/`; the accepted clean release is under
+`results/final/`.
 
 ---
 
@@ -366,7 +368,7 @@ project auditable.
 
 The explored BOND variants did not show enough pruning to justify a speedup
 claim for ColBERT MaxSim (`GTE-ModernColBERT-v1`, d=128, BEIR SciFact up to 5183
-documents). A controlled compiled-kernel comparison is the remaining test.
+documents). The later clean compiled comparison confirms this diagnosis.
 
 **Flat PDX-BOND (the direct re-implementation path)**
 
@@ -393,10 +395,9 @@ did not concentrate enough energy that way in this workload. PCA rotation
 improved the operation count, but `1/work-ratio` excludes bound maintenance,
 branching, threshold updates, and memory-layout cost.
 
-**Current conclusion for the project proposal:** the available mechanism
-evidence predicts little benefit from exact-safe dimension pruning. The final
-claim will be based on a compiled BOND-MaxSim kernel against a compiled exact
-baseline, not on this inverse operation count.
+**Current conclusion for the project proposal:** the clean compiled comparison
+shows little benefit from exact-safe dimension pruning. The inverse operation
+count remains historical mechanism evidence, not the source of the final claim.
 
 ---
 
@@ -428,7 +429,8 @@ uses a different full-score budget):
 
 IVF is standard ANN practice, not a novel contribution. These runs validate the
 candidate-generation architecture and its quality trade-off; the latency
-comparison must be repeated with matched budgets and complete timing boundaries.
+comparison was not defensible. The clean matched-budget replacement appears in
+`docs/final_results.md`.
 
 ### 2b. Generality — second dataset (NFCorpus: 3633 docs, 50 queries)
 
@@ -443,23 +445,20 @@ token vectors). Exact/FAISS/PLAID measured on the same Windows machine:
 | PLAID (CPU, nbits=4) | 26.8 s | 0.154 | 0.460 |
 
 The historical two-stage IVF + exact-rerank recipe retained about 97% of exact qrels recall
-in this configuration. The **selector gap reappears** (agreement@10
-plateaus at ~0.84 despite 0.94 coverage, and raising `nprobe` 8→16→32 did not
-help) - the same signal as SciFact that the fixed `C=50` rerank budget, not
-candidate coverage, is the remaining quality limiter. The later controlled WSL
-run includes both PDX and FAISS: they have identical recovery, and full-pool
-recovery is 0.975, showing that candidate coverage also limits some NFCorpus
-queries.
+in this configuration. The historical `C=50` result mixed selector and pool
+loss and could not isolate them. The later controlled WSL run includes both PDX
+and FAISS: they have identical recovery, and full-pool exact recall@10 is 0.975,
+showing that candidate coverage limits three of the 40 NFCorpus queries.
 
 ### 2c. Selector-gap sweep (Figure 4) — the C=50 plateau is a budget artifact
 
 The sweep in `35_selector_gap_sweep.py` fixes candidate generation
 (`nprobe=8, L=100`) and grows the re-rank budget `C` (selection policy turns out
 to barely matter). Agreement with the exact top-10 rises smoothly with `C` and
-reaches the pool-coverage limit when the **entire pool** (~400-600 docs) is
-reranked. The historical timings are shown for traceability only:
+approaches the pool's mean-overlap limit when the **entire pool** (~400-600 docs)
+is reranked. The historical timings are shown for traceability only:
 
-| dataset | C=50 | C=100 | C=200 | C=pool | pool coverage@10 | historical time @ C=pool | historical ratio |
+| dataset | C=50 overlap | C=100 | C=200 | C=pool overlap | queries with all top-10 in pool | historical time @ C=pool | historical ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | SciFact-full | 0.862 | 0.932 | 0.968 | **1.000** | 1.000 | 1.78 s | 8.0x |
 | NFCorpus | 0.840 | 0.916 | 0.960 | **0.978** | 0.940 | 0.89 s | 8.9x |
@@ -467,8 +466,9 @@ reranked. The historical timings are shown for traceability only:
 The defensible conclusion is about quality: increasing `C` smoothly improves
 exact-ranking recovery. SciFact full-pool reranking reached 1.000 agreement. On
 NFCorpus, widening candidate generation to `nprobe=32` with `C=200` recovered
-qrels recall@10 = 0.1942, equal to the exact reference. The corresponding
-latency ratios require a controlled rerun.
+qrels recall@10 = 0.1942, equal to the exact reference. Mean top-10 overlap and
+the fraction of queries containing all ten documents are different metrics;
+the table no longer calls them the same coverage value.
 
 ![Selector gap](docs/figures/fig4_selector_gap.png)
 
@@ -480,24 +480,23 @@ latency ratios require a controlled rerun.
 
 - Flat PDX-BOND was not competitive with the historical NumPy reference, and
   MaxSim-aware instrumentation found weak dimension-pruning potential on raw
-  embeddings. This is a strong negative hypothesis, not yet a final kernel
-  speedup result.
-- The same-stack compiled pilot confirms that exact-safe BOND preserves the
+  embeddings. The clean compiled kernel now confirms the negative result.
+- The same-stack compiled result confirms that exact-safe BOND preserves the
   ranking but scans 95.47% of component products and is substantially slower
   than exhaustive MaxSim on held-out SciFact queries.
 - NFCorpus independently reproduces the negative raw-order result: 94.16% of
-  component products remain and BOND has 13.36 times the same-run exact median.
+  component products remain and BOND has 9.99 times the same-run exact median.
 
 **Secondary (practical outcome discovered along the way):**
 
 - **IVF cluster pruning + exact MaxSim reranking** gives useful candidate pools
   and a tunable ranking-recovery curve. IVF is the mechanism, not evidence of a
   PDX-specific contribution.
-- Its final latency benefit will be reported only after matched-budget,
-  end-to-end measurements on one machine.
+- Clean matched-budget online measurements are now reported for SciFact and
+  NFCorpus. Encoding and index construction remain separate costs.
 
-**Open follow-ups:** (1) a frozen clean-worktree rerun; (2) a quality-matched
-PLAID point if time permits; and (3) CoRECT only if it does not weaken the
+**Open follow-ups:** (1) a quality-matched PLAID point; (2) a larger real corpus
+with a frozen scaling protocol; and (3) CoRECT only if it does not weaken the
 controlled core.
 
 ---
@@ -530,7 +529,7 @@ the time and are not final controlled speedups.
 | 20 | PCA rotation revival | Partially revives pruning (1.22x realistic / 1.68x oracle); secondary optimization. |
 | 21 | Generality check on NFCorpus (2nd dataset) | FAISS-IVF + rerank reached 0.188 vs 0.194 exact qrels recall@10 (~97%); selector gap recurs (agreement@10 ~0.84). Historical latency comparisons are withdrawn. |
 | 22 | Selector-gap sweep (script 35) | Agreement rises smoothly with C; full-pool reranking reaches 1.000 agreement on SciFact, and `nprobe=32, C=200` reaches exact qrels recall on NFCorpus. Policy choice barely matters. |
-| 23 | Controlled transfer pilot | Under the same WSL runner, NFCorpus full-pool IVF reaches 0.975 exact recall@10; raw BOND preserves every top-10 set but evaluates 94.16% of products and remains 13.36x slower than same-run exact. |
+| 23 | Controlled clean release | Under the same WSL runner, NFCorpus full-pool IVF reaches 0.975 exact recall@10; raw BOND preserves every ordered top-10 but evaluates 94.16% of products and remains 9.99x slower than same-run exact. |
 
 ### Caveats
 

@@ -109,10 +109,10 @@ hard-coded headline values.
 | --- | --- |
 | PyLate export and packed variable-length embeddings | Reusable input pipeline |
 | PDX-BOND smoke test matching brute-force L2 | Correctness evidence |
-| Flat token-vector BOND slower than NumPy at small scale | Exploratory negative result; replaced by compiled exact-safe BOND pilots |
+| Flat token-vector BOND slower than NumPy at small scale | Exploratory negative result; replaced by compiled exact-safe BOND release runs |
 | NumPy MaxSim BOND work-ratio/oracle study | Mechanism evidence; not kernel wall-clock evidence |
-| IVF candidate-pool and selector-recall measurements | Reusable quality evidence if artifacts are restored and verified |
-| Reported 30x/100x IVF speedups | Withdrawn; controlled same-stack pilots replace them, with clean release reruns pending |
+| IVF candidate-pool and selector-recall measurements | Clean controlled quality-latency evidence under `results/final/` |
+| Reported 30x/100x IVF speedups | Withdrawn; clean same-stack measurements replace them |
 | Current PLAID versus IVF wall-clock bars | Withdraw pending matched budgets and timing boundaries |
 
 ## Claim language

@@ -13,12 +13,12 @@ are measured against a strong exact implementation.
 ## Current status
 
 - P0-P2: complete in the current worktree.
-- P3: exact-safe compiled BOND, free-oracle, and PCA pilots complete; clean
-  release rerun pending.
-- P4: matched-budget FAISS-IVF/PDX-IVF pilot complete; clean rerun pending.
-- P5: SciFact and NFCorpus controlled pilots complete; clean reruns pending.
-- P6: report and figures drafted; final artifact freeze and proofreading
-  pending.
+- P3: exact-safe compiled BOND, free-oracle, and PCA clean release complete.
+- P4: matched-budget FAISS-IVF/PDX-IVF clean release complete; matched PLAID is
+  an optional extension, not part of the frozen core.
+- P5: SciFact and NFCorpus clean controlled release complete.
+- P6: repository report, final artifacts, figures, provenance, and tests are
+  complete. Supervisor-specific submission packaging is external to this plan.
 
 ## Research questions
 
@@ -75,7 +75,9 @@ the protocol in `docs/benchmark_protocol.md`.
 
 ### P4 - Controlled candidate-generation study
 
-- Compare PDX-IVF, FAISS-IVF, and PLAID on the same embeddings and queries.
+- Compare PDX-IVF and FAISS-IVF on the same embeddings and queries.
+- Include PLAID only as a clearly labeled native operating point if its full
+  score budget and timing boundary can be matched.
 - Include token retrieval, token-to-document aggregation, candidate selection,
   exact reranking, and final top-k extraction in online latency.
 - Sweep rerank budget rather than comparing one unmatched configuration.
@@ -122,10 +124,11 @@ depends on a cross-machine wall-clock ratio.
   showing that difference.
 - No large scale-up before the controlled small benchmark is stable.
 
-## Immediate implementation sequence
+## Release state
 
-1. Finish the result/figure/report audit for the completed two-dataset pilots.
-2. Commit and freeze the independently authored kernel and runner stack.
-3. Repeat the held-out raw BOND and matched-budget IVF configurations cleanly.
-4. Repeat the frozen configurations on NFCorpus as the transfer check.
-5. Replace pilot labels only after manifests prove the clean result set.
+1. Implementation and benchmark protocol frozen at source commit `0cc6145`.
+2. Five clean-commit result artifacts accepted by `results/final/manifest.json`.
+3. Figures 5-8 generated only from those accepted artifacts.
+4. Complete Windows/reference and WSL/native test suites pass.
+5. Matched-budget PLAID and larger-scale evaluation remain optional extensions,
+   not blockers for the frozen core result.

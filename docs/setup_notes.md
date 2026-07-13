@@ -98,11 +98,10 @@ query preparation, bounds, pruning, exact scoring of survivors, and top-k are
 online.
 
 The first implementation used directed `nextafter` rounding for every partial
-product and was unnecessarily expensive. The current implementation performs
-ordinary double accumulation and applies a conservative `gamma_n` summation
-error allowance at checkpoints. On the 100-document smoke fixture, this reduced
-BOND median latency from roughly 0.49-0.62 seconds to 0.06-0.09 seconds without
-changing IDs, scores within tolerance, or work diagnostics.
+product and was replaced by ordinary double accumulation plus a conservative
+`gamma_n` summation-error allowance at checkpoints. Only the current
+implementation's result artifacts are tracked, so no before/after wall-clock
+claim is made. Correctness and work diagnostics are covered by automated tests.
 
 The native `.so` is ignored for the same ABI/CPU reasons as the exact kernel.
 
@@ -122,13 +121,30 @@ OMP_NUM_THREADS=2 \
   -m unittest discover -s tests -v
 ```
 
-Current result: 32 tests pass in WSL. On Windows, 20 reference tests pass; three
+Current result: 34 tests pass in WSL. On Windows, 22 reference tests pass; three
 exact-kernel and nine BOND-kernel tests are explicitly skipped because Linux
 extensions are not built there.
 
-Controlled pilots were launched with `taskset -c 0-3`, four OpenMP/BLAS threads,
-`OMP_PROC_BIND=TRUE`, and `OMP_PLACES=cores`. OpenMP may narrow the calling
-thread to one core place before metadata capture; the existing pilot JSON can
-therefore show `[0, 1]` for `process_cpu_affinity`. The metadata helper now also
-captures `initial_cpu_affinity` at import time so clean reruns retain both the
-launcher allocation and the post-kernel calling-thread affinity.
+Final controlled runs use `taskset -c 0,2,4,6`, four OpenMP/BLAS threads,
+`OMP_PROC_BIND=TRUE`, and `OMP_PLACES=threads`. This selects one hardware thread
+from each of four physical cores on the recorded Ryzen topology. OpenMP narrows
+the calling thread to one place after native work, so metadata stores both
+`initial_cpu_affinity=[0,2,4,6]` and the post-kernel calling-thread affinity.
+
+The checkout is shared between Windows and WSL. Windows Git had checked out
+CRLF files while WSL Git initially used `core.autocrlf=false`, making a clean
+tree appear dirty inside the benchmark process. The repository-local setting
+was aligned before release runs:
+
+```bash
+git config core.autocrlf true
+```
+
+The repository now also tracks `.gitattributes` with fixed LF endings for JSON,
+source, scripts, and Markdown, so future clones preserve result hashes without
+depending on that machine-local setting.
+
+All five `results/final/` artifacts record commit `0cc6145`, `dirty=false`, and
+the expected initial affinity. BOND final comparisons use float64 products and
+accumulation in both exhaustive and exact-safe kernels; IVF reranking retains
+the established float32 contract.

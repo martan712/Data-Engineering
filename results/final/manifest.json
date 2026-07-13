@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "controlled_clean_release",
+  "wall_clock_claims_allowed": true,
+  "scope": "Online query processing only: resident normalized query token vectors to ranked document IDs. Encoding and index construction are excluded and reported separately.",
+  "source_commit": "0cc61454dfcde529ba6744e3f1fb79429350cc57",
+  "cpu_affinity": [0, 2, 4, 6],
+  "files": [
+    {
+      "name": "nfcorpus_bond_raw_test_40q_final.json",
+      "role": "second_dataset_raw_bond_heldout",
+      "bytes": 29833,
+      "sha256": "48ce493cb59fd6ebae96e9a2a2960abebe7c7023464bdca7a14c4aa2f9dc5cb2"
+    },
+    {
+      "name": "nfcorpus_ivf_test_40q_final.json",
+      "role": "second_dataset_matched_ivf_heldout",
+      "bytes": 103505,
+      "sha256": "f894d7f88c9ed274493e8f723509becd33562d5a6af70a23ee066ede1eb848ac"
+    },
+    {
+      "name": "scifact_bond_pca_test_40q_final.json",
+      "role": "primary_dataset_pca_bond_mechanism_ablation",
+      "bytes": 42477,
+      "sha256": "1da4af8fe67500f233ba8e6a17ef8588fd27f5fe297d205255618ccba86d2c40"
+    },
+    {
+      "name": "scifact_bond_raw_test_40q_final.json",
+      "role": "primary_dataset_raw_bond_heldout",
+      "bytes": 41869,
+      "sha256": "287a82692f89ada8c1365dfe54d368150a18042882fe811a958a1b0970eec032"
+    },
+    {
+      "name": "scifact_ivf_test_40q_final.json",
+      "role": "primary_dataset_matched_ivf_heldout",
+      "bytes": 156453,
+      "sha256": "28dd0280f31a71685be0d92146448a95aeee8bf4aa05aa1e4a587bc53f021f60"
+    }
+  ]
+}

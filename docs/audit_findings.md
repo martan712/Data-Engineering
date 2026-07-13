@@ -58,7 +58,7 @@ withdraw the historical headline speedups, and rerun a smaller comparison under
 | Candidate-pool coverage and rerank-budget quality curves | Keep after artifact/schema verification |
 | Flat PDX-BOND and batch/shared-scan prototype timings | Keep as exploratory engineering observations |
 | BOND/PCA/oracle work ratios | Keep as bounded mechanism analysis, with narrower language |
-| 30x/39x/32x/8x/7.4x speedup statements | Withdrawn; replaced by controlled pilot measurements pending clean release reruns |
+| 30x/39x/32x/8x/7.4x speedup statements | Withdrawn; replaced by clean controlled measurements under `results/final/` |
 | Current PLAID versus IVF latency bars | Withdraw pending matched-work rerun |
 
 Compact historical JSON files are preserved under `results/legacy/`. They are
@@ -92,12 +92,11 @@ or be independently reimplemented. Because the project is now being completed
 separately, the team should confirm the permitted reuse and attribution with the
 supervisor before importing substantial implementation from that branch.
 
-## Immediate technical direction
+## Completed remediation
 
-1. Build an independently implemented compiled exact MaxSim baseline.
-2. Verify it against NumPy on deterministic fixtures and SciFact samples.
-3. Run PDX-IVF and FAISS-IVF in the same WSL environment with the complete
-   online path inside one outer timer.
-4. Sweep matched rerank budgets and separate quality from latency.
-5. Only then decide whether PLAID and a compiled exact-safe BOND kernel fit in
-   the final scope.
+The repair produced independently implemented compiled exact and exact-safe
+BOND-MaxSim kernels, automated NumPy-oracle tests, complete online timing,
+matched FAISS/PDX rerank budgets, SciFact and NFCorpus transfer runs, and
+clean-commit release artifacts under `results/final/`. The final BOND comparison
+uses float64 products and accumulation in both arms. Historical speedup claims
+remain withdrawn; matched-budget PLAID is optional future work.

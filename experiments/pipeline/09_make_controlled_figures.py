@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path("results/controlled/scifact_test_40q_controlled_pilot.json"),
+        default=Path("results/final/scifact_ivf_test_40q_final.json"),
     )
     parser.add_argument("--output-dir", type=Path, default=Path("docs/figures"))
     return parser.parse_args()
@@ -104,11 +104,11 @@ def quality_latency_figure(result: dict, output_dir: Path) -> None:
     axis.set_ylim(0.84, 1.012)
     axis.grid(axis="both", alpha=0.22)
     axis.legend(loc="lower right", frameon=False)
-    axis.set_title("SciFact held-out quality-latency frontier (controlled pilot)")
+    axis.set_title("SciFact held-out quality-latency frontier (controlled clean run)")
     fig.text(
         0.5,
         0.01,
-        "5,183 documents; L=100; nprobe=8; 4 pinned CPUs; median of 5 interleaved runs. Pilot, not a final speedup claim.",
+        "5,183 documents; L=100; nprobe=8; 4 pinned physical cores; median of 5 interleaved runs. Online boundary only.",
         ha="center",
         fontsize=8,
         color="#555555",
@@ -149,7 +149,7 @@ def stage_breakdown_figure(result: dict, output_dir: Path) -> None:
     axis.scatter(x_values, total, marker="_", s=180, linewidth=2, color="#222222", label="Measured end-to-end median")
     axis.set_xticks(x_values, labels)
     axis.set_ylabel("Seconds for 40 queries")
-    axis.set_title("Where online time is spent (controlled pilot)")
+    axis.set_title("Where online time is spent (controlled clean run)")
     axis.grid(axis="y", alpha=0.22)
     axis.legend(frameon=False, ncol=2, loc="upper left")
     fig.text(
@@ -179,4 +179,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
