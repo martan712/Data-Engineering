@@ -1,0 +1,150 @@
+% =====================================================================
+% Accelerating ColBERT Multi-Vector Search with PDX/BOND
+% Master-level academic report.
+%
+% Compile from the report/ directory with:
+%   latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+% or, without latexmk:
+%   pdflatex -interaction=nonstopmode main.tex
+%   bibtex   main
+%   pdflatex -interaction=nonstopmode main.tex
+%   pdflatex -interaction=nonstopmode main.tex
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+% Figures live in the existing documentation tree; they are referenced,
+% not duplicated.
+\graphicspath{{../docs/figures/}}
+
+\sisetup{
+  round-mode = none,
+  group-separator = {,},
+  group-digits = integer,
+  group-minimum-digits = 4,
+  table-number-alignment = center,
+}
+
+\captionsetup{font=small,labelfont=bf,width=0.92\textwidth}
+
+\newcommand{\maxsim}{\operatorname{MaxSim}}
+\newcommand{\todometa}[1]{\textbf{[TODO: #1]}}
+
+\title{%
+  Accelerating ColBERT Multi-Vector Search with PDX/BOND:\\
+  A Controlled Evaluation of Candidate Generation and\\
+  Exact-Safe Dimension Pruning}
+
+\begin{document}
+
+% ---------------------------------------------------------------------
+% 1. Title page
+% ---------------------------------------------------------------------
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE\bfseries Accelerating ColBERT Multi-Vector Search with PDX/BOND\par}
+  \vspace{0.6cm}
+  {\Large A Controlled Evaluation of Candidate Generation and\\
+   Exact-Safe Dimension Pruning\par}
+  \vspace{2.5cm}
+  {\large Project Report\par}
+  \vspace{1.5cm}
+  \begin{tabular}{rl}
+    Author:          & \todometa{author name}\\[2pt]
+    University:      & \todometa{university}\\[2pt]
+    Programme:       & \todometa{programme / degree}\\[2pt]
+    Course:          & Data Engineering \todometa{official course code}\\[2pt]
+    Supervisor:      & \todometa{supervisor}\\[2pt]
+    Submission date: & \todometa{submission date}\\
+  \end{tabular}
+  \vfill
+  {\small All final numerical claims in this report are generated from the
+   audited release artifacts under \texttt{results/final/} at clean Git commit
+   \texttt{0cc6145}.\par}
+  \vspace{1cm}
+\end{titlepage}
+
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+
+% ---------------------------------------------------------------------
+% 2. Abstract
+% ---------------------------------------------------------------------
+\begin{abstract}
+\noindent
+ColBERT-style late-interaction retrieval represents queries and documents as
+sets of token vectors and scores each document with MaxSim, the sum over query
+tokens of the maximum token-level similarity. This report investigates whether
+the vertically decomposed PDX layout and BOND-style branch-and-bound dimension
+pruning can reduce the cost of exact ColBERT MaxSim search. All final claims
+are drawn from a controlled, single-machine, single-process benchmark with
+matched work budgets, interleaved repetitions, and audited release artifacts;
+earlier uncontrolled speedup figures were withdrawn after a measurement audit.
+Three findings emerge. First, indexing all document token vectors in a flat
+inverted-file (IVF) index and reranking retrieved candidates with a compiled
+exact MaxSim kernel yields a controllable quality--latency trade-off: on
+held-out SciFact queries, reranking 200 candidates per query recovers 97.5\% of
+the exact top-10 while evaluating 3.9\% of all query--document pairs. FAISS-IVF
+and PDX-IVF produce identical candidate pools and recovery curves, and neither
+engine shows a consistent latency advantage; this architecture is standard IVF
+practice, not a PDX-specific contribution. Second, and centrally, an
+independently implemented exact-safe BOND-MaxSim kernel preserves the exact
+top-10 on every held-out query but prunes too late to be useful: on raw
+128-dimensional ColBERT embeddings it still evaluates 95.5\% (SciFact) and
+94.2\% (NFCorpus) of the component products required by exhaustive scoring and
+runs roughly ten times slower than a precision-matched compiled exhaustive
+baseline measured in the same interleaved run. Third, an offline PCA rotation
+concentrates 90.9\% of token energy in the first eight components and reduces
+evaluated products to 61.5--69.0\%, yet both PCA arms remain about 8.7 times
+slower than their same-run exhaustive reference: dimension ordering improves
+the bound, but bound maintenance and irregular memory access dominate. The
+evidence indicates that exact-safe BOND dimension pruning is a poor fit for the
+tested ColBERT embeddings, while candidate generation plus exact reranking
+remains the practical architecture.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ---------------------------------------------------------------------
+% Body
+% ---------------------------------------------------------------------
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/architecture}
+\input{sections/methodology}
+\input{sections/results_ivf}
+\input{sections/results_bond}
+\input{sections/results_pca}
+\input{sections/discussion}
+\input{sections/limitations}
+\input{sections/reproducibility}
+\input{sections/conclusion}
+
+% ---------------------------------------------------------------------
+% References
+% ---------------------------------------------------------------------
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

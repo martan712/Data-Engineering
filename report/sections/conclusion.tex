@@ -1,0 +1,46 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+This project asked whether the PDX vertical layout and BOND-style exact-safe
+dimension pruning can accelerate ColBERT MaxSim search, and answered the
+question with a controlled, audited benchmark. Five conclusions are supported
+by the release artifacts:
+
+\begin{enumerate}
+  \item \textbf{Flat token retrieval generates high-coverage candidates but is
+    not a scorer.} Indexing individual token vectors and mapping hits back to
+    documents yields candidate pools that contain the complete exact top-10
+    for all 40 held-out SciFact queries and 37 of 40 NFCorpus queries;
+    token-hit aggregation itself, however, is not an exact document scorer and
+    must be followed by exact MaxSim reranking.
+  \item \textbf{Candidate generation plus exact reranking gives a controllable
+    quality--work curve---but it is standard IVF.} On SciFact, reranking 200
+    candidates per query recovers 97.5\% of the exact top-10 with 3.9\% of the
+    query--document pairs, and full-pool reranking recovers the exact ranking
+    with 12\% of the pairs. This effectiveness is not a PDX contribution.
+  \item \textbf{FAISS-IVF and PDX-IVF are indistinguishable here.} Both
+    engines produced identical candidate pools and recovery curves, and
+    neither showed a consistent latency advantage across budgets and datasets.
+  \item \textbf{Exact-safe BOND pruning on raw ColBERT dimensions is a clear
+    negative result.} The kernel preserves every exact top-10 but retains
+    94--95\% of the exhaustive component products---all pruning occurs at
+    dimension 96 of 128---and runs about $10\times$ slower than the
+    precision-matched compiled exhaustive baseline in the same interleaved
+    run, on both SciFact and NFCorpus.
+  \item \textbf{Dimension ordering helps the bound, not the kernel.} An
+    offline PCA rotation concentrating 90.9\% of token energy in eight
+    components cuts evaluated products to 61.5--69.0\%, yet both PCA arms
+    remain about $8.7\times$ slower than their same-run exhaustive reference;
+    bound maintenance and irregular memory access dominate.
+\end{enumerate}
+
+\paragraph{Future work.} Four directions follow naturally from the evidence:
+(i)~a quality-matched PLAID comparison point under the same protocol and
+full-score budget; (ii)~a larger corpus with a predeclared scaling protocol,
+to test whether the IVF coverage ceiling observed on NFCorpus widens or
+narrows with scale; (iii)~a redesigned pruning kernel with near-zero per-pair
+bookkeeping (e.g., block-level rather than document-level bounds), which the
+PCA evidence suggests is the only path by which the improved pruning could
+become latency; and (iv)~candidate-generation improvements
+(larger \texttt{nprobe} or $L$, or learned selection) targeted at the three
+NFCorpus queries whose exact top-10 never entered the pool.

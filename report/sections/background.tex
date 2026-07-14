@@ -1,0 +1,98 @@
+\section{Background}
+\label{sec:background}
+
+\subsection{ColBERT and late interaction}
+
+ColBERT~\citep{khattab2020colbert} encodes queries and documents
+\emph{independently} into sets of contextualized token vectors and delays
+their interaction until retrieval time. Let a query $q$ be represented by
+token vectors $q_1, \dots, q_m \in \mathbb{R}^{D}$ and a document $d$ by token
+vectors $d_1, \dots, d_n \in \mathbb{R}^{D}$. The late-interaction score is
+the MaxSim operator:
+\begin{equation}
+  \operatorname{score}(q, d)
+  \;=\;
+  \sum_{i=1}^{m} \max_{j = 1, \dots, n} \; q_i^{\top} d_j .
+  \label{eq:maxsim}
+\end{equation}
+Each query token contributes its single best match among the document tokens,
+and these maxima are summed. Because token vectors are L2-normalized, the
+inner product in \cref{eq:maxsim} equals the cosine similarity. Exhaustive
+evaluation of \cref{eq:maxsim} over a corpus requires $m \times n \times D$
+multiply--accumulate operations per document, which motivates both candidate
+pruning and cheaper scoring kernels.
+
+ColBERTv2~\citep{santhanam2022colbertv2} reduces the storage footprint of the
+token representation through residual compression, and
+PLAID~\citep{santhanam2022plaid} adds centroid-based candidate pruning inside
+a highly optimized retrieval engine. These systems establish that efficient
+multi-vector retrieval requires methods designed around the late-interaction
+operator itself rather than a single-vector distance alone.
+
+An important structural property of \cref{eq:maxsim} is that the document
+score is \emph{not} decomposable over individually retrieved tokens: knowing
+the best-matching document tokens for some query tokens does not determine the
+document score, because unretrieved query-token/document pairs still
+contribute their own maxima. This property drives the two-stage architecture
+analyzed in this report (\cref{sec:architecture}).
+
+\subsection{Vertical decomposition: BOND and PDX}
+
+BOND~\citep{devries2002bond} stores vectors column-wise (dimension-major) and
+answers top-$k$ nearest-neighbor queries by scanning dimensions incrementally.
+After processing a prefix of the dimensions, each candidate has a partial
+distance and a residual term that bounds its best possible final distance;
+candidates whose optimistic bound cannot enter the current top-$k$ are pruned,
+so later dimensions are read for fewer and fewer objects. The effectiveness of
+this scheme depends on how much of the distance signal is concentrated in the
+early dimensions.
+
+PDX~\citep{kuffo2025pdx} revisits the vertical layout for modern vector
+workloads. It decomposes vectors by dimension \emph{within} blocks of the
+index, which preserves cache locality while enabling dimension-by-dimension
+kernels, and it pairs the layout with pruning-based search algorithms
+including a PDX-BOND variant that requires no offline transformation of the
+data. ADSampling~\citep{gao2023adsampling} is related adaptive work in the
+approximate setting: it randomly rotates vectors and terminates distance
+computations early with probabilistic guarantees. In contrast, this project
+studies an \emph{exact-safe} regime in which no correct top-$k$ result may be
+lost, and asks whether such bounds remain selective when the scored object is
+a variable-length token matrix combined through \cref{eq:maxsim}.
+
+\subsection{IVF candidate generation}
+
+An inverted-file (IVF) index clusters vectors into buckets (via $k$-means)
+and, at query time, scans only the \texttt{nprobe} buckets whose centroids are
+closest to the query vector. IVF is a standard, well-understood approximate
+nearest-neighbor technique; FAISS provides a reference implementation
+(\texttt{IndexIVFFlat}), and PDX provides an IVF variant
+(\texttt{IndexPDXBONDIVFFlat}) that applies its vertical layout and BOND-style
+scanning within probed buckets. In this project both engines index
+\emph{individual document token vectors}, and their retrieved token hits are
+aggregated into document candidates that are subsequently reranked exactly
+(\cref{sec:architecture}).
+
+\subsection{Distance equivalence for normalized vectors}
+
+The PDX Python API exposes squared Euclidean distance only. For
+unit-normalized vectors $x$ and $y$,
+\begin{equation}
+  \lVert x - y \rVert_2^2 \;=\; 2 - 2\, x^{\top} y ,
+  \label{eq:l2-ip}
+\end{equation}
+so nearest-neighbor ordering under squared L2 coincides with ordering by
+inner product or cosine similarity. Retrieved distances are converted back to
+similarities as $s = 1 - \lVert x - y \rVert_2^2 / 2$. All indexes in this
+study therefore operate on identical geometry despite exposing different
+metrics.
+
+\subsection{Benchmark datasets}
+
+SciFact and NFCorpus are drawn from BEIR~\citep{thakur2021beir}, a
+heterogeneous zero-shot retrieval benchmark. SciFact is a scientific
+claim-verification corpus (5{,}183 documents in the configuration used here);
+NFCorpus is a nutrition-domain corpus (3{,}633 documents) with denser but
+still incomplete relevance labels. Embeddings are produced with
+PyLate~\citep{pylate} using the checkpoint
+\texttt{lightonai/GTE-ModernColBERT-v1}, which emits 128-dimensional
+L2-normalized token vectors.

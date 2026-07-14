@@ -1,0 +1,137 @@
+\section{Exact-Safe BOND-MaxSim: Design and Results}
+\label{sec:results-bond}
+
+This section addresses RQ1 directly. Unlike the approximate IVF pipeline of
+\cref{sec:results-ivf}, the BOND-MaxSim kernel is \emph{exact-safe}: it must
+return exactly the same top-$k$ as exhaustive MaxSim, and any wall-clock
+result is rejected if the top-$k$ set differs or an ordering difference
+exceeds the declared numerical tie tolerance. Both arms of every comparison in
+this section use float64 products and accumulation over the same float32
+embeddings; per \cref{sec:precision}, these timings are not comparable to the
+float32 IVF timings of \cref{sec:results-ivf}.
+
+\subsection{Kernel design}
+\label{sec:bond-design}
+
+The project-local C++17 kernel stores each document in dimension-major
+(vertical) order and scans dimensions incrementally in fixed checkpoints
+$\{8, 16, 32, 64, 96, 128\}$. For query token $q_i$ and document token $d_j$,
+after scanning the dimension prefix $[0, t)$, define the partial product and
+residual norms
+\begin{equation}
+  p_{ij}(t) = \sum_{r < t} q_i[r]\, d_j[r], \qquad
+  R^{q}_{i}(t) = \bigl\lVert q_i[t{:}] \bigr\rVert_2, \qquad
+  R^{d}_{j}(t) = \bigl\lVert d_j[t{:}] \bigr\rVert_2 .
+\end{equation}
+The Cauchy--Schwarz inequality bounds each token similarity,
+$q_i^{\top} d_j \le p_{ij}(t) + R^{q}_{i}(t)\, R^{d}_{j}(t)$, which yields a
+document-level upper bound on the MaxSim score:
+\begin{equation}
+  U_d(t) \;=\; \sum_{i} \max_{j}
+    \Bigl( p_{ij}(t) + R^{q}_{i}(t)\, R^{d}_{j}(t) \Bigr)
+  \;\ge\; \operatorname{score}(q, d).
+  \label{eq:bond-bound}
+\end{equation}
+Document residual norms are precomputed offline for every checkpoint; the
+inner maxima are initialized at $-\infty$ because all token similarities may
+be negative.
+
+Pruning uses a conservative threshold: the kernel first scores a set of seed
+documents fully (the release configuration uses the first 500 documents in
+corpus order as deterministic prefix seeds), computes for each fully scored
+document a rounded-\emph{down} lower bound on its exact score, and takes the
+$k$th largest of these lower bounds as the threshold, which can only increase
+as more documents complete. A live document is pruned only when its
+rounded-\emph{up} upper bound \cref{eq:bond-bound} is strictly below the
+threshold. Because (i) every threshold contribution understates a true score,
+(ii) the $k$th-largest lower bound cannot exceed the global $k$th-largest
+true score, and (iii) $U_d(t)$ overstates the unfinished document's true
+score, no document that belongs to the true top-$k$ can be pruned; float64
+accumulation with an explicit rounding allowance protects these inequalities
+near boundaries. Before any timing, the implementation was gated against a
+float64 NumPy oracle on randomized variable-length inputs, all-negative
+similarities, exact ties, forced-pruning workloads, and invalid inputs.
+
+\subsection{Held-out results on raw embeddings}
+\label{sec:bond-raw}
+
+\begin{table}[tb]
+  \centering
+  \caption{Exact-safe BOND-MaxSim versus precision-matched compiled exhaustive
+    MaxSim on 40 held-out queries (float64 products and accumulation in both
+    arms; four pinned physical cores; five interleaved repetitions; one
+    complete online timer). Every BOND arm returned the identical ordered
+    top-10 for all 40 queries; the largest absolute score deviation across all
+    arms is $1.78 \times 10^{-14}$. ``Products'' is the fraction of exhaustive
+    component products actually evaluated. Latency ratios always use the
+    exhaustive arm interleaved in the same run. Sources:
+    \texttt{scifact\_bond\_raw\_test\_40q\_final.json},
+    \texttt{scifact\_bond\_pca\_test\_40q\_final.json},
+    \texttt{nfcorpus\_bond\_raw\_test\_40q\_final.json}.}
+  \label{tab:bond}
+  \small
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular}{@{}l S[table-format=2.4] S[table-format=1.4] S[table-format=2.2] S[table-format=2.2] S[table-format=2.2]@{}}
+    \toprule
+    Arm & {BOND med.\ (\si{\second})} & {Exact med.\ (\si{\second})} & {Ratio ($\times$)} & {Pruned (\%)} & {Products (\%)} \\
+    \midrule
+    SciFact raw, prefix-500     & 46.4861 & 4.2740 & 10.88 & 22.44 & 95.47 \\
+    SciFact raw, free oracle    & 48.1283 & 4.2740 & 11.26 & 36.32 & 92.43 \\
+    SciFact PCA, prefix-500     & 35.5169 & 4.0591 &  8.75 & 86.30 & 69.02 \\
+    SciFact PCA, free oracle    & 35.4903 & 4.0591 &  8.74 & 97.91 & 61.53 \\
+    NFCorpus raw, prefix-500    & 20.3855 & 2.0397 &  9.99 & 23.36 & 94.16 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:bond} (first row) reports the primary decision measurement. On the
+40 held-out SciFact queries the BOND kernel reproduces the exact ordered
+top-10 for every query, prunes 22.44\% of the 207{,}320 query--document pairs,
+and yet still evaluates \textbf{95.47\%} of the component products required by
+exhaustive scoring. Its median online latency is \SI{46.49}{\second} versus
+\SI{4.27}{\second} (p95: \SI{48.11}{\second} versus \SI{4.41}{\second}) for
+the precision-matched exhaustive arm in the same interleaved run---a
+\textbf{10.88-fold slowdown}. This is the main negative result of the project,
+and it is a controlled slowdown measurement, not a withdrawn-style estimate.
+
+\paragraph{Why the bounds do not help: late pruning.} The per-checkpoint
+pruning counts explain the discrepancy between the visible document-pruning
+percentage and the negligible arithmetic saving. Every single one of the
+46{,}526 held-out SciFact prunes occurred at dimension checkpoint 96 of
+128---none at checkpoints 8 through 64. A document pruned at dimension 96 has
+already paid 75\% of its component products, so pruning 22.44\% of documents
+saves only 4.53\% of the arithmetic. Meanwhile the kernel pays for residual
+norms, per-pair upper bounds, threshold maintenance, branching, and
+partial-state writes on \emph{every} surviving pair---costs the regular,
+SIMD-friendly exhaustive kernel does not incur. On raw normalized ColBERT
+embeddings the score signal is spread nearly uniformly across the 128
+dimensions, so the Cauchy--Schwarz residual term stays large until almost the
+entire vector has been scanned. This answers RQ2 for the raw representation:
+the bounds become useful too late to offset their runtime overhead.
+
+\subsection{Transfer to NFCorpus}
+
+The frozen raw-order configuration was rerun unchanged on NFCorpus
+(\cref{tab:bond}, last row; \cref{fig:transfer}, middle and right panels).
+The diagnosis transfers: the kernel preserves the exact ordered top-10 for
+all 40 held-out queries (maximum score deviation $7.11 \times 10^{-15}$),
+prunes 23.36\% of pairs, evaluates 94.16\% of component products, and is
+9.99 times slower than its same-run exhaustive arm
+(\SI{20.39}{\second} versus \SI{2.04}{\second} median). Pruning is again
+late, though marginally earlier than on SciFact: 730 documents prune at
+checkpoint 64 and 33{,}210 at checkpoint 96.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\textwidth]{fig8_controlled_transfer.png}
+  \caption{SciFact-to-NFCorpus transfer check (40 held-out queries per
+    dataset; $L=100$, $\texttt{nprobe}=8$; BOND prefix seeds $=500$; same WSL
+    stack, four pinned physical cores, and online boundary). Left: IVF
+    exact-ranking recovery versus rerank budget; NFCorpus saturates at 0.975
+    because its candidate pool misses part of the exact top-10 for 3 of 40
+    queries, whereas the SciFact pool is complete. Middle and right: raw-order
+    exact-safe BOND evaluates 94--95\% of exhaustive component products and
+    remains about $10\times$ slower than the same-run precision-matched
+    exhaustive median on both datasets.}
+  \label{fig:transfer}
+\end{figure}

@@ -1,0 +1,72 @@
+\begin{thebibliography}{8}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[de~Vries et~al.(2002)de~Vries, Mamoulis, Nes, and
+  Kersten]{devries2002bond}
+Arjen~P. de~Vries, Nikos Mamoulis, Niels Nes, and Martin~L. Kersten.
+\newblock Efficient k-{NN} search on vertically decomposed data.
+\newblock In \emph{Proceedings of the 2002 ACM SIGMOD International Conference
+  on Management of Data}, 2002.
+\newblock \doi{10.1145/564691.564729}.
+
+\bibitem[Gao and Long(2023)]{gao2023adsampling}
+Jianyang Gao and Cheng Long.
+\newblock High-dimensional approximate nearest neighbor search: with reliable
+  and efficient distance comparison operations, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.09855}.
+
+\bibitem[Khattab and Zaharia(2020)]{khattab2020colbert}
+Omar Khattab and Matei Zaharia.
+\newblock {ColBERT}: Efficient and effective passage search via contextualized
+  late interaction over {BERT}.
+\newblock In \emph{Proceedings of the 43rd International ACM SIGIR Conference
+  on Research and Development in Information Retrieval}, 2020.
+\newblock URL \url{https://arxiv.org/abs/2004.12832}.
+
+\bibitem[Kuffo et~al.(2025)Kuffo, Krippner, and Boncz]{kuffo2025pdx}
+Leonardo Kuffo, Elena Krippner, and Peter Boncz.
+\newblock {PDX}: A data layout for vector similarity search.
+\newblock \emph{Proceedings of the ACM on Management of Data}, 2025.
+\newblock \doi{10.1145/3725333}.
+
+\bibitem[{LightOn}()]{pylate}
+{LightOn}.
+\newblock {PyLate}: Flexible training and retrieval for late interaction
+  models.
+\newblock Software repository, version 1.5.0.
+\newblock URL \url{https://github.com/lightonai/pylate}.
+
+\bibitem[Santhanam et~al.(2022{\natexlab{a}})Santhanam, Khattab, Potts, and
+  Zaharia]{santhanam2022plaid}
+Keshav Santhanam, Omar Khattab, Christopher Potts, and Matei Zaharia.
+\newblock {PLAID}: An efficient engine for late interaction retrieval.
+\newblock In \emph{Proceedings of the 31st ACM International Conference on
+  Information and Knowledge Management ({CIKM})}, 2022{\natexlab{a}}.
+\newblock URL \url{https://arxiv.org/abs/2205.09707}.
+
+\bibitem[Santhanam et~al.(2022{\natexlab{b}})Santhanam, Khattab, Saad-Falcon,
+  Potts, and Zaharia]{santhanam2022colbertv2}
+Keshav Santhanam, Omar Khattab, Jon Saad-Falcon, Christopher Potts, and Matei
+  Zaharia.
+\newblock {ColBERTv2}: Effective and efficient retrieval via lightweight late
+  interaction.
+\newblock In \emph{Proceedings of the 2022 Conference of the North American
+  Chapter of the Association for Computational Linguistics ({NAACL})},
+  2022{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2112.01488}.
+
+\bibitem[Thakur et~al.(2021)Thakur, Reimers, R{\"u}ckl{\'e}, Srivastava, and
+  Gurevych]{thakur2021beir}
+Nandan Thakur, Nils Reimers, Andreas R{\"u}ckl{\'e}, Abhishek Srivastava, and
+  Iryna Gurevych.
+\newblock {BEIR}: A heterogeneous benchmark for zero-shot evaluation of
+  information retrieval models.
+\newblock In \emph{Proceedings of the Thirty-fifth Conference on Neural
+  Information Processing Systems, Datasets and Benchmarks Track}, 2021.
+\newblock URL \url{https://arxiv.org/abs/2104.08663}.
+
+\end{thebibliography}

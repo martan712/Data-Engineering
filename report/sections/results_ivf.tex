@@ -1,0 +1,152 @@
+\section{IVF Candidate-Generation Results}
+\label{sec:results-ivf}
+
+This section evaluates the approximate two-stage architecture of
+\cref{sec:three-stages}: IVF token retrieval, document selection at budget
+$C$, and exact float32 MaxSim reranking. Results are approximate by
+construction and are evaluated against the exact ranking; they are reported
+separately from the exact-safe BOND results of \cref{sec:results-bond}.
+
+\subsection{SciFact}
+\label{sec:ivf-scifact}
+
+\begin{table}[tb]
+  \centering
+  \caption{Controlled SciFact release comparison on 40 held-out queries
+    (5{,}183 documents; $L=100$, $\texttt{nprobe}=8$; medians and p95 over
+    five interleaved repetitions of the complete online boundary for all 40
+    queries). Exact R@10 is exact-ranking recovery against compiled exact
+    MaxSim; the rerank ratio is the fraction of all query--document pairs
+    evaluated exactly. Source: \texttt{scifact\_ivf\_test\_40q\_final.json}.}
+  \label{tab:scifact-ivf}
+  \small
+  \begin{tabular}{@{}l S[table-format=1.4] S[table-format=1.4] S[table-format=1.4] S[table-format=4.1] S[table-format=1.4]@{}}
+    \toprule
+    Arm & {Median (\si{\second})} & {p95 (\si{\second})} & {Exact R@10} & {Mean $C$} & {Rerank ratio} \\
+    \midrule
+    Compiled exact      & 2.9333 & 3.1010 & 1.0000 & 5183.0 & 1.0000 \\
+    \midrule
+    FAISS-IVF, $C{=}50$   & 0.3810 & 0.4003 & 0.8600 &   50.0 & 0.0096 \\
+    PDX-IVF,   $C{=}50$   & 0.3495 & 0.3575 & 0.8600 &   50.0 & 0.0096 \\
+    FAISS-IVF, $C{=}100$  & 0.3814 & 0.4025 & 0.9325 &  100.0 & 0.0193 \\
+    PDX-IVF,   $C{=}100$  & 0.3973 & 0.4757 & 0.9325 &  100.0 & 0.0193 \\
+    FAISS-IVF, $C{=}200$  & 0.5051 & 0.5885 & 0.9750 &  200.0 & 0.0386 \\
+    PDX-IVF,   $C{=}200$  & 0.5411 & 0.5541 & 0.9750 &  200.0 & 0.0386 \\
+    FAISS-IVF, $C{=}400$  & 0.8483 & 0.9233 & 0.9900 &  390.9 & 0.0754 \\
+    PDX-IVF,   $C{=}400$  & 0.8820 & 0.9127 & 0.9900 &  390.9 & 0.0754 \\
+    FAISS-IVF, full pool  & 1.2908 & 1.7934 & 1.0000 &  619.3 & 0.1195 \\
+    PDX-IVF,   full pool  & 1.2467 & 1.5615 & 1.0000 &  619.3 & 0.1195 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:scifact-ivf} presents the held-out SciFact comparison and
+\cref{fig:quality-latency} plots the resulting quality--latency frontier.
+Four observations follow directly from the artifacts.
+
+\paragraph{Candidate pools are complete; residual loss is selector loss.}
+For every one of the 40 held-out queries, the retrieved candidate pool (mean
+619.3 documents) contains the entire exact top-10. Loss at finite $C$ is
+therefore attributable to the zero-filled approximate selector, not to token
+retrieval. Reranking $C = 200$ documents per query recovers 0.975 of the exact
+top-10 while evaluating 3.86\% of all query--document pairs; reranking the
+complete pool recovers the exact ranking with 11.95\% of the pairs.
+
+\paragraph{FAISS-IVF and PDX-IVF are quality-identical.} The artifacts record
+that candidate pools, selected candidates, retrieved-hit counts, and final
+top-$k$ rankings are equal between the engines at every budget; consequently
+their recovery curves in \cref{fig:quality-latency} coincide exactly.
+
+\paragraph{No consistent engine latency advantage.} The latency winner changes
+with the budget (PDX is faster at $C = 50$ and full pool; FAISS is faster at
+$C = 100$, 200, and 400), and token-search stage medians differ by at most
+about \SI{0.02}{\second} across the SciFact arms. The evidence therefore does
+not support a PDX-specific retrieval advantage in this workload.
+
+\paragraph{Qrels metrics cannot resolve the architecture differences.} Qrels
+Recall@10 (0.985) and MRR@10 (0.902) are \emph{identical} for every arm in
+\cref{tab:scifact-ivf}, even though exact-ranking recovery spans 0.86 to 1.00.
+With incomplete qrels and 40 queries, exact-ranking recovery is the sensitive
+metric; qrels metrics are reported for completeness only.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig5_controlled_quality_latency.png}
+  \caption{SciFact held-out quality--latency frontier from the controlled
+    clean run (5{,}183 documents; 40 queries; $L=100$, $\texttt{nprobe}=8$;
+    four pinned physical cores; median of five interleaved repetitions;
+    online boundary only). Each point is one rerank budget $C$; the vertical
+    axis is recall@10 against the exact MaxSim ranking. FAISS-IVF and PDX-IVF
+    trace the same recovery curve, and both reach exact recovery when the full
+    candidate pool ($\approx 619$ documents) is reranked, well below the
+    compiled exhaustive latency (star).}
+  \label{fig:quality-latency}
+\end{figure}
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig6_controlled_stage_breakdown.png}
+  \caption{Online stage breakdown for the controlled SciFact run (40 held-out
+    queries, five interleaved repetitions). Bars stack the median stage timers
+    (token search; aggregation and selection; exact rerank and top-$k$)
+    against the measured end-to-end median (black marker). At small budgets
+    token search dominates; at the full candidate pool exact reranking
+    dominates for both engines. Stage medians are diagnostic and need not sum
+    exactly to the outer-timer median.}
+  \label{fig:stage-breakdown}
+\end{figure}
+
+\Cref{fig:stage-breakdown} decomposes the online time by stage. At $C = 50$
+token search dominates for both engines; at the full pool, exact reranking
+accounts for most of the latency. Offline index construction, excluded from
+these timings, took \SI{18.52}{\second} (FAISS) and \SI{21.46}{\second} (PDX)
+on SciFact.
+
+\subsection{NFCorpus transfer}
+\label{sec:ivf-nfcorpus}
+
+The identical stack, online boundary, and configuration ($L = 100$,
+$\texttt{nprobe} = 8$, frozen selector) were applied to NFCorpus
+(3{,}633 documents; 864{,}703 token vectors; 40 held-out queries).
+\Cref{tab:nfcorpus-ivf} reports the results and the left panel of
+\cref{fig:transfer} compares the recovery curves of both datasets.
+
+\begin{table}[tb]
+  \centering
+  \caption{NFCorpus transfer comparison on 40 held-out queries
+    (3{,}633 documents; same configuration and online boundary as
+    \cref{tab:scifact-ivf}).
+    Source: \texttt{nfcorpus\_ivf\_test\_40q\_final.json}.}
+  \label{tab:nfcorpus-ivf}
+  \small
+  \begin{tabular}{@{}l S[table-format=1.4] S[table-format=1.4] S[table-format=1.4] S[table-format=4.1] S[table-format=1.4]@{}}
+    \toprule
+    Arm & {Median (\si{\second})} & {p95 (\si{\second})} & {Exact R@10} & {Mean $C$} & {Rerank ratio} \\
+    \midrule
+    Compiled exact      & 1.4328 & 1.6469 & 1.0000 & 3633.0 & 1.0000 \\
+    \midrule
+    FAISS-IVF, $C{=}50$  & 0.2114 & 0.2541 & 0.8275 &   50.0 & 0.0138 \\
+    PDX-IVF,   $C{=}50$  & 0.2365 & 0.2712 & 0.8275 &   50.0 & 0.0138 \\
+    FAISS-IVF, $C{=}200$ & 0.3615 & 0.4032 & 0.9650 &  198.0 & 0.0545 \\
+    PDX-IVF,   $C{=}200$ & 0.3610 & 0.4265 & 0.9650 &  198.0 & 0.0545 \\
+    FAISS-IVF, full pool & 0.7019 & 0.7163 & 0.9750 &  388.1 & 0.1068 \\
+    PDX-IVF,   full pool & 0.6952 & 0.7510 & 0.9750 &  388.1 & 0.1068 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The transfer is less forgiving than SciFact in one specific way: reranking the
+\emph{entire} candidate pool reaches only 0.975 exact recall@10, and the pool
+contains the complete exact top-10 for 37 of the 40 queries. The residual
+0.025 loss is therefore \emph{candidate-pool coverage} loss---no selector
+operating on this pool can repair it---whereas on SciFact all loss at finite
+$C$ was selector loss. Candidate pools and final rankings again agree between
+FAISS and PDX at every budget. The PDX token-search stage is slightly slower
+than FAISS in every matched NFCorpus arm (e.g., median \SI{0.145}{\second}
+versus \SI{0.128}{\second} at $C = 50$), but total online latency is nearly
+tied at $C = 200$ and at the full pool, so the earlier conclusion stands: the
+evidence shows no consistent PDX-specific advantage. Qrels Recall@10 moves
+only from 0.2150 ($C{=}50$) to 0.2191 (full pool, equal to the exact
+reference), confirming again that qrels cannot resolve these differences.
+Offline index construction took \SI{12.27}{\second} (FAISS) and
+\SI{14.67}{\second} (PDX).

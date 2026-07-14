@@ -1,0 +1,116 @@
+\section{Implementation and Benchmark Details}
+\label{app:details}
+
+\subsection{Hardware and software environment}
+
+All release measurements were taken on a single machine: AMD Ryzen 7 5800H
+(16 logical CPUs), Ubuntu WSL2 (kernel 6.6.87.2-microsoft-standard-WSL2),
+Python 3.14.4 built with GCC 15.2.0. Processes were pinned with
+\texttt{taskset} to CPUs $\{0, 2, 4, 6\}$ (one hardware thread per physical
+core) with \texttt{OMP\_NUM\_THREADS=4}, \texttt{OMP\_DYNAMIC=FALSE},
+\texttt{OMP\_PROC\_BIND=TRUE}, \texttt{OMP\_PLACES=threads}, and BLAS thread
+counts fixed at 4. Recorded package versions: NumPy 2.4.6, faiss-cpu 1.14.2,
+pdxearch 0.1 (PDX commit \texttt{fdc62f2d22b3793060abf633cb5407438c7f739b},
+clean). Embeddings were produced with PyLate~1.5.0 and
+\texttt{lightonai/GTE-ModernColBERT-v1}.
+
+\subsection{Dataset statistics}
+
+\begin{table}[ht]
+  \centering
+  \caption{Release dataset statistics (from the artifact
+    \texttt{dataset} blocks). In both datasets, queries 0--9 were reserved
+    for pilot validation and queries 10--49 form the held-out set.}
+  \label{tab:datasets}
+  \small
+  \begin{tabular}{@{}l S[table-format=4.0] S[table-format=7.0] S[table-format=2.0] S[table-format=3.0]@{}}
+    \toprule
+    Dataset & {Documents} & {Doc.\ token vectors} & {Held-out queries} & {Query token vectors} \\
+    \midrule
+    SciFact  & 5183 & 1193945 & 40 & 780 \\
+    NFCorpus & 3633 &  864703 & 40 & 461 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Embedding dimension is 128 in both datasets. SciFact retains 49 qrels labels
+for the held-out queries and NFCorpus retains 1{,}250, which quantifies the
+difference in judgment density noted in \cref{sec:metrics}.
+
+\subsection{IVF configuration}
+
+Both engines index all document token vectors with squared-L2 metric on
+L2-normalized inputs. SciFact: 2{,}186 buckets trained on 109{,}300 sampled
+points; NFCorpus: 1{,}860 buckets trained on 93{,}000 points; both with
+$\texttt{nprobe} = 8$, $L = 100$ hits per query token, seed 0, and the frozen
+\texttt{approx\_score} selector. Offline build (train + load) times:
+SciFact \SI{18.52}{\second} (FAISS) and \SI{21.46}{\second} (PDX); NFCorpus
+\SI{12.27}{\second} (FAISS) and \SI{14.67}{\second} (PDX).
+
+\subsection{Online stage medians (SciFact)}
+
+\begin{table}[ht]
+  \centering
+  \caption{Median per-stage online times in seconds for 40 SciFact queries
+    (five interleaved repetitions). Stage timers are diagnostic; they need not
+    sum exactly to the outer end-to-end median.}
+  \label{tab:stages}
+  \small
+  \begin{tabular}{@{}l S[table-format=1.4] S[table-format=1.4] S[table-format=1.4] S[table-format=1.4]@{}}
+    \toprule
+    Arm & {Token search} & {Aggregation} & {Selection} & {Exact rerank + top-$k$} \\
+    \midrule
+    FAISS-IVF, $C{=}50$  & 0.2430 & 0.0730 & 0.0109 & 0.0491 \\
+    PDX-IVF,   $C{=}50$  & 0.2254 & 0.0651 & 0.0090 & 0.0461 \\
+    FAISS-IVF, full pool & 0.2351 & 0.0728 & 0.0109 & 0.9674 \\
+    PDX-IVF,   full pool & 0.2398 & 0.0660 & 0.0091 & 0.9253 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{BOND kernel configuration}
+
+Dimension checkpoints $\{8, 16, 32, 64, 96, 128\}$; pruning threshold from
+the $k$th-largest conservative lower bound over fully scored documents;
+500 deterministic prefix seeds (oracle arms receive the exact top-10 free);
+strict-inequality pruning with score tie tolerance $10^{-10}$; float64
+products and accumulation in both BOND and exhaustive arms. Offline vertical
+index construction: \SI{1.755}{\second} (SciFact raw),
+\SI{1.681}{\second} (SciFact PCA), \SI{1.224}{\second} (NFCorpus raw);
+estimated vertical index footprint on SciFact: \SI{611}{\mega\byte} of values
+plus \SI{57}{\mega\byte} of residual norms.
+
+\subsection{Per-checkpoint pruning counts}
+
+\begin{table}[ht]
+  \centering
+  \caption{Documents pruned at each dimension checkpoint (all held-out
+    queries pooled). Raw-order pruning is concentrated at checkpoint 96;
+    PCA moves most pruning to checkpoints 64 and 96.}
+  \label{tab:checkpoints}
+  \small
+  \begin{tabular}{@{}l S[table-format=2.0] S[table-format=6.0] S[table-format=6.0] S[table-format=6.0] S[table-format=1.0]@{}}
+    \toprule
+    Arm & {dim 32} & {dim 64} & {dim 96} & {Total pruned} & {dim 128} \\
+    \midrule
+    SciFact raw, prefix-500  & 0  & 0      & 46526 & 46526  & 0 \\
+    SciFact raw, oracle      & 0  & 0      & 75299 & 75299  & 0 \\
+    SciFact PCA, prefix-500  & 9  & 83722  & 95177 & 178908 & 0 \\
+    SciFact PCA, oracle      & 40 & 121166 & 81782 & 202988 & 0 \\
+    NFCorpus raw, prefix-500 & 0  & 730    & 33210 & 33940  & 0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+No pruning occurred at checkpoints 8 or 16 in any arm. Total held-out
+query--document pairs: 207{,}320 (SciFact), 145{,}320 (NFCorpus).
+
+\subsection{Numerical validation}
+
+BOND-versus-exhaustive score agreement on held-out queries: maximum absolute
+error $1.78 \times 10^{-14}$ (SciFact raw), $1.07 \times 10^{-14}$
+(SciFact PCA), $7.11 \times 10^{-15}$ (NFCorpus raw); ordered top-10 rankings
+identical in every arm with no non-tie inversions. The float32 compiled exact
+kernel used for IVF reranking matches the NumPy oracle with maximum absolute
+score error below $2 \times 10^{-6}$ on the validation workloads, with
+identical rankings.

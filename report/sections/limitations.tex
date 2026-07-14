@@ -1,0 +1,50 @@
+\section{Limitations and Threats to Validity}
+\label{sec:limitations}
+
+\paragraph{External validity.}
+All release measurements come from one clean commit on one machine (Ubuntu
+WSL2, AMD Ryzen 7 5800H); hardware and operating-system generality is
+untested. SciFact (5{,}183 documents) and NFCorpus (3{,}633 documents) are
+small corpora, and results may change at larger scales or under different
+query- and document-length distributions. Only one candidate configuration
+($L = 100$, $\texttt{nprobe} = 8$) appears in the held-out release; the
+quality--latency curves vary only the rerank budget $C$.
+
+\paragraph{Baseline strength.}
+The compiled exact kernel is validated and independently implemented, but it
+is a project baseline, not a claim to be the fastest possible MaxSim
+implementation. Similarly, the BOND-MaxSim kernel is an exact-safe,
+document-oriented research prototype rather than an upstream PDX block kernel;
+a substantially different engineering of the same bound could shift the
+latency ratios, although the late-pruning geometry on raw embeddings would
+persist.
+
+\paragraph{Statistical and evaluation limits.}
+Each dataset contributes 40 held-out queries and five measured repetitions;
+interquartile ranges and p95 values are recorded, but formal significance
+testing was not performed. The qrels are incomplete, which is precisely why
+they proved insensitive (identical across all SciFact arms) and why
+exact-ranking recovery is the primary metric.
+
+\paragraph{Residual tuning knowledge.}
+IVF parameters originate from earlier exploration on these datasets. The
+validation/test query split prevents new selector tuning on evaluation
+queries, but it cannot erase all historical knowledge encoded in the chosen
+configuration.
+
+\paragraph{Engine internals.}
+PDX and FAISS may use different internal threading and memory layouts even
+under the same process-level thread limits; the stage timers bound, but do not
+eliminate, this confounder.
+
+\paragraph{Missing comparison points.}
+PLAID has not been rerun under a matched full-score budget, so no controlled
+PLAID comparison is reported. The historical PLAID numbers were withdrawn
+together with the other uncontrolled measurements (\cref{sec:audit}).
+
+\paragraph{Diagnostic arms are not methods.}
+The oracle seed policy receives the exact top-10 for free and is a mechanism
+upper bound only; it is not deployable. PCA is an offline transformation whose
+fit, transform, and index-build costs are reported separately; the PCA arms
+demonstrate the effect of dimension ordering on the bound rather than an
+end-to-end method.

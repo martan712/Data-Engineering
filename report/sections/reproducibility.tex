@@ -1,0 +1,45 @@
+\section{Reproducibility}
+\label{sec:reproducibility}
+
+The repository is organized so that every number in this report can be traced
+to an audited artifact:
+
+\begin{itemize}
+  \item \textbf{Release artifacts.} The five JSON files under
+    \texttt{results/final/} are the authoritative evidence. Each records the
+    Git commit (\texttt{0cc6145}, \texttt{dirty=false}), SHA-256 hashes of the
+    embedding and qrels inputs, package versions, CPU affinity and thread
+    environment, warm-up and repetition counts, raw outer-timer samples,
+    per-stage timings, exact-ranking recovery, qrels metrics, and, for BOND,
+    per-checkpoint pruning counts and score-validation errors.
+    \texttt{results/final/manifest.json} lists the accepted files with sizes
+    and hashes. Historical results under \texttt{results/legacy/} and
+    dirty-worktree pilots under \texttt{results/controlled/} are preserved for
+    auditability but support no final performance claim.
+  \item \textbf{Pinned environments.} Python dependency manifests are pinned;
+    the PDX library is checked out at the audited commit \texttt{fdc62f2}
+    (the controlled runner refuses a dirty or unexpected PDX checkout).
+    Key package versions recorded in the artifacts include NumPy 2.4.6 and
+    faiss-cpu 1.14.2 on Python 3.14.4.
+  \item \textbf{Independent kernels and tests.} The compiled exact kernel
+    (\texttt{cpp/exact\_maxsim/}) and the exact-safe BOND kernel
+    (\texttt{cpp/bond\_maxsim/}) ship with build scripts and automated
+    unit tests against the NumPy oracle, including tie, all-negative,
+    forced-pruning, and invalid-input cases.
+  \item \textbf{Controlled runners.} \texttt{experiments/pipeline/08} (IVF)
+    and \texttt{experiments/pipeline/10} (BOND) implement the protocol of
+    \cref{sec:protocol}; the repository \texttt{README.md} documents the
+    exact \texttt{taskset} and environment-variable invocations used for the
+    release runs.
+  \item \textbf{Figures from artifacts.} Figures
+    \ref{fig:quality-latency}--\ref{fig:bond} are generated directly from the
+    release JSON files by \texttt{experiments/pipeline/09}, \texttt{11}, and
+    \texttt{12}, without hard-coded headline values.
+\end{itemize}
+
+Large embedding inputs remain outside Git; their SHA-256 hashes inside each
+artifact tie the recorded results to immutable inputs. The documentation set
+(\texttt{docs/benchmark\_protocol.md}, \texttt{docs/audit\_findings.md},
+\texttt{docs/bond\_kernel\_design.md}, \texttt{docs/final\_results.md})
+records the protocol, the audit, the kernel safety argument, and the release
+summary, respectively.

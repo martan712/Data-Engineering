@@ -1,0 +1,95 @@
+\section{Representation and System Architecture}
+\label{sec:architecture}
+
+\subsection{Packed variable-length token representation}
+
+ColBERT produces a variable number of token vectors per document and per
+query. The project stores each collection in a packed format consisting of:
+
+\begin{itemize}
+  \item one dense \texttt{values} matrix of shape
+    $(\text{total tokens}) \times 128$ containing all token vectors
+    contiguously;
+  \item one terminal \texttt{offsets} array of length $(\text{items} + 1)$,
+    so that item $i$ owns the token rows
+    $[\texttt{offsets}[i], \texttt{offsets}[i+1])$;
+  \item parallel document and query identifier arrays.
+\end{itemize}
+
+This representation feeds every component in the study---the NumPy oracle, the
+compiled exact kernel, the BOND kernel, and both IVF engines---so all methods
+score exactly the same embeddings. On SciFact the corpus comprises 5{,}183
+documents and 1{,}193{,}945 document token vectors; on NFCorpus, 3{,}633
+documents and 864{,}703 token vectors.
+
+\subsection{Flattened token index and token-to-document mapping}
+
+For candidate generation, all document token vectors are indexed
+\emph{independently} as points in $\mathbb{R}^{128}$, discarding document
+boundaries at index level. Two metadata arrays map each token-vector
+identifier back to its owning document and its token position within that
+document. This flattened design allows any off-the-shelf vector index to serve
+multi-vector retrieval, at the cost of an explicit aggregation step at query
+time.
+
+\subsection{Token retrieval, document selection, and exact reranking}
+\label{sec:three-stages}
+
+Online query processing distinguishes three conceptually different stages:
+
+\begin{enumerate}
+  \item \textbf{Token retrieval.} For each of the $m$ query tokens, the index
+    returns its top-$L$ nearest document-token vectors ($L = 100$ throughout
+    the controlled experiments).
+  \item \textbf{Document selection.} Every retrieved token hit is mapped back
+    to its document. For each (query token, document) pair, only the best
+    retrieved similarity is retained; contributions of query tokens with no
+    retrieved hit in a document are replaced by zero. Summing these values
+    yields an \emph{approximate selector score}, and the top-$C$ documents by
+    this score are selected for reranking. The union of all documents hit by
+    at least one token defines the \emph{candidate pool}, whose full size is
+    also measured as an oracle selection upper bound at fixed $L$.
+  \item \textbf{Exact MaxSim reranking.} The compiled exact kernel evaluates
+    \cref{eq:maxsim} for the selected documents only, and the final document
+    top-$k$ is produced from these exact scores.
+\end{enumerate}
+
+The zero-filled aggregation in stage~2 is deliberately \emph{not} used as a
+final scorer. Token-only aggregation is not an exact document scorer for two
+reasons. First, a query token whose true best match in a document was not
+among the retrieved top-$L$ hits contributes zero instead of its true maximum,
+underestimating the document score by an unknown amount. Second, the retrieved
+top-$L$ lists are themselves truncated per query token, so different documents
+have different subsets of their token similarities observed. Early experiments
+confirmed empirically that ranking by this aggregate disagrees with exact
+MaxSim rankings; it is retained only as a cheap selection heuristic whose loss
+is measured explicitly (\cref{sec:results-ivf}).
+
+\subsection{Candidate engines}
+
+The controlled release compares two engines over the same flattened token
+index contents:
+
+\begin{itemize}
+  \item \textbf{FAISS-IVF}: \texttt{IndexIVFFlat} over L2-normalized vectors
+    with squared-L2 metric (\cref{eq:l2-ip});
+  \item \textbf{PDX-IVF}: \texttt{IndexPDXBONDIVFFlat} from the PDX library at
+    pinned commit \texttt{fdc62f2}.
+\end{itemize}
+
+Both engines use the same IVF training sample, the same number of buckets, and
+the same \texttt{nprobe}; both feed the same aggregation, selection, and
+compiled exact reranking code. Index construction is an offline cost and is
+reported separately from online latency.
+
+\subsection{Exact reference kernels}
+
+A readable NumPy implementation of \cref{eq:maxsim} serves as the correctness
+oracle throughout. The \emph{performance} reference is an independently
+implemented pybind11 C++17 kernel over the packed float32 inputs which
+validates dtype, shape, contiguity, and terminal offsets; releases the Python
+GIL; parallelizes query--document pairs with OpenMP; vectorizes the
+128-dimensional dot products; and returns the full exact query--document score
+matrix. Its scores and deterministic rankings are tested against the NumPy
+oracle. A second, exact-safe BOND-MaxSim kernel is described together with its
+results in \cref{sec:results-bond}.

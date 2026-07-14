@@ -1,0 +1,100 @@
+\section{Experimental Methodology}
+\label{sec:methodology}
+
+\subsection{Measurement audit and withdrawn results}
+\label{sec:audit}
+
+Before the controlled campaign, an internal audit examined the project's early
+wall-clock comparisons and found them unsuitable as performance evidence.
+The principal defects were: (i)~PDX and FAISS candidate timers excluded
+token-to-document aggregation, candidate selection, reranking, and final
+ranking; (ii)~PLAID was allowed up to 8{,}192 full scores per query while the
+IVF pipelines commonly reranked 50 documents, so the compared methods
+performed very different work; (iii)~the exact baseline was a per-document
+Python/NumPy loop rather than a compiled kernel; and (iv)~measurements from
+Windows and WSL environments appeared in the same figures. Additional issues
+included uncontrolled thread counts, no repeated or interleaved runs,
+parameter selection on the evaluation queries, favorable corpus prefixes, and
+IVF bucket counts that changed with corpus size in scaling plots.
+The historical headline ratios (approximately $30\times$, $39\times$, and
+$32\times$) were consequently withdrawn. Legacy artifacts are preserved under
+\texttt{results/legacy/} for mechanism and quality analysis only; no
+performance claim in this report relies on them.
+
+\subsection{Controlled benchmark protocol}
+\label{sec:protocol}
+
+All results in \cref{sec:results-ivf,sec:results-bond,sec:results-pca} were
+produced under the replacement protocol recorded in
+\texttt{docs/benchmark\_protocol.md}, whose core requirements are:
+
+\begin{itemize}
+  \item \textbf{One machine, one process.} All compared arms run in a single
+    Python process on one machine (Ubuntu WSL2 on an AMD Ryzen~7~5800H),
+    pinned to CPU affinity $\{0, 2, 4, 6\}$ (one hardware thread on each of
+    four physical cores) with four OpenMP/BLAS threads.
+  \item \textbf{Matched work and output contract.} Every arm must emit ranked
+    document identifiers under the same exact MaxSim definition; approximate
+    arms are compared at matched rerank budgets.
+  \item \textbf{Complete online timing boundary.} The online timer starts with
+    normalized query token vectors resident in memory and stops when final
+    ranked document identifiers are available. It covers index search,
+    token-to-document mapping, aggregation, candidate selection, exact
+    reranking, and final top-$k$ production. Query encoding and index
+    construction are excluded and reported separately as offline costs.
+    Reported ratios therefore describe this online boundary, not an
+    end-to-end retrieval service.
+  \item \textbf{Repetition schedule.} One untimed warm-up pass and five
+    measured repetitions, with the arm order interleaved per repetition to
+    reduce thermal and cache-order bias. Median and 95th-percentile (p95)
+    latencies are reported and raw samples are preserved in the artifacts.
+  \item \textbf{Provenance.} Every result JSON records the Git commit and
+    dirty flag, input SHA-256 hashes, package versions, thread environment,
+    CPU affinity, stage timings, and per-repetition samples. The release
+    manifest accepts only artifacts from clean commit \texttt{0cc6145}.
+\end{itemize}
+
+\subsection{Quality metrics}
+\label{sec:metrics}
+
+Two families of quality metrics are kept strictly separate:
+
+\begin{description}
+  \item[Exact-ranking recovery.] The primary architecture metric. For each
+    query, the fraction of the \emph{exact} MaxSim top-$k$ documents that the
+    approximate arm returns in its top-$k$ (reported at $k = 10$ as exact
+    recall@10). Candidate-pool recovery measures the same quantity against the
+    entire retrieved pool, isolating pool-coverage loss from selector loss.
+  \item[Qrels metrics.] Standard relevance-judgment metrics (Recall@$k$,
+    MRR@10) against the BEIR judgments. Because qrels are incomplete and the
+    query samples are small, these metrics are insensitive to architecture
+    differences (\cref{sec:results-ivf}) and are reported for completeness
+    only.
+\end{description}
+
+\subsection{Datasets, splits, and configuration}
+
+For each dataset the first 10 queries were used for pilot validation and
+selector-policy freezing, and the remaining \textbf{40 held-out queries} form
+the release comparison. On SciFact, the selector study found that a more
+complex \texttt{union\_approx\_and\_count} policy changed exact recall@10 by
+at most $\pm 0.02$ across budgets, so the simpler \texttt{approx\_score}
+selector was frozen before the held-out runs. The candidate configuration is
+fixed at $L = 100$ token hits per query token and $\texttt{nprobe} = 8$; only
+the rerank budget $C \in \{50, 100, 200, 400, \text{full pool}\}$ varies
+(SciFact; NFCorpus uses $\{50, 200, \text{full pool}\}$). ``Full pool'' means
+that every unique document in the candidate pool is reranked.
+
+\subsection{Numerical precision contracts}
+\label{sec:precision}
+
+Two distinct precision contracts are used, and their timings are never mixed:
+the \textbf{IVF comparison} reranks with the compiled float32 exact kernel,
+matching the float32 ColBERT embeddings, whereas the \textbf{BOND comparison}
+uses float64 products and accumulation in \emph{both} the exhaustive and the
+BOND arm, because the exact-safe pruning proof requires controlled rounding
+(\cref{sec:results-bond}). Consequently, float32 IVF latencies (e.g., the
+\SI{2.93}{\second} SciFact exhaustive median) must not be compared with
+float64 BOND-comparison latencies (e.g., the \SI{4.27}{\second} SciFact
+exhaustive median); each table names its own precision-matched baseline, and
+every BOND-to-exact ratio uses the exhaustive arm interleaved in the same run.
