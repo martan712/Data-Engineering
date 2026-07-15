@@ -1,4 +1,4 @@
-"""Stage 5 session-preserving timing artifact persistence."""
+"""Session-preserving timing artifact persistence shared across stages."""
 
 from __future__ import annotations
 
@@ -25,7 +25,14 @@ def write_or_append_timing_sessions(
     path: Path,
     envelope: ExperimentResultEnvelope,
 ) -> ExperimentResultEnvelope:
-    """Append compatible fresh sessions and never discard prior observations."""
+    """Append compatible fresh sessions and never discard prior observations.
+
+    Stage 3/4/5 repeated runs re-invoke the same deterministic experiment with a
+    fresh ``session_id`` into a shared output directory. Rather than overwrite the
+    prior invocation's artifact, this accumulates every session into one envelope,
+    refusing to merge across incompatible workloads, protocols, frozen inputs, or
+    duplicate session IDs.
+    """
     if not path.exists():
         atomic_write_envelope(path, envelope)
         return envelope
@@ -42,16 +49,15 @@ def write_or_append_timing_sessions(
         mismatches.append("payload_non_timing_fields")
     if mismatches:
         raise ResultValidationError(
-            f"refusing to append incompatible Stage 5 sessions: {sorted(set(mismatches))}"
+            f"refusing to append incompatible timing sessions: {sorted(set(mismatches))}"
         )
     sessions = [*previous.payload["sessions"], *envelope.payload["sessions"]]
     session_ids = [session.get("session_id") for session in sessions]
     if len(set(session_ids)) != len(session_ids):
-        raise ResultValidationError("refusing duplicate Stage 5 timing session IDs")
+        raise ResultValidationError("refusing duplicate timing session IDs")
     merged = replace(
         envelope,
         payload={**current_extras, "sessions": sessions},
     ).validate()
     atomic_write_envelope(path, merged)
     return merged
-

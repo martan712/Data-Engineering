@@ -18,7 +18,7 @@ from bondmaxsim.eval.qrels import compute_quality_metrics, per_query_ndcg_at_10
 from bondmaxsim.experiments.arms import ArmSpec, ExperimentSpec
 from bondmaxsim.experiments.execution import execute_prepared_timing_experiment
 from bondmaxsim.experiments.stage5.quality import RankedQueryResult, RetrievalPassResult, rank_run, validate_ranked_pass
-from bondmaxsim.experiments.stage5.persistence import write_or_append_timing_sessions
+from bondmaxsim.experiments.persistence import write_or_append_timing_sessions
 from bondmaxsim.experiments.timing import TimingProtocol, new_session_id
 from bondmaxsim.experiments.workloads import WorkloadMetadata
 from bondmaxsim.results.io import deterministic_result_name

@@ -31,7 +31,7 @@ from bondmaxsim.experiments.stage5.quality import (
     validate_exact_pass,
     validate_ranked_pass,
 )
-from bondmaxsim.experiments.stage5.persistence import write_or_append_timing_sessions
+from bondmaxsim.experiments.persistence import write_or_append_timing_sessions
 from bondmaxsim.experiments.timing import TimingProtocol, new_session_id
 from bondmaxsim.experiments.workloads import WorkloadMetadata
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, exact_maxsim_topk, topk_from_scores
