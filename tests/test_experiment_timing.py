@@ -242,6 +242,11 @@ def test_declarative_execution_excludes_setup_and_serializes_raw_session():
         arms=arms,
         command="pytest fixture timing",
         baseline_arm_id="baseline",
+        workload_metadata={
+            "workload_id": "fixture-workload-v1",
+            "dataset": "fixture",
+            "sample_size": 2,
+        },
     )
     envelope, session = execute_timing_experiment(
         spec,
@@ -257,6 +262,7 @@ def test_declarative_execution_excludes_setup_and_serializes_raw_session():
     assert len(validation_calls) == 8
     assert session.summaries()["baseline"]["median_ns"] == 100
     assert envelope.payload_kind == "timing_comparison"
+    assert envelope.protocol["workload"]["sample_size"] == 2
     serialized_session = envelope.payload["sessions"][0]
     assert serialized_session["complete"] is True
     assert len(serialized_session["observations"]) == 8
@@ -276,4 +282,17 @@ def test_arm_and_experiment_specs_reject_ambiguous_configuration():
             workload_id="fixture-workload",
             arms=(arm, arm),
             command="pytest",
+        )
+    with pytest.raises(ValueError, match="workload metadata ID"):
+        ExperimentSpec(
+            experiment_id="fixture",
+            artifact_id="fixture-result",
+            dataset_id="fixture",
+            workload_id="fixture-workload",
+            arms=(arm,),
+            command="pytest",
+            workload_metadata={
+                "workload_id": "another-workload",
+                "dataset": "fixture",
+            },
         )

@@ -58,6 +58,8 @@ def execute_timing_experiment(
         **protocol.to_dict(),
         "thread_mode": snapshot.get("threads", {}),
     }
+    if spec.workload_metadata:
+        protocol_block["workload"] = dict(spec.workload_metadata)
     envelope = ExperimentResultEnvelope.create(
         artifact_id=spec.artifact_id,
         experiment_id=spec.experiment_id,

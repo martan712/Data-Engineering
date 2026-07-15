@@ -64,6 +64,7 @@ class ExperimentSpec:
     command: str
     baseline_arm_id: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    workload_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -83,6 +84,11 @@ class ExperimentSpec:
             raise ValueError("baseline_arm_id does not name an arm")
         if not self.command:
             raise ValueError("command must be non-empty")
+        if self.workload_metadata:
+            if self.workload_metadata.get("workload_id") != self.workload_id:
+                raise ValueError("workload metadata ID does not match ExperimentSpec")
+            if self.workload_metadata.get("dataset") != self.dataset_id:
+                raise ValueError("workload metadata dataset does not match ExperimentSpec")
 
     def method_configuration(self) -> dict[str, Any]:
         return {
