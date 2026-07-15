@@ -17,9 +17,10 @@ def render_kernel_comparison(input_path: Path, output_path: Path) -> Path:
     envelope = load_result(input_path)
     if not (
         envelope.experiment_id.startswith("stage3-e03-kernel-comparison-")
+        or envelope.experiment_id.startswith("stage3-r12b-interleaved-baseline-probe-")
         or envelope.experiment_id.startswith("stage3-r12c-exact-safe-interleaved-")
     ):
-        raise ValueError("renderer requires an E03 or R12c timing artifact")
+        raise ValueError("renderer requires an E03, R12b, or R12c timing artifact")
     session = envelope.payload["sessions"][0]
     if not session.get("complete"):
         raise ValueError("renderer refuses incomplete timing sessions")

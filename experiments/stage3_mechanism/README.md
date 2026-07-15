@@ -2,20 +2,21 @@
 
 ## Current artifact drivers
 
-E01, E02, E03, E08, and R12c use the frozen shared-driver pattern. Their
+E01, E02, E03, E08, R12b, and R12c use the frozen shared-driver pattern. Their
 command modules select configuration only; preparation, workload identity,
 correctness, accounting/timing, provenance, and atomic serialization live
 under `bondmaxsim.experiments`. E01/E02 are accounting-only and make no
-latency claim. E03/E08/R12c retain raw counterbalanced observations. Dedicated
+latency claim. E03/E08/R12b/R12c retain raw counterbalanced observations. Dedicated
 `render_*` commands reopen the validated artifact before plotting.
 
 All current drivers provide `--fixture`. Fixture results are diagnostic and
 must not be used as performance evidence.
 
-E04--E07, E09, and R12b are retained as historical/diagnostic scripts. Their
+E04--E07 and E09 are retained as historical/diagnostic scripts. Their
 stored artifacts remain readable through the registered compatibility
-readers; they are not final-evidence producers and their standalone timing
-fields must not be promoted over R12c.
+readers; they are not final-evidence producers. R12b remains explicitly
+diagnostic, while its migrated driver records raw timing observations; neither
+its historical nor migrated probe fields may be promoted over R12c.
 
 Planned experiments for Stage 3 (see `docs/project_b_analysis_and_research_plan.md`,
 Stage 3 section, and `docs/stage1_bond_maxsim_formalization.md` §7 empirical context).

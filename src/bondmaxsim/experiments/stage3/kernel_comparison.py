@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from statistics import mean, median
 from typing import Any
 
 import numpy as np
 from threadpoolctl import threadpool_limits
 
+from bondmaxsim.config import REPO_ROOT
+from bondmaxsim.data.beir_ids import load_ids
+from bondmaxsim.data.loader import load_dataset
 from bondmaxsim.experiments.arms import ArmSpec, ExperimentSpec
 from bondmaxsim.experiments.execution import execute_prepared_timing_experiment
 from bondmaxsim.experiments.mechanism import (
@@ -16,8 +22,17 @@ from bondmaxsim.experiments.mechanism import (
     PreparedFusedWorkload,
     QueryPassResult,
 )
-from bondmaxsim.experiments.stage3.common import configuration_sha256, load_mechanism_data
+from bondmaxsim.experiments.stage3.common import (
+    MechanismData,
+    configuration_sha256,
+    load_mechanism_data,
+    sha256_file,
+)
 from bondmaxsim.experiments.timing import TimingProtocol, new_session_id
+from bondmaxsim.experiments.workloads import (
+    embedding_configuration_sha256,
+    ordered_query_id_sha256,
+)
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.results.io import atomic_write_envelope, deterministic_result_name
 from bondmaxsim.results.models import ExperimentResultEnvelope
@@ -63,6 +78,39 @@ class ExactSafeInterleavedConfig:
     @classmethod
     def fixture_config(cls) -> "ExactSafeInterleavedConfig":
         return cls(dataset="synthetic-small-v1", checkpoint_sets=((4,), (6,), (4, 6)), k=3, n_threads=1, fixture=True)
+
+    @property
+    def thread_tag(self) -> str:
+        return f"{self.n_threads}t" if self.n_threads > 0 else "mt"
+
+
+@dataclass(frozen=True)
+class BaselineProbeConfig:
+    dataset: str = "arguana"
+    checkpoint_sets: tuple[tuple[int, ...], ...] = (
+        (32,),
+        (112,),
+        (64, 112),
+        (32, 64, 96, 112),
+    )
+    order: str = "natural"
+    policy: str = "oracle"
+    shrink: float = 1.0
+    k: int = 10
+    query_count: int = 120
+    n_threads: int = 0
+    fixture: bool = False
+
+    @classmethod
+    def fixture_config(cls) -> "BaselineProbeConfig":
+        return cls(
+            dataset="synthetic-small-v1",
+            checkpoint_sets=((4,), (6,), (4, 6)),
+            k=3,
+            query_count=4,
+            n_threads=1,
+            fixture=True,
+        )
 
     @property
     def thread_tag(self) -> str:
@@ -225,6 +273,65 @@ def _write_timing(
     return TimingExperimentRun(envelope, path)
 
 
+def _canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _load_baseline_probe_data(config: BaselineProbeConfig) -> MechanismData:
+    if config.fixture:
+        return load_mechanism_data(config.dataset, fixture=True)
+    flat, starts, population = load_dataset(config.dataset)
+    if config.query_count <= 0 or config.query_count > len(population):
+        raise ValueError("R12b query_count must be within the encoded query population")
+    queries = tuple(
+        np.ascontiguousarray(query, dtype=np.float32)
+        for query in population[: config.query_count]
+    )
+    query_ids = tuple(
+        str(query_id)
+        for query_id in load_ids(config.dataset)["query_ids"][: config.query_count]
+    )
+    token_counts = tuple(len(query) for query in queries)
+    query_values = np.concatenate(queries, axis=0)
+    encoding = {
+        "model": "lightonai/GTE-ModernColBERT-v1",
+        "dimension": int(flat.shape[1]),
+        "l2_normalized": True,
+    }
+    workload_id = f"beir-{config.dataset}-r12b-prefix-n{config.query_count}-v1"
+    workload = {
+        "workload_id": workload_id,
+        "dataset": config.dataset,
+        "regime": "r12b_baseline_probe",
+        "ordered_query_id_sha256": ordered_query_id_sha256(query_ids),
+        "embedding_configuration_sha256": embedding_configuration_sha256(
+            query_values, encoding
+        ),
+        "sample_size": config.query_count,
+        "token_count_mean": float(mean(token_counts)),
+        "token_count_median": float(median(token_counts)),
+        "token_count_min": min(token_counts),
+        "token_count_max": max(token_counts),
+        "token_counts": list(token_counts),
+        "token_counts_sha256": _canonical_sha256(list(token_counts)),
+        "selection": f"first {config.query_count} archive queries in source order",
+        "source_revision": "archive/preliminaries/02_bond_variance/.cache",
+        "source_split": "queries-first-200",
+    }
+    data_path = REPO_ROOT / "data" / "embeddings" / f"{config.dataset}.npz"
+    return MechanismData(
+        dataset=config.dataset,
+        flat_tokens=flat,
+        doc_starts=starts,
+        queries=queries,
+        query_ids=query_ids,
+        workload_metadata=workload,
+        data_sha256=sha256_file(data_path),
+        fixture=False,
+    )
+
+
 def run_kernel_comparison(
     config: KernelComparisonConfig,
     *,
@@ -348,3 +455,73 @@ def run_exact_safe_interleaved(
         )
 
     return _write_timing(config, experiment_id=experiment_id, output_dir=output_dir, session_id=session_id, prepare_spec=prepare)
+
+
+def run_baseline_probe(
+    config: BaselineProbeConfig,
+    *,
+    output_dir: Path,
+    session_id: str | None = None,
+) -> TimingExperimentRun:
+    """Run the R12b standalone-baseline diagnostic under the shared protocol."""
+    experiment_id = f"stage3-r12b-interleaved-baseline-probe-{config.thread_tag}"
+
+    def prepare() -> ExperimentSpec:
+        data = _load_baseline_probe_data(config)
+        workload = PreparedFusedWorkload(
+            data.flat_tokens,
+            data.doc_starts,
+            list(data.queries),
+            list(data.query_ids),
+        )
+        arms = [_dense_arm(workload, data.dataset, config.k, config.n_threads)]
+        for checkpoints in config.checkpoint_sets:
+            suffix = "-".join(str(value) for value in checkpoints)
+            arms.append(
+                _bond_arm(
+                    workload,
+                    dataset=data.dataset,
+                    k=config.k,
+                    n_threads=config.n_threads,
+                    order=config.order,
+                    level="doc",
+                    checkpoints=checkpoints,
+                    policy=config.policy,
+                    shrink=config.shrink,
+                    arm_id=f"bond-c{suffix}",
+                )
+            )
+        return ExperimentSpec(
+            experiment_id=experiment_id,
+            artifact_id=f"{experiment_id}-{data.dataset}",
+            dataset_id=data.dataset,
+            workload_id=str(data.workload_metadata["workload_id"]),
+            arms=tuple(arms),
+            command=(
+                "uv run python -m experiments.stage3_mechanism.r12b_interleaved_baseline_probe "
+                f"--dataset {config.dataset} --queries {config.query_count} "
+                f"--threads {config.n_threads}"
+                + (" --fixture" if config.fixture else "")
+            ),
+            baseline_arm_id="dense-fused",
+            metadata={
+                "baseline_probe": asdict(config),
+                "evidence_status": "diagnostic",
+                "purpose": "test standalone-baseline measurement artifact before R12c",
+            },
+            workload_metadata=data.workload_metadata,
+            provenance_inputs={
+                "configuration_sha256": configuration_sha256(config),
+                "data_sha256": data.data_sha256,
+                "index_sha256": None,
+                "input_artifact_ids": [f"historical-stage3-e08-{config.dataset}"],
+            },
+        )
+
+    return _write_timing(
+        config,
+        experiment_id=experiment_id,
+        output_dir=output_dir,
+        session_id=session_id,
+        prepare_spec=prepare,
+    )

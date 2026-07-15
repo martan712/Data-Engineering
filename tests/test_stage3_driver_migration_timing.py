@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from bondmaxsim.experiments.stage3.kernel_comparison import (
+    BaselineProbeConfig,
     ExactSafeInterleavedConfig,
     KernelComparisonConfig,
+    run_baseline_probe,
     run_exact_safe_interleaved,
     run_kernel_comparison,
 )
@@ -58,3 +60,26 @@ def test_r12c_fixture_pairs_each_late_checkpoint_with_dense(tmp_path):
         "historical-stage3-e08.wall-clock",
         "historical-stage3-e09.wall-clock",
     ]
+
+
+def test_r12b_fixture_is_counterbalanced_diagnostic_not_best_of(tmp_path):
+    result = run_baseline_probe(
+        BaselineProbeConfig.fixture_config(),
+        output_dir=tmp_path,
+        session_id="r12b-fixture-test",
+    )
+    loaded = load_result(result.output_path)
+    session = loaded.payload["sessions"][0]
+    assert session["complete"] is True
+    assert loaded.method_configuration["evidence_status"] == "diagnostic"
+    assert session["protocol"]["protocol_class"] == "fixture"
+    assert len(session["observations"]) == len(session["arm_ids"]) * 4
+    assert set(session["paired_comparisons"]) == {
+        "bond-c4",
+        "bond-c6",
+        "bond-c4-6",
+    }
+    for comparison in session["paired_comparisons"].values():
+        assert len(comparison["paired_margins_pct"]) == 3
+        assert "median_paired_margin_pct" in comparison
+    assert "best_of" not in str(loaded.to_dict()).lower()
