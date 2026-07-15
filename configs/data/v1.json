@@ -106,6 +106,8 @@
   },
   "workloads": {
     "mechanism": {
+      "population_selection": "first_200_queries_in_source_order",
+      "population_query_count": 200,
       "selection": "seed42_without_replacement_sorted_source_indices",
       "query_count": 50,
       "workload_id_template": "beir-{dataset}-mechanism-seed42-n50-v1"
