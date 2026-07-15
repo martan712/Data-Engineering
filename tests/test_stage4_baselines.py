@@ -233,6 +233,8 @@ def test_plaid_build_and_search_smoke(tmp_path):
     docs = unpack_embeddings(tokens, starts)
     p = PLAIDBaseline("synthetic", index_root=tmp_path, n_full_scores=200)
     p.build(docs)
+    p.set_search_params(n_ivf_probe=4, n_full_scores=150)
+    assert p.compatibility_record()["version"] == "1.6.0"
     res = p.search(queries, k=10)
     assert len(res) == len(queries)
     hits = 0

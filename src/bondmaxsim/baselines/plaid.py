@@ -32,6 +32,11 @@ from pathlib import Path
 import numpy as np
 
 from bondmaxsim.config import REPO_ROOT
+from bondmaxsim.compat.plaid import PlaidCapabilities, inspect_plaid_capabilities
+from bondmaxsim.experiments.candidate_work import (
+    CandidateWorkObservation,
+    CountObservation,
+)
 
 _DEFAULT_INDEX_ROOT: Path = REPO_ROOT / "data" / "plaid_indexes"
 
@@ -78,6 +83,7 @@ class PLAIDBaseline:
         self.seed = seed
         self._plaid = None
         self._plaid_to_doc: dict | None = None
+        self._capabilities: PlaidCapabilities | None = None
 
     # ------------------------------------------------------------------
     # Index lifecycle
@@ -86,6 +92,7 @@ class PLAIDBaseline:
     def _make_index(self, override: bool):
         from pylate import indexes
 
+        self._capabilities = inspect_plaid_capabilities(indexes.PLAID)
         return indexes.PLAID(
             index_folder=str(self.index_root),
             index_name=self.dataset,
@@ -135,16 +142,22 @@ class PLAIDBaseline:
         n_ivf_probe: int | None = None,
         n_full_scores: int | None = None,
     ) -> None:
-        """Change search-time knobs without rebuilding (FastPlaid reads them per call)."""
+        """Change search knobs through PyLate's public constructor interface.
+
+        PyLate 1.6.0 has no public mutator. Reattaching the already-built index
+        applies the active constructor settings and happens outside timed search.
+        """
         if self._plaid is None:
             raise RuntimeError("Index not loaded; call build() or load() first.")
-        fast = self._plaid._index
         if n_ivf_probe is not None:
+            if n_ivf_probe <= 0:
+                raise ValueError("n_ivf_probe must be positive")
             self.n_ivf_probe = n_ivf_probe
-            fast.n_ivf_probe = n_ivf_probe
         if n_full_scores is not None:
+            if n_full_scores <= 0:
+                raise ValueError("n_full_scores must be positive")
             self.n_full_scores = n_full_scores
-            fast.n_full_scores = n_full_scores
+        self._plaid = self._make_index(override=False)
 
     def search(
         self,
@@ -156,8 +169,22 @@ class PLAIDBaseline:
         The whole batch goes through fast-plaid in one call (its natural
         execution mode); per-query latency is batch time / n_queries.
         """
-        if self._plaid is None:
+        results, _ = self.search_with_work(queries, k=k)
+        return results
+
+    def search_with_work(
+        self,
+        queries: list[np.ndarray],
+        k: int = 10,
+        comparison_scope: str = "system_cap",
+    ) -> tuple[
+        list[tuple[np.ndarray, np.ndarray]],
+        list[CandidateWorkObservation],
+    ]:
+        """Batch search with honest per-query work observability metadata."""
+        if self._plaid is None or self._capabilities is None:
             raise RuntimeError("Index not loaded; call build() or load() first.")
+        self._capabilities.require_system_cap(comparison_scope)
         results = self._plaid(
             [np.ascontiguousarray(q, dtype=np.float32) for q in queries], k=k
         )
@@ -166,4 +193,32 @@ class PLAIDBaseline:
             ids = np.array([int(r["id"]) for r in query_results], dtype=np.int64)
             scores = np.array([r["score"] for r in query_results], dtype=np.float32)
             out.append((ids, scores))
-        return out
+        unavailable = CountObservation.unavailable(self._capabilities.count_source)
+        no_partition = CountObservation.unavailable(
+            "PLAID does not expose document-partition probe counts"
+        )
+        work = [
+            CandidateWorkObservation(
+                configured_candidate_cap=CountObservation.unavailable(
+                    "PLAID is configured by a full-score cap, not a candidate cap"
+                ),
+                configured_full_score_cap=CountObservation.exact(
+                    self.n_full_scores, "PLAID n_full_scores public constructor setting"
+                ),
+                unique_candidates_generated=unavailable,
+                documents_admitted_to_scoring=unavailable,
+                documents_fully_scored=unavailable,
+                documents_probed=no_partition,
+                partitions_probed=no_partition,
+                token_hits_inspected=CountObservation.unavailable(
+                    "PyLate PLAID does not expose per-query token-hit counts"
+                ),
+            )
+            for _ in queries
+        ]
+        return out, work
+
+    def compatibility_record(self) -> dict[str, str | bool]:
+        if self._capabilities is None:
+            raise RuntimeError("Index not loaded; call build() or load() first.")
+        return self._capabilities.to_dict()
