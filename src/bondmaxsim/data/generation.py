@@ -168,7 +168,6 @@ def _validate_public_source(
     if any(not isinstance(text, str) for text in source.query_texts):
         raise DataGenerationError(f"{dataset}: query texts must be strings")
 
-    document_ids = set(source.document_ids)
     query_ids = set(source.query_ids)
     for query_id, judgments in source.qrels.items():
         if query_id not in query_ids:
@@ -176,10 +175,6 @@ def _validate_public_source(
         if not isinstance(judgments, Mapping) or not judgments:
             raise DataGenerationError(f"{dataset}: qrels query {query_id!r} has no judgments")
         for document_id, relevance in judgments.items():
-            if document_id not in document_ids:
-                raise DataGenerationError(
-                    f"{dataset}: qrels/document ID mismatch for {document_id!r}"
-                )
             if (
                 isinstance(relevance, bool)
                 or not isinstance(relevance, int)
@@ -188,6 +183,10 @@ def _validate_public_source(
                 raise DataGenerationError(
                     f"{dataset}: qrels relevance must be a positive integer"
                 )
+            # Qrels may judge documents absent from the pinned corpus (a known
+            # BeIR arguana property). Such dangling judgments are retained to
+            # match the legacy pipeline and standard IR practice, where an
+            # unretrievable judged document simply cannot be recalled.
 
     if not fixture:
         expected = frozen.dataset(dataset)
@@ -440,7 +439,7 @@ def _read_qrels(
     dataset: str,
     query_ids: set[str],
     document_ids: set[str],
-) -> tuple[dict[str, dict[str, int]], int]:
+) -> tuple[dict[str, dict[str, int]], int, int]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as error:
@@ -449,6 +448,7 @@ def _read_qrels(
         raise DataGenerationError(f"{dataset}: invalid qrels header")
     qrels: dict[str, dict[str, int]] = {}
     seen: set[tuple[str, str]] = set()
+    dangling = 0
     for row_number, line in enumerate(lines[1:], start=2):
         columns = line.split("\t")
         if len(columns) != 3:
@@ -457,8 +457,12 @@ def _read_qrels(
         pair = (query_id, document_id)
         if not query_id or query_id not in query_ids:
             raise DataGenerationError(f"{dataset}: unknown qrels query at row {row_number}")
-        if not document_id or document_id not in document_ids:
-            raise DataGenerationError(f"{dataset}: unknown qrels document at row {row_number}")
+        if not document_id:
+            raise DataGenerationError(f"{dataset}: empty qrels document at row {row_number}")
+        if document_id not in document_ids:
+            # Retain judgments of documents absent from the pinned corpus
+            # (matches the legacy arguana qrels); count them for provenance.
+            dangling += 1
         if pair in seen:
             raise DataGenerationError(f"{dataset}: duplicate qrels row for {pair!r}")
         seen.add(pair)
@@ -475,7 +479,7 @@ def _read_qrels(
         qrels.setdefault(query_id, {})[document_id] = relevance
     if not seen:
         raise DataGenerationError(f"{dataset}: qrels contain no judgments")
-    return qrels, len(seen)
+    return qrels, len(seen), dangling
 
 
 def _manifest_from_completed_files(
@@ -524,7 +528,7 @@ def _manifest_from_completed_files(
     source_query_ids = sequences["query_ids"]
     mechanism_ids = sequences["mechanism_query_ids"]
     sidecar_quality_ids = sequences["quality_query_ids"]
-    qrels, qrels_rows = _read_qrels(
+    qrels, qrels_rows, qrels_dangling = _read_qrels(
         paths[f"qrels/{dataset}.tsv"],
         dataset=dataset,
         query_ids=set(source_query_ids),
@@ -635,6 +639,11 @@ def _manifest_from_completed_files(
             "quality_queries": len(quality_ids),
             "qrels_queries": len(qrels),
             "qrels_rows": qrels_rows,
+            **(
+                {"qrels_dangling_documents": qrels_dangling}
+                if qrels_dangling
+                else {}
+            ),
         },
         "document_token_statistics": _token_statistics(document_lengths),
         "outputs": output_records,

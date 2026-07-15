@@ -179,8 +179,8 @@ def test_validation_rejects_duplicate_or_reordered_ids(
             "duplicate qrels row",
         ),
         (
-            "query-id\tcorpus-id\tscore\nq01\tmissing\t1\nq03\td4\t2\n",
-            "unknown qrels document",
+            "query-id\tcorpus-id\tscore\nq99\td1\t1\nq03\td4\t2\n",
+            "unknown qrels query",
         ),
         (
             "query-id\tcorpus-id\tscore\nq01\td1\t0\nq03\td4\t2\n",
@@ -193,6 +193,39 @@ def test_validation_rejects_invalid_qrels(tmp_path: Path, replacement: str, matc
     (tmp_path / "qrels/scifact.tsv").write_text(replacement, encoding="utf-8")
     with pytest.raises(DataGenerationError, match=match):
         validate_generated_dataset(tmp_path, "scifact", frozen=frozen, fixture=True)
+
+
+def _dangling_source(dataset, frozen):
+    documents = tuple(f"d{index}" for index in range(6))
+    queries = tuple(f"q{index:02d}" for index in range(60))
+    return PublicSource(
+        documents,
+        tuple(f"document {index}" for index in range(6)),
+        queries,
+        tuple(f"query {index}" for index in range(60)),
+        # q03 judges a document absent from the corpus, as BeIR arguana does.
+        {"q01": {"d1": 1}, "q03": {"absent-doc": 2}},
+    )
+
+
+def test_dangling_qrels_documents_are_retained_and_counted(tmp_path: Path):
+    frozen = load_data_configuration()
+    generate_dataset(
+        "scifact",
+        output_root=tmp_path,
+        frozen=frozen,
+        source_loader=_dangling_source,
+        encoder=_FixtureEncoder(),
+        fixture=True,
+    )
+    manifest = validate_generated_dataset(
+        tmp_path, "scifact", frozen=frozen, fixture=True
+    )
+    assert manifest["counts"]["qrels_dangling_documents"] == 1
+    assert manifest["counts"]["qrels_rows"] == 2
+    assert manifest["counts"]["qrels_queries"] == 2
+    # The dangling judgment is retained verbatim in the written qrels file.
+    assert "absent-doc" in (tmp_path / "qrels/scifact.tsv").read_text(encoding="utf-8")
 
 
 def test_completed_legacy_manifest_refreezes_without_encoding(tmp_path: Path):
