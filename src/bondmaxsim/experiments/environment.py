@@ -143,6 +143,30 @@ def capture_environment(build_profile: str | None = None) -> dict[str, Any]:
     }
 
 
+def capture_session_environment(
+    session_id: str,
+    *,
+    build_profile: str | None = None,
+    machine_quiescent: bool | None = None,
+) -> dict[str, Any]:
+    """Add timing-session identity, affinity, and operator state declaration."""
+    snapshot = capture_environment(build_profile)
+    affinity = None
+    if hasattr(os, "sched_getaffinity"):
+        try:
+            affinity = sorted(os.sched_getaffinity(0))
+        except OSError:
+            affinity = None
+    snapshot["session"].update(
+        {
+            "session_id": session_id,
+            "cpu_affinity": affinity,
+            "machine_quiescent": machine_quiescent,
+        }
+    )
+    return snapshot
+
+
 def write_environment(path: Path, build_profile: str | None = None) -> None:
     """Atomically write one environment snapshot."""
     path.parent.mkdir(parents=True, exist_ok=True)
