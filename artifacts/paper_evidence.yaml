@@ -1,4 +1,401 @@
 {
   "manifest_version": "1.0.0",
-  "evidence": []
+  "generation_command": "uv run python -m bondmaxsim.render.paper",
+  "check_command": "uv run python -m bondmaxsim.render.paper --check",
+  "evidence": [
+    {
+      "evidence_id": "paper.table.experiment-map",
+      "kind": "table",
+      "paper_label": "tab:experiments",
+      "claim_marker": "methodology.experiment-map",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_mt", "pointer": "/experiment"},
+        {"artifact_id": "stage4_integration_e01_fixed_candidate_arms_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage4_integration_e02_seeded_tau_recovery_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage4_integration_e03_partitioned_fused_scan_scifact", "pointer": "/experiment"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_scifact", "pointer": "/experiment"}
+      ],
+      "filters": "one representative artifact per experiment family",
+      "grouping": "research question, then experiment",
+      "derivation": "experiment_to_research_question_map_v1",
+      "units": "not applicable",
+      "rounding": "not applicable",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/experiment-map-rows.tex",
+      "qualifications": "Methodology map only; it does not select numeric conclusions."
+    },
+    {
+      "evidence_id": "paper.table.dense-kernel",
+      "kind": "table",
+      "paper_label": "tab:dense",
+      "claim_marker": "rq2.dense-kernel-latency",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_nfcorpus", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scifact", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_arguana", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scidocs", "pointer": "/arms"}
+      ],
+      "filters": "dimension_order in {dense_fused,dense_numpy}",
+      "grouping": "dataset and thread mode",
+      "derivation": "dense_kernel_latency_rows_v1",
+      "units": "milliseconds per query",
+      "rounding": "one decimal place",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/dense-kernel-rows.tex",
+      "qualifications": "Historical provisional timings; final claims require the Stage 8 counterbalanced rerun."
+    },
+    {
+      "evidence_id": "paper.table.exact-safe",
+      "kind": "table",
+      "paper_label": "tab:exactsafe",
+      "claim_marker": "rq3.exact-safe-margin",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_mt", "pointer": "/results"}
+      ],
+      "filters": "per dataset arm with maximum margin_vs_interleaved_dense_pct",
+      "grouping": "dataset",
+      "derivation": "best_exact_safe_interleaved_margin_v1",
+      "units": "milliseconds per query and percent",
+      "rounding": "latency and margin one decimal; pruning whole percent",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/exact-safe-rows.tex",
+      "qualifications": "Uses current R12c interleaved timing; pruning accounting is carried by the selected R12c arm."
+    },
+    {
+      "evidence_id": "paper.table.ir-quality",
+      "kind": "table",
+      "paper_label": "tab:ir",
+      "claim_marker": "retrieval.quality-latency",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_scifact", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_nfcorpus", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_arguana", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_scidocs", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e03_bm25_baseline", "pointer": "/datasets"}
+      ],
+      "filters": "declared best representative arms per method family plus BM25",
+      "grouping": "dataset, then method family",
+      "derivation": "ir_quality_latency_rows_v1",
+      "units": "unitless qrels metrics and milliseconds per query",
+      "rounding": "metrics three decimals; latency one decimal",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/ir-quality-rows.tex",
+      "qualifications": "Provisional historical Stage 5 values; Relevance Composition is not computed."
+    },
+    {
+      "evidence_id": "paper.figure.bound-slack",
+      "kind": "figure",
+      "paper_label": "fig:e01",
+      "claim_marker": "rq1.bound-slack-curve",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_scifact", "pointer": "/results"}
+      ],
+      "filters": "dataset=scifact; all declared dimension orders",
+      "grouping": "dimension order and prefix dimension",
+      "derivation": "bound_slack_plot_data_v1",
+      "units": "upper-bound to exact-score ratio",
+      "rounding": "full precision in CSV; visual ticks renderer-defined",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/plot-data/bound-slack-scifact.csv",
+      "paper_asset_path": "results/figures/stage3_mechanism/e01_bound_slack_scifact.png",
+      "qualifications": "Representative SciFact plot; cross-dataset ranges are separate claim evidence."
+    },
+    {
+      "evidence_id": "paper.figure.survival",
+      "kind": "figure",
+      "paper_label": "fig:e02",
+      "claim_marker": "rq1.survival-curve",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scifact", "pointer": "/arms"}
+      ],
+      "filters": "dataset=scifact; all policies and dimension orders",
+      "grouping": "policy, dimension order, fetch-boundary dimension",
+      "derivation": "document_token_survival_plot_data_v1",
+      "units": "fraction alive",
+      "rounding": "full precision in CSV",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/plot-data/survival-scifact.csv",
+      "paper_asset_path": "results/figures/stage3_mechanism/e02_pruning_rate_scifact.png",
+      "qualifications": "Accounting result, not wall-clock evidence."
+    },
+    {
+      "evidence_id": "paper.figure.checkpoint-ablation",
+      "kind": "figure",
+      "paper_label": "fig:e08",
+      "claim_marker": "rq3.checkpoint-diagnostic",
+      "status": "diagnostic",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e08_checkpoint_ablation_scifact", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_1t", "pointer": "/results"}
+      ],
+      "filters": "dataset=scifact; oracle threshold; single-thread checkpoint sets",
+      "grouping": "dimension order and checkpoint set",
+      "derivation": "checkpoint_ablation_diagnostic_plot_data_v1",
+      "units": "milliseconds per query, recall, percent pruned",
+      "rounding": "full precision in CSV",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/plot-data/checkpoint-ablation-scifact.csv",
+      "paper_asset_path": "results/figures/stage3_mechanism/e08_checkpoint_ablation_scifact.png",
+      "qualifications": "E08 latency is superseded and retained only as a diagnostic; every headline wall-clock conclusion selects R12c."
+    },
+    {
+      "evidence_id": "paper.figure.fixed-candidates",
+      "kind": "figure",
+      "paper_label": "fig:s01",
+      "claim_marker": "rq4.fixed-budget-crossover",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage4_integration_e01_fixed_candidate_arms_scidocs", "pointer": "/runs/mt/arms"}
+      ],
+      "filters": "dataset=scidocs; all-core fixed-budget arms",
+      "grouping": "method family and candidate budget",
+      "derivation": "fixed_candidate_plot_data_v1",
+      "units": "milliseconds per query and recall versus exact at 10",
+      "rounding": "full precision in CSV",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/plot-data/fixed-candidates-scidocs.csv",
+      "paper_asset_path": "results/figures/stage4_integration/e01_fixed_candidate_arms_scidocs.png",
+      "qualifications": "Historical mixed system-cap plot; strict equal-work and system-cap conclusions must remain separate in final evidence."
+    },
+    {
+      "evidence_id": "paper.claim.dataset-scale",
+      "kind": "numeric_claim",
+      "paper_label": "sec:method:setup",
+      "claim_marker": "setup.dataset-document-token-counts",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_nfcorpus", "pointer": "/n_docs"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_nfcorpus", "pointer": "/total_tokens"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scifact", "pointer": "/n_docs"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scifact", "pointer": "/total_tokens"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_arguana", "pointer": "/n_docs"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_arguana", "pointer": "/total_tokens"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scidocs", "pointer": "/n_docs"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scidocs", "pointer": "/total_tokens"}
+      ],
+      "filters": "all four evaluated datasets",
+      "grouping": "dataset",
+      "derivation": "identity_dataset_scale_v1",
+      "units": "documents and token vectors",
+      "rounding": "documents exact; tokens two decimal millions",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Counts describe the provisional cached corpus versions."
+    },
+    {
+      "evidence_id": "paper.claim.bound-slack-range",
+      "kind": "numeric_claim",
+      "paper_label": "sec:results",
+      "claim_marker": "rq1.bound-slack-early-and-half",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_nfcorpus", "pointer": "/results"},
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_scifact", "pointer": "/results"},
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_arguana", "pointer": "/results"},
+        {"artifact_id": "stage3_mechanism_e01_bound_slack_scidocs", "pointer": "/results"}
+      ],
+      "filters": "declared orders at first prefix and D/2",
+      "grouping": "dataset and dimension order",
+      "derivation": "cross_dataset_bound_overestimate_range_v1",
+      "units": "percent over exact score",
+      "rounding": "whole percent",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Descriptive accounting statistic, not a latency estimate."
+    },
+    {
+      "evidence_id": "paper.claim.survival-work-ceiling",
+      "kind": "numeric_claim",
+      "paper_label": "sec:results",
+      "claim_marker": "rq1.survival-and-avoidable-cells",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_nfcorpus", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scifact", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_arguana", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e02_pruning_rate_scidocs", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_nfcorpus", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scifact", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_arguana", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scidocs", "pointer": "/arms"}
+      ],
+      "filters": "exact-safe arms at D/2 and reported accounting schedule",
+      "grouping": "dataset, policy, order",
+      "derivation": "survival_and_cells_ceiling_range_v1",
+      "units": "percent documents alive and percent cells",
+      "rounding": "whole percent",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Cells scanned and documents pruned are distinct accounting quantities."
+    },
+    {
+      "evidence_id": "paper.claim.dense-speedup",
+      "kind": "numeric_claim",
+      "paper_label": "tab:dense",
+      "claim_marker": "rq2.dense-fused-speedup-range",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_nfcorpus", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scifact", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_arguana", "pointer": "/arms"},
+        {"artifact_id": "stage3_mechanism_e03_order_ablation_scidocs", "pointer": "/arms"}
+      ],
+      "filters": "dense_numpy divided by dense_fused within dataset and thread mode",
+      "grouping": "single-thread and all-core",
+      "derivation": "dense_latency_ratio_and_median_v1",
+      "units": "multiplicative speedup",
+      "rounding": "range and median one decimal",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Historical E03 timing; exact agreement is a separate gate."
+    },
+    {
+      "evidence_id": "paper.claim.late-exact-safe",
+      "kind": "numeric_claim",
+      "paper_label": "tab:exactsafe",
+      "claim_marker": "rq3.late-pruning-margin-and-count",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_mt", "pointer": "/results"}
+      ],
+      "filters": "best exact-safe late-checkpoint arm per dataset",
+      "grouping": "dataset",
+      "derivation": "best_exact_safe_interleaved_margin_v1",
+      "units": "percent documents pruned, percent latency margin, dataset count",
+      "rounding": "one decimal margin; whole percent pruning",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Only margins above the 3% equivalence band count as wins; one of four datasets qualifies."
+    },
+    {
+      "evidence_id": "paper.claim.cheap-bound-zero",
+      "kind": "numeric_claim",
+      "paper_label": "sec:results",
+      "claim_marker": "rq3.cheap-bound-zero-late-pruning",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_nfcorpus", "pointer": "/arms/7/pruned_docs_pct"},
+        {"artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_scifact", "pointer": "/arms/7/pruned_docs_pct"},
+        {"artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_arguana", "pointer": "/arms/7/pruned_docs_pct"},
+        {"artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_scidocs", "pointer": "/arms/7/pruned_docs_pct"}
+      ],
+      "filters": "cheap bound, natural order, checkpoint {112}",
+      "grouping": "dataset",
+      "derivation": "cross_dataset_zero_pruning_check_v1",
+      "units": "percent documents pruned",
+      "rounding": "two decimals",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Selects only retained pruning leaves; all e09 latency leaves are superseded and excluded."
+    },
+    {
+      "evidence_id": "paper.claim.scidocs-crossover",
+      "kind": "numeric_claim",
+      "paper_label": "fig:s01",
+      "claim_marker": "rq4.scidocs-budget100-crossover",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage4_integration_e01_fixed_candidate_arms_scidocs", "pointer": "/runs/mt/arms"}
+      ],
+      "filters": "dense_fused, faiss@100, pdx@100; all cores",
+      "grouping": "arm",
+      "derivation": "scidocs_budget100_latency_recall_v1",
+      "units": "milliseconds per query and recall versus exact at 10",
+      "rounding": "latency one decimal; recall two decimals",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Historical system-cap comparison; not evidence of equal actual scoring work."
+    },
+    {
+      "evidence_id": "paper.claim.seed-recovery-cost",
+      "kind": "numeric_claim",
+      "paper_label": "sec:results",
+      "claim_marker": "rq4.strong-seed-recovery-and-cost",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage4_integration_e02_seeded_tau_recovery_nfcorpus", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e02_seeded_tau_recovery_scifact", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e02_seeded_tau_recovery_arguana", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e02_seeded_tau_recovery_scidocs", "pointer": "/runs/mt/arms"}
+      ],
+      "filters": "arm=ivf_seed_strong; all cores",
+      "grouping": "dataset",
+      "derivation": "seed_prune_recovery_and_cost_range_v1",
+      "units": "percent oracle pruning recovered and milliseconds per query",
+      "rounding": "whole percent and whole milliseconds",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Seed cost is included in end-to-end conclusions and excluded only from the kernel-only diagnostic."
+    },
+    {
+      "evidence_id": "paper.claim.partition-frontier",
+      "kind": "numeric_claim",
+      "paper_label": "sec:results",
+      "claim_marker": "rq4.partitioned-speedup-recall-frontier",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage4_integration_e03_partitioned_fused_scan_nfcorpus", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e03_partitioned_fused_scan_scifact", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e03_partitioned_fused_scan_arguana", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage4_integration_e03_partitioned_fused_scan_scidocs", "pointer": "/runs/mt/arms"}
+      ],
+      "filters": "brute partition scanner frontier plus full-probe controls",
+      "grouping": "dataset and nprobe",
+      "derivation": "partition_frontier_speedup_at_recall_v1",
+      "units": "multiplicative speedup and recall versus exact at 10",
+      "rounding": "speedup one decimal; recall two decimals",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/headline-macros.tex",
+      "qualifications": "Approximate frontier; it must never be presented as exact-safe BOND speedup."
+    },
+    {
+      "evidence_id": "paper.claim.ir-quality-conclusions",
+      "kind": "numeric_claim",
+      "paper_label": "tab:ir",
+      "claim_marker": "retrieval.exact-candidate-bm25-comparison",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_scifact", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_nfcorpus", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_arguana", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e01_ir_evaluation_scidocs", "pointer": "/runs/mt/arms"},
+        {"artifact_id": "stage5_corect_e03_bm25_baseline", "pointer": "/datasets"}
+      ],
+      "filters": "table-selected arms and BM25",
+      "grouping": "dataset and method family",
+      "derivation": "retrieval_quality_latency_comparison_v1",
+      "units": "qrels metrics, recall versus exact, milliseconds per query",
+      "rounding": "metrics three decimals; latency one decimal",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/ir-quality-rows.tex",
+      "qualifications": "Exact MaxSim is not a relevance oracle; BM25 is a standalone lexical reference."
+    },
+    {
+      "evidence_id": "paper.claim.paired-significance",
+      "kind": "numeric_claim",
+      "paper_label": "tab:ir",
+      "claim_marker": "retrieval.paired-permutation-significance",
+      "status": "provisional",
+      "references": [
+        {"artifact_id": "stage5_corect_e02_paired_significance", "pointer": "/datasets"}
+      ],
+      "filters": "declared approximate arms compared with dense_fused",
+      "grouping": "dataset and arm",
+      "derivation": "two_sided_paired_permutation_p_value_v1",
+      "units": "p-value and changed-query count",
+      "rounding": "p-values as reported; counts exact",
+      "renderer_command": "uv run python -m bondmaxsim.render.paper",
+      "output_path": "report/generated/tables/ir-quality-rows.tex",
+      "qualifications": "Twenty thousand sign flips per pair; nonsignificance is not proof of equivalence."
+    }
+  ]
 }
