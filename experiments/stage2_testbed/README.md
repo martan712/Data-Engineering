@@ -1,5 +1,12 @@
 # Stage 2: Mechanism Testbed Experiments
 
+S01 and S02 now write versioned validation-audit envelopes with provenance.
+S02 calls the validated native wide and fused kernels directly and applies the
+shared exact-agreement gate; it does not use legacy `Runner` result production.
+Both commands expose `--fixture` for the clean-clone diagnostic path. S03 is a
+preserved historical two-mode smoke script whose old flat `ResultRecord`
+artifacts remain available through the compatibility reader.
+
 Smoke drivers for Stage 2 (see `docs/project_b_analysis_and_research_plan.md`,
 Stage 2 section, and `docs/stage1_bond_maxsim_formalization.md` §8 audit
 checklist).
