@@ -108,6 +108,42 @@ def test_multi_tile_query_m_over_24():
         _assert_agrees(flat, doc_starts, q, packed, k=5)
 
 
+@pytest.mark.parametrize("mq", [1, 24, 25, 192, 193, 257])
+def test_dynamic_query_tiles_across_old_boundary(mq):
+    """The SIMD tile stays 24 rows, while the number of tiles is unbounded by
+    the historical eight-tile/192-token metadata arrays."""
+    from bondmaxsim.data.packing import build_qcum
+
+    flat, doc_starts, _ = _make_corpus(311, 24, 16, n_queries=0)
+    packed = pack_corpus_panels(flat, doc_starts, target_group_tokens=128)
+    panel_data, group_offsets, doc_offsets, group_doc_starts, _ = packed
+    rng = np.random.default_rng(900 + mq)
+    q = rng.standard_normal((mq, 16)).astype(np.float32)
+    q /= np.linalg.norm(q, axis=1, keepdims=True)
+    order = np.arange(16, dtype=np.uint32)
+    qcum = build_qcum(q, order)
+    ref = exact_maxsim_scores(q, flat, doc_starts)
+    kth = np.sort(ref)[-5]
+
+    ids, scores = run_fused_panel_brute(
+        LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+        q, K=5, n_threads=1,
+    )
+    np.testing.assert_allclose(scores, ref[ids], rtol=0, atol=max(SCORE_ATOL, mq * 2e-6))
+    assert (ref[ids] >= kth - max(SCORE_ATOL, mq * 2e-6)).all()
+
+    for level in ("doc", "token"):
+        ids, scores, _ = run_fused_panel_bond(
+            LIB, panel_data, group_offsets, doc_offsets, group_doc_starts,
+            q, order, qcum, shrink=1.0, tau_seed=-np.inf, K=5,
+            n_threads=1, level=level, checkpoints=(8,),
+        )
+        np.testing.assert_allclose(
+            scores, ref[ids], rtol=0, atol=max(SCORE_ATOL, mq * 2e-6)
+        )
+        assert (ref[ids] >= kth - max(SCORE_ATOL, mq * 2e-6)).all()
+
+
 def test_negative_similarity_docs_not_clamped():
     """Documents whose best similarity to a query token is NEGATIVE must keep
     their true (negative) max — this fails if padding used zero tokens."""

@@ -135,7 +135,7 @@ def run_fused_panel_brute(
     ids    = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
 
-    lib.fused_panel_maxsim_brute(
+    status = lib.fused_panel_maxsim_brute(
         fp(panel_data),
         lp(group_offsets), csz(n_groups),
         lp(doc_offsets),
@@ -144,6 +144,8 @@ def run_fused_panel_brute(
         csz(K), ctypes.c_int(n_threads),
         up(ids), fp(scores),
     )
+    if status == np.iinfo(np.uint64).max:
+        raise RuntimeError("fused_panel_maxsim_brute rejected the native call")
     return ids, scores
 
 
@@ -240,7 +242,7 @@ def run_fused_panel_bond(
         fn = lib.fused_panel_maxsim_bond_cheap
     else:
         fn = lib.fused_panel_maxsim_bond
-    fn(
+    status = fn(
         fp(panel_data),
         lp(group_offsets), csz(n_groups),
         lp(doc_offsets),
@@ -251,4 +253,6 @@ def run_fused_panel_bond(
         ctypes.c_float(shrink), ctypes.c_float(tau_seed), csz(K), ctypes.c_int(n_threads),
         up(ids), fp(scores), lp(stats),
     )
+    if status == np.iinfo(np.uint64).max:
+        raise RuntimeError(f"{fn.__name__} rejected the native call")
     return ids, scores, stats

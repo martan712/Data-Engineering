@@ -50,6 +50,10 @@ uint64_t fused_panel_maxsim_brute(
 
     (void)group_offsets;
     QueryTiles qt(query, m, D);
+    if (!qt.valid || panel_data == nullptr || group_offsets == nullptr ||
+        doc_offsets == nullptr || group_doc_starts == nullptr ||
+        topk_id == nullptr || topk_score == nullptr || n_groups == 0 || K == 0 ||
+        K > (size_t)group_doc_starts[n_groups]) return NATIVE_ERROR;
     TopK global(K);
 
 #ifdef _OPENMP
@@ -61,7 +65,7 @@ uint64_t fused_panel_maxsim_brute(
     #pragma omp parallel num_threads(nt)
     {
         TopK local(K);
-        DocMax dm[8];
+        std::vector<DocMax> dm(qt.n_tiles);
 
         #pragma omp for schedule(dynamic)
         for (size_t g = 0; g < n_groups; ++g) {
@@ -69,7 +73,7 @@ uint64_t fused_panel_maxsim_brute(
             for (size_t d = d0; d < d1; ++d) {
                 size_t tok0 = (size_t)doc_offsets[d], tok1 = (size_t)doc_offsets[d + 1];
                 if (tok1 <= tok0) continue;                 // empty doc: never offered
-                local.offer(score_doc(panel_data, D, qt, dm, tok0, tok1), (uint32_t)d);
+                local.offer(score_doc(panel_data, D, qt, dm.data(), tok0, tok1), (uint32_t)d);
             }
         }
 

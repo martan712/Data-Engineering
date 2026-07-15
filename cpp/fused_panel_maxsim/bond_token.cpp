@@ -49,7 +49,7 @@ struct TokenScanner {
 
     // Per-thread scratch.  Pt layout as in bond_doc.cpp; live[p] is the
     // 16-lane survival mask of panel p for the current document.
-    DocMax dm[8];
+    std::vector<DocMax> dm;
     std::vector<std::vector<float>> Pt;
     std::vector<float> ss, resd, resq, Li;
     std::vector<uint16_t> live;
@@ -64,7 +64,7 @@ struct TokenScanner {
         : panel_data(panel_data_), D(D_), m(m_), qt(qt_), order(order_),
           cps(cps_), n_cps(n_cps_), Qcum(Qcum_), shrink(shrink_),
           shared_tau(shared_tau_), tau_seed(tau_seed_),
-          Pt(qt_.n_tiles), ss(max_panels * PT), resd(max_panels * PT),
+          dm(qt_.n_tiles), Pt(qt_.n_tiles), ss(max_panels * PT), resd(max_panels * PT),
           resq(m_), Li(m_), live(max_panels) {
         for (size_t t = 0; t < qt.n_tiles; ++t)
             Pt[t].assign(max_panels * qt.M[t] * PT, 0.0f);
@@ -210,6 +210,12 @@ uint64_t fused_panel_maxsim_bond_token(
 
     (void)group_offsets;
     QueryTiles qt(query, m, D);
+    if (!qt.valid || panel_data == nullptr || group_offsets == nullptr ||
+        doc_offsets == nullptr || group_doc_starts == nullptr || order == nullptr ||
+        Qcum == nullptr || topk_id == nullptr || topk_score == nullptr ||
+        n_groups == 0 || K == 0 || K > (size_t)group_doc_starts[n_groups]) {
+        return NATIVE_ERROR;
+    }
     TopK global(K);
     std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
     std::atomic<uint64_t> cells{0}, docs_pruned{0}, tokens_pruned{0};

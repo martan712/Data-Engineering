@@ -85,7 +85,7 @@ struct DocScanner {
 
     // Per-thread scratch.  Spilled partials Pt: per tile, per panel, per
     // query row: [i*PT] lanes; row stride across panels within a tile = M*PT.
-    DocMax dm[8];
+    std::vector<DocMax> dm;
     std::vector<std::vector<float>> Pt;
     std::vector<float> ss, resd;
     uint64_t cells = 0, docs_pruned = 0;
@@ -98,7 +98,7 @@ struct DocScanner {
         : panel_data(panel_data_), D(D_), m(m_), qt(qt_), order(order_),
           cps(cps_), n_cps(n_cps_), resq_cp(resq_cp_), rq_sum(rq_sum_),
           shared_tau(shared_tau_), tau_seed(tau_seed_),
-          Pt(qt_.n_tiles),
+          dm(qt_.n_tiles), Pt(qt_.n_tiles),
           ss(CHEAP ? 0 : max_panels * PT), resd(CHEAP ? 0 : max_panels * PT) {
         for (size_t t = 0; t < qt.n_tiles; ++t)
             Pt[t].assign(max_panels * qt.M[t] * PT, 0.0f);
@@ -202,6 +202,12 @@ static uint64_t fused_bond_doc_impl(
 
     (void)group_offsets;
     QueryTiles qt(query, m, D);
+    if (!qt.valid || panel_data == nullptr || group_offsets == nullptr ||
+        doc_offsets == nullptr || group_doc_starts == nullptr || order == nullptr ||
+        Qcum == nullptr || topk_id == nullptr || topk_score == nullptr ||
+        n_groups == 0 || K == 0 || K > (size_t)group_doc_starts[n_groups]) {
+        return NATIVE_ERROR;
+    }
     TopK global(K);
     std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
     std::atomic<uint64_t> cells{0}, docs_pruned{0};

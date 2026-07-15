@@ -45,9 +45,11 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
+#include <new>
 
 static constexpr size_t PT = 16;          // panel width (tokens)
 static constexpr size_t TILE_MAX = 24;    // largest query tile (register budget)
+static constexpr uint64_t NATIVE_ERROR = std::numeric_limits<uint64_t>::max();
 
 // float32 guard on the per-document UB < tau pruning test (same constant and
 // rationale as cpp/wide_block_maxsim_bond).
@@ -103,21 +105,44 @@ static inline void emit_topk(const TopK& topk, size_t K, uint32_t* topk_id, floa
 // Query tile descriptor built once per query.
 struct QueryTiles {
     size_t n_tiles = 0;
-    size_t M[8];        // padded tile height (8/16/24)
-    size_t m_real[8];   // real query tokens in this tile
+    std::vector<size_t> M;        // padded tile height (8/16/24)
+    std::vector<size_t> m_real;   // real query tokens in this tile
     std::vector<float> qpack;   // concatenated per-tile dim-major packs
-    size_t pack_off[8];
+    std::vector<size_t> pack_off;
+    bool valid = false;
 
     QueryTiles(const float* query, size_t m, size_t D) {
+        if (query == nullptr || m == 0 || D == 0 ||
+            m > std::numeric_limits<size_t>::max() - (TILE_MAX - 1)) return;
+        n_tiles = (m + TILE_MAX - 1) / TILE_MAX;
+        try {
+            M.reserve(n_tiles);
+            m_real.reserve(n_tiles);
+            pack_off.reserve(n_tiles);
+        } catch (const std::bad_alloc&) {
+            n_tiles = 0;
+            return;
+        }
         size_t off = 0;
         for (size_t t0 = 0; t0 < m; t0 += TILE_MAX) {
-            size_t t = n_tiles++;
             size_t mt = std::min(TILE_MAX, m - t0);
             size_t Mt = mt <= 8 ? 8 : (mt <= 16 ? 16 : 24);
-            M[t] = Mt; m_real[t] = mt; pack_off[t] = off;
-            off += Mt * D;
+            if (D > std::numeric_limits<size_t>::max() / Mt) return;
+            size_t tile_size = Mt * D;
+            if (off > std::numeric_limits<size_t>::max() - tile_size) return;
+            M.push_back(Mt);
+            m_real.push_back(mt);
+            pack_off.push_back(off);
+            off += tile_size;
+            if (m - t0 <= TILE_MAX) break;
         }
-        qpack.assign(off, 0.0f);
+        if (off > qpack.max_size()) return;
+        try {
+            qpack.assign(off, 0.0f);
+        } catch (const std::bad_alloc&) {
+            qpack.clear();
+            return;
+        }
         for (size_t t = 0; t < n_tiles; ++t) {
             size_t t0 = t * TILE_MAX;
             float* dst = qpack.data() + pack_off[t];
@@ -125,6 +150,8 @@ struct QueryTiles {
                 for (size_t i = 0; i < m_real[t]; ++i)
                     dst[z * M[t] + i] = query[(t0 + i) * D + z];
         }
+        valid = M.size() == n_tiles && m_real.size() == n_tiles &&
+                pack_off.size() == n_tiles;
     }
 };
 
