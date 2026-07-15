@@ -29,6 +29,7 @@ _INTEGRATION_PREFIXES = (
     "test_stage3_driver_migration",
     "test_stage4_driver_migration",
     "test_stage5_driver_migration",
+    "test_session_persistence",
 )
 _ARTIFACT_MODULES = {
     "test_artifact_catalog.py",
