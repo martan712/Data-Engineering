@@ -25,6 +25,9 @@ class ArmSpec:
     exactness: str = "approximate"
     comparison_scope: str = "system_cap"
     validator: Callable[[Any], Any] | None = field(default=None, repr=False, compare=False)
+    metadata_extractor: Callable[[Any], Mapping[str, Any]] | None = field(
+        default=None, repr=False, compare=False
+    )
     timer_scope_id: str = "scoring"
 
     def __post_init__(self) -> None:
@@ -36,6 +39,8 @@ class ArmSpec:
             raise TypeError("operation must be callable")
         if self.validator is not None and not callable(self.validator):
             raise TypeError("validator must be callable")
+        if self.metadata_extractor is not None and not callable(self.metadata_extractor):
+            raise TypeError("metadata_extractor must be callable")
         if self.exactness not in EXACTNESS_CLASSES:
             raise ValueError(f"invalid exactness class {self.exactness!r}")
         if self.comparison_scope not in COMPARISON_SCOPES:
@@ -51,6 +56,7 @@ class ArmSpec:
             "exactness": self.exactness,
             "comparison_scope": self.comparison_scope,
             "timer_scope_id": self.timer_scope_id,
+            "captures_result_metadata": self.metadata_extractor is not None,
         }
 
 

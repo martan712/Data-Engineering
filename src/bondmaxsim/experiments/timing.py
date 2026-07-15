@@ -11,7 +11,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any, Callable, Iterable, Iterator, Mapping
 
 from bondmaxsim.experiments.arms import ArmSpec
 
@@ -167,6 +167,7 @@ class TimingSession:
     observations: list[TimingObservation]
     scope_events: list[ScopeEvent]
     validation_results: list[dict[str, Any]]
+    result_metadata: list[dict[str, Any]]
     complete: bool
     environment: dict[str, Any]
 
@@ -226,6 +227,7 @@ class TimingSession:
             "observations": [row.to_dict() for row in self.observations],
             "scope_events": [asdict(event) for event in self.scope_events],
             "validation_results": self.validation_results,
+            "result_metadata": self.result_metadata,
             "environment": self.environment,
         }
         if self.complete:
@@ -257,6 +259,7 @@ def run_timing_session(
     ledger = ledger or ScopeLedger(clock_ns)
     observations: list[TimingObservation] = []
     validation_results: list[dict[str, Any]] = []
+    result_metadata: list[dict[str, Any]] = []
     complete = True
 
     for phase, rounds in (("warmup", protocol.warmup_rounds), ("measured", protocol.measured_rounds)):
@@ -289,6 +292,29 @@ def run_timing_session(
                         error=error,
                     )
                 )
+                if completed and arm.metadata_extractor is not None:
+                    try:
+                        with ledger.scope("result-metadata", phase, measured=False):
+                            extracted = arm.metadata_extractor(result)
+                        if not isinstance(extracted, Mapping):
+                            raise TypeError("metadata extractor must return a mapping")
+                        result_metadata.append(
+                            {
+                                "phase": phase,
+                                "round_index": round_index,
+                                "arm_id": arm.arm_id,
+                                **dict(extracted),
+                            }
+                        )
+                    except BaseException as caught:
+                        observations[-1] = TimingObservation(
+                            **{
+                                **observations[-1].to_dict(),
+                                "completed": False,
+                                "error": f"metadata {type(caught).__name__}: {caught}",
+                            }
+                        )
+                        completed = False
                 if completed and arm.validator is not None:
                     try:
                         with ledger.scope("result-validation", phase, measured=False):
@@ -339,6 +365,7 @@ def run_timing_session(
         observations=observations,
         scope_events=list(ledger.events),
         validation_results=validation_results,
+        result_metadata=result_metadata,
         complete=complete,
         environment=environment,
     )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 
 from bondmaxsim.compat.corect import (
@@ -22,6 +23,18 @@ def test_corect_import_shim_does_not_persist_on_sys_path():
     before = list(sys.path)
     assert callable(load_corect_evaluate_results())
     assert sys.path == before
+
+
+def test_corect_import_orders_work_in_clean_processes():
+    scripts = (
+        "from bondmaxsim.compat.corect import load_corect_evaluate_results; "
+        "assert callable(load_corect_evaluate_results())",
+        "from bondmaxsim.eval.corect import compute_corect_standard_metrics; "
+        "from bondmaxsim.compat.corect import load_corect_evaluate_results; "
+        "assert callable(load_corect_evaluate_results())",
+    )
+    for script in scripts:
+        subprocess.run([sys.executable, "-c", script], check=True)
 
 
 def test_result_record_reads_historical_corect_field(tmp_path):

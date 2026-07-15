@@ -34,6 +34,18 @@ _PROVENANCE_KEYS = frozenset(
         "input_artifact_ids",
     }
 )
+_CANDIDATE_WORK_FIELDS = frozenset(
+    {
+        "configured_candidate_cap",
+        "configured_full_score_cap",
+        "unique_candidates_generated",
+        "documents_admitted_to_scoring",
+        "documents_fully_scored",
+        "documents_probed",
+        "partitions_probed",
+        "token_hits_inspected",
+    }
+)
 
 
 class ResultValidationError(ValueError):
@@ -99,6 +111,17 @@ def _validate_count_observation(value: Any, name: str) -> None:
         raise ResultValidationError(f"{name}.source must be non-empty")
 
 
+def _validate_candidate_work(value: Any, name: str) -> None:
+    if not isinstance(value, Mapping):
+        raise ResultValidationError(f"{name} must be an object")
+    if set(value) != _CANDIDATE_WORK_FIELDS:
+        raise ResultValidationError(
+            f"{name} must contain exactly {sorted(_CANDIDATE_WORK_FIELDS)}"
+        )
+    for field_name, observation in value.items():
+        _validate_count_observation(observation, f"{name}.{field_name}")
+
+
 def _validate_timing(payload: Mapping[str, Any]) -> None:
     sessions = _rows(payload, "sessions")
     for session_index, session in enumerate(sessions):
@@ -107,6 +130,21 @@ def _validate_timing(payload: Mapping[str, Any]) -> None:
             raise ResultValidationError("timing session observations must be non-empty")
         measured_by_round: dict[int, list[Mapping[str, Any]]] = {}
         expected_arms = set(session.get("arm_ids", []))
+        result_metadata = session.get("result_metadata", [])
+        if not isinstance(result_metadata, list):
+            raise ResultValidationError("timing result_metadata must be a list")
+        for metadata in result_metadata:
+            if not isinstance(metadata, Mapping):
+                raise ResultValidationError("timing result metadata must be objects")
+            candidate_work = metadata.get("candidate_work")
+            if candidate_work is None:
+                continue
+            if not isinstance(candidate_work, list) or not candidate_work:
+                raise ResultValidationError(
+                    "timing candidate_work must retain a non-empty per-query list"
+                )
+            for query_index, query_work in enumerate(candidate_work):
+                _validate_candidate_work(query_work, f"candidate_work[{query_index}]")
         for observation in observations:
             if not isinstance(observation, Mapping):
                 raise ResultValidationError("timing observations must be objects")
@@ -147,10 +185,14 @@ def _validate_candidate(payload: Mapping[str, Any]) -> None:
         if point.get("comparison_scope") not in scopes:
             raise ResultValidationError("candidate comparison_scope is invalid")
         work = point.get("candidate_work")
-        if not isinstance(work, Mapping):
-            raise ResultValidationError("candidate_work must be an object")
-        for name, observation in work.items():
-            _validate_count_observation(observation, f"candidate_work.{name}")
+        _validate_candidate_work(work, "candidate_work")
+        if (
+            point.get("comparison_scope") == "equal_work_reranking"
+            and work["documents_fully_scored"].get("quality") != "exact"
+        ):
+            raise ResultValidationError(
+                "equal_work_reranking requires exact documents_fully_scored"
+            )
         if "recall" in point and point["recall"] is not None:
             _unit_interval(point["recall"], "recall")
 

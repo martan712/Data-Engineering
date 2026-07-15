@@ -22,6 +22,24 @@ from bondmaxsim.results.validation import merge_timing_sessions
 
 REPO_ROOT = Path(__file__).parents[1]
 
+_CANDIDATE_FIELDS = (
+    "configured_candidate_cap",
+    "configured_full_score_cap",
+    "unique_candidates_generated",
+    "documents_admitted_to_scoring",
+    "documents_fully_scored",
+    "documents_probed",
+    "partitions_probed",
+    "token_hits_inspected",
+)
+
+
+def _candidate_work(**overrides):
+    missing = {"value": None, "quality": "unavailable", "source": "fixture unavailable"}
+    result = {name: dict(missing) for name in _CANDIDATE_FIELDS}
+    result.update(overrides)
+    return result
+
 
 def _environment():
     return {"snapshot_id": "fixture-session", "thread_mode": "single"}
@@ -85,13 +103,13 @@ def _timing_payload(session_id="session-a"):
                     {
                         "comparison_scope": "system_cap",
                         "recall": 0.9,
-                        "candidate_work": {
-                            "documents_fully_scored": {
+                        "candidate_work": _candidate_work(
+                            documents_fully_scored={
                                 "value": None,
                                 "quality": "unavailable",
                                 "source": "pinned adapter exposes no count",
-                            }
-                        },
+                            },
+                        ),
                     }
                 ]
             },
@@ -118,13 +136,13 @@ def test_each_payload_kind_has_semantic_validation(kind, payload):
                 "points": [
                     {
                         "comparison_scope": "equal_work_reranking",
-                        "candidate_work": {
-                            "documents_fully_scored": {
+                        "candidate_work": _candidate_work(
+                            documents_fully_scored={
                                 "value": 10,
                                 "quality": "unavailable",
                                 "source": "bad",
-                            }
-                        },
+                            },
+                        ),
                     }
                 ]
             },
