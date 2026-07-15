@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from bondmaxsim.results.frozen_inputs import validate_frozen_inputs
 from bondmaxsim.results.models import (
     CURRENT_SCHEMA_NAME,
     ExperimentResultEnvelope,
@@ -113,8 +114,12 @@ def migrate_historical(path: Path, data: Mapping[str, Any]) -> ExperimentResultE
     )
 
 
-def load_result(path: Path | str) -> ExperimentResultEnvelope:
-    """Load a current envelope or normalize a supported historical artifact."""
+def load_result(
+    path: Path | str,
+    *,
+    frozen_hashes: Mapping[str, Any] | None = None,
+) -> ExperimentResultEnvelope:
+    """Load a result, optionally requiring exact frozen input provenance."""
     source = Path(path)
     try:
         data = json.loads(source.read_text(encoding="utf-8"))
@@ -123,5 +128,9 @@ def load_result(path: Path | str) -> ExperimentResultEnvelope:
     if not isinstance(data, Mapping):
         raise ResultValidationError("result JSON root must be an object")
     if data.get("schema_name") == CURRENT_SCHEMA_NAME:
-        return ExperimentResultEnvelope.from_dict(data)
-    return migrate_historical(source, data)
+        envelope = ExperimentResultEnvelope.from_dict(data)
+    else:
+        envelope = migrate_historical(source, data)
+    if frozen_hashes is not None:
+        validate_frozen_inputs(envelope, frozen_hashes)
+    return envelope
