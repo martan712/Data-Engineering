@@ -1,7 +1,10 @@
 """Shared declarative experiment, timing, environment, and execution tools."""
 
 from bondmaxsim.experiments.arms import ArmSpec, ExperimentSpec
-from bondmaxsim.experiments.execution import execute_timing_experiment
+from bondmaxsim.experiments.execution import (
+    execute_prepared_timing_experiment,
+    execute_timing_experiment,
+)
 from bondmaxsim.experiments.candidate_work import (
     CandidateWorkObservation,
     CountObservation,
@@ -23,6 +26,7 @@ __all__ = [
     "TimingProtocol",
     "WorkloadMetadata",
     "execute_timing_experiment",
+    "execute_prepared_timing_experiment",
     "new_session_id",
     "run_timing_session",
 ]

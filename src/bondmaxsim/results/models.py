@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import asdict, dataclass
@@ -54,6 +55,19 @@ class ResultValidationError(ValueError):
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def _json_object(value: Mapping[str, Any], name: str) -> dict[str, Any]:
+    """Normalize tuples and reject values that cannot round-trip through JSON."""
+    try:
+        normalized = json.loads(
+            json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False)
+        )
+    except (TypeError, ValueError) as error:
+        raise ResultValidationError(f"{name} is not JSON-serializable: {error}") from error
+    if not isinstance(normalized, dict):
+        raise ResultValidationError(f"{name} must normalize to an object")
+    return normalized
 
 
 def _finite_number(value: Any, name: str) -> float:
@@ -136,6 +150,9 @@ def _validate_timing(payload: Mapping[str, Any]) -> None:
         for metadata in result_metadata:
             if not isinstance(metadata, Mapping):
                 raise ResultValidationError("timing result metadata must be objects")
+            pruning_accounting = metadata.get("pruning_accounting")
+            if pruning_accounting is not None:
+                _validate_pruning({"rows": pruning_accounting})
             candidate_work = metadata.get("candidate_work")
             if candidate_work is None:
                 continue
@@ -399,12 +416,12 @@ class ExperimentResultEnvelope:
             created_at_utc=created_at_utc or utc_now(),
             dataset_id=dataset_id,
             workload_id=workload_id,
-            method_configuration=dict(method_configuration),
-            protocol=dict(protocol),
-            environment=dict(environment),
-            provenance=dict(provenance),
+            method_configuration=_json_object(method_configuration, "method_configuration"),
+            protocol=_json_object(protocol, "protocol"),
+            environment=_json_object(environment, "environment"),
+            provenance=_json_object(provenance, "provenance"),
             payload_kind=payload_kind,
-            payload=dict(payload),
+            payload=_json_object(payload, "payload"),
         ).validate()
 
 

@@ -28,6 +28,64 @@ def execute_timing_experiment(
     if setup is not None:
         with ledger.scope("experiment-setup", "setup", measured=False):
             setup()
+    return _execute_after_setup(
+        spec,
+        protocol,
+        session_id=session_id,
+        ledger=ledger,
+        build_profile=build_profile,
+        machine_quiescent=machine_quiescent,
+        environment=environment,
+        provenance=provenance,
+        clock_ns=clock_ns,
+        utc_timestamp=utc_timestamp,
+    )
+
+
+def execute_prepared_timing_experiment(
+    prepare: Callable[[], ExperimentSpec],
+    protocol: TimingProtocol,
+    *,
+    session_id: str,
+    build_profile: str | None = None,
+    machine_quiescent: bool | None = None,
+    environment: dict[str, Any] | None = None,
+    provenance: dict[str, Any] | None = None,
+    clock_ns=None,
+    utc_timestamp=None,
+) -> tuple[ExperimentResultEnvelope, TimingSession, ExperimentSpec]:
+    """Prepare data/index/arms in one excluded scope, then time the returned spec."""
+    ledger = ScopeLedger(clock_ns) if clock_ns is not None else ScopeLedger()
+    with ledger.scope("experiment-setup", "setup", measured=False):
+        spec = prepare()
+    envelope, session = _execute_after_setup(
+        spec,
+        protocol,
+        session_id=session_id,
+        ledger=ledger,
+        build_profile=build_profile,
+        machine_quiescent=machine_quiescent,
+        environment=environment,
+        provenance=provenance,
+        clock_ns=clock_ns,
+        utc_timestamp=utc_timestamp,
+    )
+    return envelope, session, spec
+
+
+def _execute_after_setup(
+    spec: ExperimentSpec,
+    protocol: TimingProtocol,
+    *,
+    session_id: str,
+    ledger: ScopeLedger,
+    build_profile: str | None,
+    machine_quiescent: bool | None,
+    environment: dict[str, Any] | None,
+    provenance: dict[str, Any] | None,
+    clock_ns,
+    utc_timestamp,
+) -> tuple[ExperimentResultEnvelope, TimingSession]:
     snapshot = environment or capture_session_environment(
         session_id,
         build_profile=build_profile,
@@ -49,6 +107,7 @@ def execute_timing_experiment(
         git_revision=snapshot.get("code", {}).get("git_revision") or "unknown",
     )
     provenance_block = dict(provenance_block)
+    provenance_block.update(spec.provenance_inputs)
     provenance_block["git_dirty"] = bool(snapshot.get("code", {}).get("git_dirty"))
     provenance_block["lockfile_sha256"] = snapshot.get("code", {}).get("uv_lock_sha256")
     provenance_block["native_binary_sha256"] = snapshot.get("toolchain", {}).get(

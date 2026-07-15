@@ -71,6 +71,7 @@ class ExperimentSpec:
     baseline_arm_id: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
     workload_metadata: Mapping[str, Any] = field(default_factory=dict)
+    provenance_inputs: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -95,6 +96,15 @@ class ExperimentSpec:
                 raise ValueError("workload metadata ID does not match ExperimentSpec")
             if self.workload_metadata.get("dataset") != self.dataset_id:
                 raise ValueError("workload metadata dataset does not match ExperimentSpec")
+        allowed_provenance = {
+            "configuration_sha256",
+            "data_sha256",
+            "index_sha256",
+            "input_artifact_ids",
+        }
+        unknown_provenance = set(self.provenance_inputs) - allowed_provenance
+        if unknown_provenance:
+            raise ValueError(f"unsupported provenance inputs {sorted(unknown_provenance)}")
 
     def method_configuration(self) -> dict[str, Any]:
         return {

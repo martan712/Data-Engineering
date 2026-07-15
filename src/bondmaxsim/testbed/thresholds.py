@@ -26,6 +26,11 @@ _SEED_FRACTION = 0.05
 _TAU_SEED_EPS = 1e-3
 
 
+def oracle_tau_seed(exact_scores: np.ndarray, k: int) -> float:
+    """Safe oracle seed from already-computed exact scores."""
+    return oracle_threshold(exact_scores, k) - _TAU_SEED_EPS
+
+
 def resolve_tau_seed(
     config: RunConfig,
     query: np.ndarray,
@@ -63,7 +68,7 @@ def resolve_tau_seed(
     exact_scores = exact_maxsim_scores(query, packing.flat_tokens, packing.doc_starts)
 
     if policy == "oracle":
-        return oracle_threshold(exact_scores, config.k) - _TAU_SEED_EPS
+        return oracle_tau_seed(exact_scores, config.k)
 
     if policy == "seed":
         if dimension_order == "pca":

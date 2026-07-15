@@ -38,6 +38,41 @@ class AgreementResult:
         return result
 
 
+@dataclass(frozen=True)
+class AgreementBatchResult:
+    strict_top_k_set_equal: bool
+    boundary_tie_equivalent: bool
+    recall_vs_oracle_set_mean: float
+    query_count: int
+    failure_codes: tuple[str, ...]
+
+    @property
+    def exact_gate_passed(self) -> bool:
+        return self.query_count > 0 and self.boundary_tie_equivalent
+
+    def to_dict(self) -> dict:
+        result = asdict(self)
+        result["failure_codes"] = list(self.failure_codes)
+        return result
+
+
+def batch_agreement_result(results: list[AgreementResult]) -> AgreementBatchResult:
+    """Retain strict/tie distinctions while aggregating one workload pass."""
+    if not results:
+        raise ValueError("agreement batch must contain at least one query")
+    return AgreementBatchResult(
+        strict_top_k_set_equal=all(row.strict_top_k_set_equal for row in results),
+        boundary_tie_equivalent=all(row.exact_gate_passed for row in results),
+        recall_vs_oracle_set_mean=float(np.mean([
+            row.recall_vs_oracle_set for row in results
+        ])),
+        query_count=len(results),
+        failure_codes=tuple(sorted({
+            code for row in results for code in row.failure_codes
+        })),
+    )
+
+
 def aggregate_agreement_results(results: list[AgreementResult]) -> dict:
     """Aggregate per-query gates without collapsing strict and tie outcomes."""
     return {
