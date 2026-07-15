@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bondmaxsim.result-envelope/1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_name",
+    "schema_version",
+    "artifact_id",
+    "experiment_id",
+    "created_at_utc",
+    "dataset_id",
+    "workload_id",
+    "method_configuration",
+    "protocol",
+    "environment",
+    "provenance",
+    "payload_kind",
+    "payload"
+  ],
+  "properties": {
+    "schema_name": {"const": "bondmaxsim.result-envelope"},
+    "schema_version": {"const": "1.0.0"},
+    "artifact_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "experiment_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "dataset_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "workload_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "method_configuration": {"type": "object"},
+    "protocol": {"type": "object"},
+    "environment": {"type": "object"},
+    "provenance": {"type": "object"},
+    "payload_kind": {
+      "enum": [
+        "timing_comparison",
+        "pruning_accounting",
+        "candidate_frontier",
+        "ir_quality",
+        "paired_significance",
+        "validation_audit"
+      ]
+    },
+    "payload": {"type": "object"}
+  }
+}

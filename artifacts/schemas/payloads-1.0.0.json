@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bondmaxsim.payloads/1.0.0",
+  "$defs": {
+    "timing_comparison": {
+      "type": "object",
+      "required": ["sessions"],
+      "properties": {"sessions": {"type": "array", "minItems": 1}}
+    },
+    "pruning_accounting": {
+      "type": "object",
+      "required": ["rows"],
+      "properties": {"rows": {"type": "array", "minItems": 1}}
+    },
+    "candidate_frontier": {
+      "type": "object",
+      "required": ["points"],
+      "properties": {"points": {"type": "array", "minItems": 1}}
+    },
+    "ir_quality": {
+      "type": "object",
+      "required": ["rows"],
+      "properties": {"rows": {"type": "array", "minItems": 1}}
+    },
+    "paired_significance": {
+      "type": "object",
+      "required": ["comparisons"],
+      "properties": {"comparisons": {"type": "array", "minItems": 1}}
+    },
+    "validation_audit": {
+      "type": "object",
+      "required": ["checks", "passed"],
+      "properties": {
+        "checks": {"type": "array", "minItems": 1},
+        "passed": {"type": "boolean"}
+      }
+    }
+  }
+}
