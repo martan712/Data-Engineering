@@ -1,0 +1,75 @@
+{
+  "schema_name": "bondmaxsim.data-config",
+  "schema_version": "1.0.0",
+  "resolution_status": "recovery_required",
+  "datasets": {
+    "arguana": {},
+    "nfcorpus": {},
+    "scidocs": {},
+    "scifact": {}
+  },
+  "sources": {
+    "corpus_and_queries": {
+      "repository_template": "BeIR/{dataset}",
+      "revision": null,
+      "revision_status": "unknown_original_revision",
+      "corpus_split": "corpus",
+      "queries_split": "queries"
+    },
+    "qrels": {
+      "preferred_repository_template": "BeIR/{dataset}-qrels",
+      "fallback_repository_template": "mteb/{dataset}",
+      "revision": null,
+      "revision_status": "unknown_original_revision",
+      "split": "test"
+    },
+    "model": {
+      "repository": "lightonai/GTE-ModernColBERT-v1",
+      "revision": null,
+      "revision_status": "unknown_original_revision"
+    },
+    "tokenizer": {
+      "repository": "lightonai/GTE-ModernColBERT-v1",
+      "revision": null,
+      "revision_status": "unknown_original_revision"
+    }
+  },
+  "text": {
+    "document_fields": ["text"],
+    "include_title": false,
+    "query_field": "text",
+    "ordering": "source_row_order"
+  },
+  "encoding": {
+    "batch_size_documents": 64,
+    "batch_size_queries": 32,
+    "device": "cpu",
+    "dimension": 128,
+    "document_max_length": null,
+    "document_max_length_status": "recover_effective_default",
+    "dtype": "float32",
+    "is_query_documents": false,
+    "is_query_queries": true,
+    "normalization": "unit_l2_per_token",
+    "padding": null,
+    "padding_status": "recover_effective_default",
+    "precision": "float32_output",
+    "query_max_length": null,
+    "query_max_length_status": "recover_effective_default",
+    "special_tokens": null,
+    "special_tokens_status": "recover_effective_default",
+    "truncation": null,
+    "truncation_status": "recover_effective_default"
+  },
+  "workloads": {
+    "mechanism": "beir-<dataset>-mechanism-seed42-n50-v1",
+    "quality": "beir-<dataset>-qrels-test-v1"
+  },
+  "outputs": {
+    "embedding_format": "npz-flat-token-major",
+    "id_sidecar_format": "json-ordered-ids",
+    "qrels_format": "beir-tsv",
+    "atomic": true,
+    "resumable_unit": "dataset_or_shard"
+  }
+}

@@ -15,9 +15,7 @@ venv/
 env/
 .env/
 
-# uv (pip-interface workflow; reproducibility is anchored by pinned submodules,
-# not a locked env, so the auto-generated lock is not tracked)
-uv.lock
+# uv caches and environments are local; uv.lock is tracked for the paper.
 
 # Large / regenerable data files
 *.npy
@@ -25,7 +23,8 @@ uv.lock
 *.pkl
 
 # Local data storage (root data/ only — src/bondmaxsim/data is a package)
-/data/
+/data/*
+!/data/README.md
 *.csv
 *.png
 
