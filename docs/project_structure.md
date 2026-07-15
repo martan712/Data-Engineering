@@ -1,6 +1,6 @@
 # Project Structure And Conventions
 
-Prepared 2026-06-30 for branch `final-research-implementation`.
+Updated 2026-07-15 for branch `final-research-implementation`.
 
 This is the **canonical map** of the research project. It is the single source of
 truth for where things live and how new code/results are added. The project
@@ -17,12 +17,14 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 .
 ├── README.md                       # entry point: what / how to reproduce / status
 ├── pyproject.toml                  # installs the `bondmaxsim` package (editable)
+├── artifacts/                      # schemas, catalog, evidence manifest, baseline inventory
 ├── setup.sh                        # init submodules at pinned commits + build kernels
 ├── .gitignore                      # ignores scratch/build/data; TRACKS results + figures
 ├── .gitmodules                     # pinned external dependencies
 │
 ├── docs/                           # research documents (the written project)
-│   ├── project_b_analysis_and_research_plan.md   # the plan (Stages 0–5)
+│   ├── project_b_analysis_and_research_plan.md   # original research-stage plan
+│   ├── provisional-paper-corrections.md          # nonnumeric wording awaiting final evidence
 │   ├── stage0_references_and_baselines.md        # Stage 0 artifact
 │   ├── stage1_bond_maxsim_formalization.md       # Stage 1 artifact (proof + audit)
 │   ├── stage4_comparison_methodology.md          # Stage 4 fairness controls + Mikel-chart dissection (R8)
@@ -38,19 +40,23 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 ├── src/bondmaxsim/                 # the research Python package (import `bondmaxsim`)
 │   ├── __init__.py
 │   ├── config.py                   # paths, pinned commits, constants (D=128, default K, …)
-│   ├── schema.py                   # ResultRecord dataclass + JSON IO (shared result schema)
+│   ├── schema.py                   # legacy flat-result compatibility only
+│   ├── results/                    # versioned envelopes, schemas, migration, catalog validation
+│   ├── experiments/                # shared arms, timing, execution, accounting, stage orchestration
+│   ├── render/                     # artifact-only figures, tables, macros, and plot data
 │   ├── data/                       # embedding export, token packing, doc offsets, dataset loaders
 │   ├── oracle/                     # exact MaxSim, normalization guard, exact-agreement, checkpoint simulator (R2)
 │   ├── ordering/                   # dimension-order signals: natural / bond / pca (rotation)
 │   ├── threshold/                  # threshold policies: self_bound / oracle / seed
 │   ├── kernels/                    # ctypes bindings to the C++ kernels + build helpers
-│   ├── testbed/                    # mechanism testbed runner: accounting + throughput modes
+│   ├── testbed/                    # packing/config compatibility and mechanism utilities
 │   ├── baselines/                  # faiss_ivf / pdx_ivf / plaid wrappers
-│   └── eval/                       # CoRECT + qrels metrics (nDCG@10, recall@100, MRR@10, RC)
+│   └── eval/                       # qrels metrics + CoRECT standard-metric cross-check
 │
 ├── cpp/                            # OUR C++ contribution
 │   ├── per_document_oracle/        # exact-safe oracle kernels (ported exp-09 accounting, exp-10 throughput)
 │   ├── wide_block_maxsim_bond/     # Stage 2 deliverable: MaxSim extension of PDX-sigmod BOND (wide token block)
+│   ├── fused_panel_maxsim/          # final dense and BOND-style fused document/token scanners
 │   └── README.md                   # build instructions; maps kernels to Stage 1 sections
 │
 ├── experiments/                    # thin reproducible drivers — import bondmaxsim, never duplicate logic
@@ -60,7 +66,7 @@ on this branch**. Everything explicitly needed to reproduce the research lives o
 │   └── stage5_corect/              # CoRECT IR evaluation
 │
 ├── results/                        # tracked outputs (this is research evidence, keep on-branch)
-│   ├── json/                       # ResultRecord JSON under the shared schema
+│   ├── json/                       # versioned envelopes plus readable historical results
 │   ├── figures/                    # final figures used in the paper
 │   └── external_baselines/         # preserved external results we cite
 │       └── zen5-martan/            # PDX-sigmod BOND-vs-ADSampling-vs-BSA results (preserved from local checkout)
@@ -99,16 +105,18 @@ below (on-branch), not a branch-local or gitignored path.
    `bondmaxsim` and only wires inputs → run → write results. No algorithm logic
    lives in a driver. If two drivers need the same code, it belongs in the
    package.
-3. **One result format.** Every experiment writes a `ResultRecord`
-   (`src/bondmaxsim/schema.py`) as JSON into `results/json/`. Fields follow the
-   shared schema in the research plan. `null` only when a field does not apply;
-   never leave quality metrics at 0 in final results.
+3. **One current result envelope.** New experiments write the versioned
+   `bondmaxsim.result-envelope` schema atomically. Historical flat
+   `ResultRecord` files remain readable only through compatibility readers.
+   Artifacts are selected through the catalog and evidence manifest, never by
+   filename convention alone.
 4. **Exact and approximate never mix.** `shrink = 1` (exact-safe) and
    `shrink < 1` (approximate) results are reported on separate arms; the schema's
    `method`/`threshold_policy` fields must distinguish them (Stage 1 §3).
-5. **Accounting vs throughput are separate.** Cells-scanned (algorithmic work)
-   and wall-clock are reported separately and produced by different kernel modes
-   (Stage 1 §6).
+5. **Accounting vs timing are separate.** Algorithmic-work counters and
+   wall-clock observations retain distinct fields and scope semantics. Timing
+   sessions preserve every counterbalanced observation and use paired margins;
+   independently selected minima are not combined.
 6. **External code is pinned and referenced by path+commit.** Cite
    `extern/<repo>/<path>` with the pinned commit. Never copy upstream source into
    the package; build our C++ against their headers via the submodule.
@@ -147,6 +155,11 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 
 ## Stage Status
 
+This table records implementation history, not current publication evidence.
+Every numeric statement below is historical/provisional until its source and
+field are classified as current by `artifacts/catalog.yaml`, selected by
+`artifacts/paper_evidence.yaml`, and regenerated after the final-run gate.
+
 | Stage | Artifact | Status |
 |---|---|---|
 | 0 References & baselines | `docs/stage0_references_and_baselines.md` | Done |
@@ -156,7 +169,7 @@ stack for Stages 3–5 is `uv pip install -e ".[dev,retrieval,faiss]"`.
 | 3b Fused panel kernels (instruments v2) | `docs/stage3b_fused_panel_maxsim_kernel.md`, `cpp/fused_panel_maxsim/` | Done (K1–K5; brute = decision-gate dense baseline, bond doc/token = wall-clock mechanism instruments; overhead revision + parameterized checkpoints 2026-07-03, §6.1.1; cheap query-only bound arm `_bond_cheap` added 2026-07-03, `docs/bond2002_bound_cost_analysis.md`; gates green; scifact measured) |
 | 3 Mechanism experiments | `experiments/stage3_mechanism/` | In progress. e01–e04 + e06 done on all 4 datasets (e03/e04: exact-safe BOND at default C={32,64} never beats dense; e06: policy choice moves cells only a few points); e05 done on scifact+nfcorpus (no G2 point at default C); e07 done on scifact/nfcorpus/arguana (reorder cost negligible; scidocs deferred — memory issue); e08 done on all 4 — LATE checkpoints (C={96}/{112}) prune 88–98% exact-safe (e08's standalone-baseline "beats dense on 3/4" was later shown inflated — see R12c); e09 done on all 4. R12a (2026-07-04 overnight, e09 at late sets {112}/{64,112}/{32,64,96,112}) → adopt the TIGHT bound: the cheap query-only bound prunes 0% at every late checkpoint (reverses BOND-2002). R12b (2026-07-04): the e08 "wall-clock exceeds cells" / arguana −19% exact-safe win is a MEASUREMENT ARTIFACT of a standalone dense baseline — interleaved back-to-back it corrects to +8.7% MT. R12c (2026-07-04, driver `r12c_interleaved_exact_safe.py`) re-measured all 4 datasets interleaved (1T + all-cores): corrected all-cores margins arguana +8.7%, scidocs +0.9%, scifact +2.3%, nfcorpus +0.9% — only arguana wins, so **G1 is NOT met at the honest all-cores baseline** (single-dataset, not ≥2). R12 CLOSED (a/b/c done). Scope-final 2026-07-08: RQ4/e05 remainder (R5) and scale (R7) deferred to future work; only e07-scidocs remains (memory issue, back of queue) |
 | 4 Candidate-kernel integration | `experiments/stage4_integration/`, `docs/stage4_comparison_methodology.md` | Done (R8, 2026-07-09). e01/e02/e03 on all 4 datasets, MT+1T, interleaved: at matched candidate budgets every token-level pipeline (faiss_ivf/plaid/pdx_ivf) loses to the exhaustive fused dense scan except on scidocs (25.7k docs — faiss/pdx +56/+62% at B=100, recall 0.92); a strong IVF tau-seed recovers ~99% of ORACLE pruning but seed cost > kernel saving everywhere (self_bound stays the free production policy); the partitioned fused scan is a genuine APPROXIMATE frontier (2–5x at recall 0.87–0.95 on arguana/scidocs) whose full-probe exact control is slower than the monolithic scan. Verdict: at this scale the exhaustive fused dense kernel IS the system. Next: R10 write-up |
-| 5 CoRECT IR evaluation | `experiments/stage5_corect/`, `src/bondmaxsim/eval/` | Evaluate the best Stage 3–4 methods with qrels metrics (nDCG@10, recall@100, MRR@10, recall versus exact@10) and standard-metric cross-validation through pinned CoRECT `evaluate_results`. Relevance Composition is not computed. Arms include dense fused, exact-safe BOND, partitioned frontier points, and tuned FAISS-IVF/PLAID system-cap references under the same interleaved controls. |
+| 5 Standard IR evaluation | `experiments/stage5_corect/`, `src/bondmaxsim/eval/` | Evaluate the best Stage 3–4 methods with qrels metrics (nDCG@10, recall@100, MRR@10, recall versus exact@10) and standard-metric cross-validation through pinned CoRECT `evaluate_results`. Relevance Composition is not computed. Arms include dense fused, exact-safe BOND, partitioned frontier points, and tuned FAISS-IVF/PLAID system-cap references under the same interleaved controls. |
 
 The working plan (research questions RQ1–RQ5, instrument table, R-items,
 decision gates G1/G2) lives in `docs/project_b_analysis_and_research_plan.md`

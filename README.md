@@ -7,8 +7,9 @@ MaxSim retrieval at matched retrieval quality?
 ColBERT scores a query and document by late interaction,
 `score(q, d) = sum_i max_j <q_i, d_j>`. Exact MaxSim is expensive. We adapt the
 SIGMOD-2002 BOND branch-and-bound over embedding dimensions to MaxSim, implement
-it on the PDX columnar layout, and evaluate it against exact MaxSim, IVF + exact
-rerank, and PLAID using BEIR-style datasets and the CoRECT framework.
+it on a PDX-compatible columnar layout, and evaluate it against exact MaxSim,
+IVF + exact rerank, and PLAID using BEIR-style datasets. CoRECT is used to
+cross-check standard qrels metrics; Relevance Composition is not computed.
 
 ## Layout
 
@@ -24,14 +25,13 @@ See **`docs/project_structure.md`** for the canonical map and conventions. In sh
 
 ## Status
 
-Stages 0 (references), 1 (BOND-MaxSim formalization + exact-safe proof), 2
-(mechanism testbed), and 3b (fused panel kernels) are complete; Stage 3
-mechanism experiments are largely run (e01–e09; e05 on 2 of 4 datasets, e07
-missing scidocs; headline so far: exact-safe BOND with late checkpoints beats
-the fused dense baseline on 3 of 4 small corpora, and the approximate
-frontier at default checkpoints offers no ≥0.99-recall win). See the status
-table in `docs/project_structure.md`
-and the plan in `docs/project_b_analysis_and_research_plan.md`.
+The native gates, shared result/timing infrastructure, and final-evidence
+driver migrations are complete. Artifact governance and publication generation
+are in progress. Existing numeric results and figures are provisional or
+historical inputs until the data freeze, release-candidate audit, and final
+counterbalanced rerun classify them as current in the artifact catalog. See
+`docs/project_structure.md`, `docs/provisional-paper-corrections.md`, and the
+implementation plan for the evidence lifecycle.
 
 ## Getting Started
 
@@ -56,11 +56,13 @@ The core install is NumPy-only (the mechanism testbed). The heavy retrieval
 stack (torch/pylate/ranx, Stages 3–5) is an optional extra:
 `uv pip install -e ".[dev,retrieval,faiss]"`.
 
-## Key Results (Stage 1)
+## Method status
 
-The `shrink = 1` BOND-MaxSim kernel is **exact-safe by proof** (unit-normalized
-tokens, exact arithmetic, set-equality top-k); the token-pruning survival
-invariant is proven. `shrink < 1` is approximate with no recall guarantee and is
-reported only on a quality–work frontier. The contribution is the **multi-vector
-MaxSim extension** of PDX's existing single-vector BOND. See
-`docs/stage1_bond_maxsim_formalization.md`.
+The `shrink = 1` bound is exact-safe in exact arithmetic under unit-normalized
+tokens. The fp32 implementation is separately gated by strict ID-set equality
+or independently scored boundary-tie equivalence. `shrink < 1` is approximate
+and is reported only on a quality–work frontier. The contribution is a
+multi-vector, document-level MaxSim adaptation of BOND's elimination idea, not
+the original BOND 2002 single-vector algorithm. See
+`docs/stage1_bond_maxsim_formalization.md` and
+`docs/contracts/terminology.md`.
