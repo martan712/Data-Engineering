@@ -22,7 +22,7 @@ retrieval = [
     "torch>=2.0",
     "pylate==1.6.0",
     "ranx>=0.3",
-    # CoRECT RC metrics (extern/CoRECT evaluate_results is pytrec_eval-based).
+    # CoRECT standard-metric cross-check (evaluate_results is pytrec_eval-based).
     "pytrec-eval-terrier>=0.5",
     # Stage 5 lexical reference baseline (e03).
     "bm25s>=0.2",
@@ -48,3 +48,14 @@ testpaths = ["tests"]
 # Put src/ on sys.path so `pytest` works without an editable install or a
 # PYTHONPATH=src prefix (requires pytest>=7).
 pythonpath = ["src"]
+addopts = ["--strict-markers"]
+markers = [
+    "unit: fast tests with no native binary, external service, or generated artifact dependency",
+    "native: tests that exercise or enforce a compiled native-kernel contract",
+    "native_gate: native tests that must execute (not skip) in the native-required tier",
+    "integration: fixture-scale tests spanning experiment or renderer components",
+    "artifact: result-schema, catalog, evidence, or publication-output validation",
+    "reproduction: clean-clone fixture and deterministic reproduction checks",
+    "sanitizer: sanitizer build/harness contract checks",
+    "research_audit: tests required by the full pre-publication research audit",
+]

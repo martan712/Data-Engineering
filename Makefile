@@ -3,7 +3,10 @@ BUILD ?= portable
 DATASET ?=
 
 .PHONY: setup-paper data-small verify reproduce-core paper artifact-smoke \
-	data-full reproduce-full audit-results audit-evidence test-sanitize
+	data-full reproduce-full audit-results audit-evidence audit-paper \
+	test-unit test-native test-integration test-artifact test-reproduction \
+	test-sanitize test-sanitizer test-full native-portable clean-clone-smoke \
+	research-audit
 
 setup-paper:
 	./setup.sh --full --frozen
@@ -14,13 +17,41 @@ data-small:
 verify:
 	$(PYTHON) -m pytest -q
 
+test-unit:
+	$(PYTHON) -m pytest -q -m unit
+
+test-native:
+	$(PYTHON) -m pytest -q -m native --native-required
+
+test-integration:
+	$(PYTHON) -m pytest -q -m integration
+
+test-artifact:
+	$(PYTHON) -m pytest -q -m artifact
+	$(PYTHON) -m bondmaxsim.research_audit results
+	$(PYTHON) -m bondmaxsim.research_audit governance
+	$(PYTHON) -m bondmaxsim.research_audit paper
+
+test-reproduction:
+	$(PYTHON) -m pytest -q -m reproduction
+
+test-full:
+	$(PYTHON) -m pytest -q
+
 test-sanitize:
 	$(MAKE) -C cpp/per_document_oracle sanitize-check
 	$(MAKE) -C cpp/wide_block_maxsim_bond sanitize-check
 	$(MAKE) -C cpp/fused_panel_maxsim sanitize-check
 
-# Stage 2 scaffold: validates the deterministic fixture. Stage 4 extends this
-# target with representative mechanism and system experiment drivers.
+test-sanitizer: test-sanitize
+
+native-portable:
+	$(MAKE) -C cpp/per_document_oracle BUILD=portable
+	$(MAKE) -C cpp/wide_block_maxsim_bond BUILD=portable
+	$(MAKE) -C cpp/fused_panel_maxsim BUILD=portable
+
+# Deterministic data-fixture foundation; the clean-clone target below adds
+# representative Stage 3--5 experiment drivers.
 reproduce-core: data-small
 	$(PYTHON) -m bondmaxsim.data.fixture --verify data/fixture
 
@@ -40,9 +71,15 @@ reproduce-full:
 	@exit 2
 
 audit-results:
-	@echo "audit-results becomes available with the Stage 3 schema registry." >&2
-	@exit 2
+	$(PYTHON) -m bondmaxsim.research_audit results
 
 audit-evidence:
-	@echo "audit-evidence becomes available with the Stage 5 evidence manifest." >&2
-	@exit 2
+	$(PYTHON) -m bondmaxsim.research_audit governance
+
+audit-paper:
+	$(PYTHON) -m bondmaxsim.research_audit paper
+
+clean-clone-smoke:
+	$(PYTHON) -m bondmaxsim.research_audit clean-clone
+
+research-audit: test-full test-artifact test-native test-sanitizer clean-clone-smoke

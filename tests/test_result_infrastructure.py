@@ -226,13 +226,15 @@ def test_merge_guards_and_override_provenance():
     assert "workload_id" in overridden.provenance["merge_overrides"]
 
 
-def test_catalog_and_evidence_skeletons_validate():
+def test_catalog_and_evidence_manifests_are_populated_and_validate():
     catalog = validate_catalog(REPO_ROOT / "artifacts" / "catalog.yaml", workspace=REPO_ROOT)
     manifest = validate_evidence_manifest(
         REPO_ROOT / "artifacts" / "paper_evidence.yaml", catalog
     )
-    assert catalog["artifacts"] == []
-    assert manifest["evidence"] == []
+    assert catalog["catalog_version"] == "1.0.0"
+    assert catalog["artifacts"]
+    assert manifest["manifest_version"] == "1.0.0"
+    assert manifest["evidence"]
 
 
 def test_catalog_rejects_cycles_and_current_invalid_evidence(tmp_path):
