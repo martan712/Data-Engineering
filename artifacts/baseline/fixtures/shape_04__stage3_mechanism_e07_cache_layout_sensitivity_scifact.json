@@ -1,0 +1,79 @@
+{
+  "experiment": "e07_cache_layout_sensitivity",
+  "dataset": "scifact",
+  "method": "fused_panel_maxsim_bond",
+  "n_docs": 5183,
+  "total_tokens": 1141434,
+  "n_queries": 200,
+  "k": 10,
+  "policy": "oracle",
+  "shrink": 1.0,
+  "n_repeats": 10,
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "baselines": [
+    "dense_fused",
+    "dense_numpy"
+  ],
+  "arms": [
+    {
+      "dimension_order": "natural",
+      "ms_per_query_total": 14.471560669999235,
+      "ms_per_query_preprocess": 0.014007569998284453,
+      "ms_per_query_kernel": 14.45755310000095,
+      "reorder_fraction": 0.0009679377585945741,
+      "qps": 69.16799772984643,
+      "recall_vs_exact_at_10": 1.0,
+      "kernel_penalty_vs_natural_pct": 0.0
+    },
+    {
+      "dimension_order": "bond",
+      "ms_per_query_total": 18.170340104998104,
+      "ms_per_query_preprocess": 0.025677964995338698,
+      "ms_per_query_kernel": 18.144662140002765,
+      "reorder_fraction": 0.0014131802072474954,
+      "qps": 55.11262718942242,
+      "recall_vs_exact_at_10": 1.0,
+      "kernel_penalty_vs_natural_pct": 25.50299497085418
+    },
+    {
+      "dimension_order": "pca",
+      "ms_per_query_total": 16.434172179997404,
+      "ms_per_query_preprocess": 0.01952288999746088,
+      "ms_per_query_kernel": 16.414649289999943,
+      "reorder_fraction": 0.0011879448373568133,
+      "qps": 60.92119193854573,
+      "recall_vs_exact_at_10": 1.0,
+      "kernel_penalty_vs_natural_pct": 13.53684248269414
+    }
+  ],
+  "brute_arms": [
+    {
+      "dimension_order": "dense_fused",
+      "ms_per_query_total": 15.887491884996052,
+      "ms_per_query_preprocess": 0.0,
+      "ms_per_query_kernel": 15.887491884996052,
+      "reorder_fraction": 0.0,
+      "qps": 62.94259705928709,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "dimension_order": "dense_numpy",
+      "ms_per_query_total": 48.293876729994736,
+      "ms_per_query_preprocess": 0.0,
+      "ms_per_query_kernel": 48.293876729994736,
+      "reorder_fraction": 0.0,
+      "qps": 20.706558837487407,
+      "recall_vs_exact_at_10": 1.0
+    }
+  ],
+  "corpus_prep_s": {
+    "corpus_stats_s": 0.19165762500051642,
+    "panel_packing_s": 0.18015136800022447,
+    "pca_fit_s": 0.0011228010007471312,
+    "panel_packing_rot_s": 0.38504437600022356
+  }
+}

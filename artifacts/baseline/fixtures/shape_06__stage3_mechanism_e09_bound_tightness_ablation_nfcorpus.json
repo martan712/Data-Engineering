@@ -1,0 +1,343 @@
+{
+  "experiment": "e09_bound_tightness_ablation",
+  "dataset": "nfcorpus",
+  "methods": {
+    "tight": "fused_panel_maxsim_bond",
+    "cheap": "fused_panel_maxsim_bond_cheap"
+  },
+  "n_docs": 3633,
+  "total_tokens": 838305,
+  "n_queries": 200,
+  "k": 10,
+  "policy": "oracle",
+  "shrink": 1.0,
+  "n_repeats": 10,
+  "orders": [
+    "natural",
+    "bond",
+    "pca"
+  ],
+  "checkpoint_sets": [
+    [
+      32,
+      64
+    ],
+    [
+      112
+    ],
+    [
+      64,
+      112
+    ],
+    [
+      32,
+      64,
+      96,
+      112
+    ]
+  ],
+  "arms": [
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 12.619483514972671,
+      "qps": 79.24254576770336,
+      "pruned_docs_pct": 0.0011010184420589045,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 12.46854972498113,
+      "qps": 80.20178946685905,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 14.12074104497151,
+      "qps": 70.81781308893181,
+      "pruned_docs_pct": 4.574456372144233,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 13.28403661500488,
+      "qps": 75.27832307165262,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 13.465453235003224,
+      "qps": 74.26411740828125,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 13.668742629997723,
+      "qps": 73.15961877908053,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 13.326684960011335,
+      "qps": 75.03741575648003,
+      "pruned_docs_pct": 90.88687035507844,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 12.855993414996192,
+      "qps": 77.78473181493118,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 12.944483579994994,
+      "qps": 77.25298532151923,
+      "pruned_docs_pct": 96.69501789154968,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 12.683774605029612,
+      "qps": 78.84088381730317,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 13.341102429985767,
+      "qps": 74.95632428039659,
+      "pruned_docs_pct": 88.77731902009359,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 12.43278095502319,
+      "qps": 80.43252781639107,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 12.240370765030093,
+      "qps": 81.69687170399544,
+      "pruned_docs_pct": 90.88687035507844,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 13.021034550001787,
+      "qps": 76.7988131941377,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 12.941640659992117,
+      "qps": 77.26995566268559,
+      "pruned_docs_pct": 96.69501789154968,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 13.18080387001828,
+      "qps": 75.86790683341023,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 12.657288549999066,
+      "qps": 79.00586259448701,
+      "pruned_docs_pct": 88.77731902009359,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        64,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 12.606109845000901,
+      "qps": 79.32661322926371,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "natural",
+      "ms_per_query": 11.821494119976705,
+      "qps": 84.59167596337396,
+      "pruned_docs_pct": 90.88687035507844,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "natural",
+      "ms_per_query": 12.865359889983665,
+      "qps": 77.72810154953774,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "bond",
+      "ms_per_query": 12.646704595026677,
+      "qps": 79.0719821504529,
+      "pruned_docs_pct": 96.69501789154968,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "bond",
+      "ms_per_query": 13.229103134981415,
+      "qps": 75.59091419853874,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "tight",
+      "dimension_order": "pca",
+      "ms_per_query": 11.804991245007841,
+      "qps": 84.70993152348889,
+      "pruned_docs_pct": 88.77731902009359,
+      "recall_vs_exact_at_10": 1.0
+    },
+    {
+      "checkpoints": [
+        32,
+        64,
+        96,
+        112
+      ],
+      "bound": "cheap",
+      "dimension_order": "pca",
+      "ms_per_query": 12.633150140027283,
+      "qps": 79.15682065960473,
+      "pruned_docs_pct": 0.0,
+      "recall_vs_exact_at_10": 1.0
+    }
+  ],
+  "dense_arm": {
+    "bound": "none",
+    "dimension_order": "dense_fused",
+    "ms_per_query": 12.721822089988564,
+    "qps": 78.60509233083442,
+    "pruned_docs_pct": 0.0,
+    "recall_vs_exact_at_10": 1.0
+  }
+}

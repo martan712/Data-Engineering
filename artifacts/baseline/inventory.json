@@ -1,0 +1,2666 @@
+{
+  "figures": [
+    {
+      "path": "results/figures/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0,
+      "stage": "unclassified"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e01_bound_slack_arguana.png",
+      "sha256": "ed2ec2bf17b6622f92ab7ae1073073f69a978c4a01c1fb6fd5eae6e2e541add6",
+      "size_bytes": 88308,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e01_bound_slack_nfcorpus.png",
+      "sha256": "38424ecb82d53b2840851968d816d2f0b664eb4f2441f03d7186fd3dca07f5e6",
+      "size_bytes": 96796,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e01_bound_slack_scidocs.png",
+      "sha256": "c5da9d177ad33d6b56964f4d3b4308e2aa7b10dfec9c6a3666c41855f2711f61",
+      "size_bytes": 94983,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e01_bound_slack_scifact.png",
+      "sha256": "e93ac89712783ccb6d38306274ca98305a1544d425cf63952b69cbad0bb7059a",
+      "size_bytes": 91714,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e02_pruning_rate_arguana.png",
+      "sha256": "6e067dc13ff57856d1f679692937c88621292587935110dca0c492e7c4366bab",
+      "size_bytes": 142032,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e02_pruning_rate_nfcorpus.png",
+      "sha256": "6ba060a3de3623d8c9d3cacdb3b4ac602dc9f912ea10c8328576a60901ec1cb7",
+      "size_bytes": 182353,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e02_pruning_rate_scidocs.png",
+      "sha256": "4d5c2b579d82af5583c68beb34e6f39f7bac48b7e1f684247b73e074f5eb48df",
+      "size_bytes": 183744,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e02_pruning_rate_scifact.png",
+      "sha256": "31386bee5202467618f970f1132c59717c9cdc4d040992901c08a0eb0d04d867",
+      "size_bytes": 159877,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e03_order_ablation_arguana.png",
+      "sha256": "042a193dd86238ee6eb9bd3403f26b5a4d1292501728402c8f394b20e865947d",
+      "size_bytes": 95139,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e03_order_ablation_nfcorpus.png",
+      "sha256": "33b5a988ba76bbc22927262262e501b064867541ac9d653e1a2ebc08ac7ec017",
+      "size_bytes": 94093,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e03_order_ablation_scidocs.png",
+      "sha256": "e93518608537cca25ad105ee830a8e54fa38f302c8dc933ad526cde77feeff24",
+      "size_bytes": 97728,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e03_order_ablation_scifact.png",
+      "sha256": "ca2dd3dce4facb5afb95c2ba7e88b4f03cfdc60da90468828beeb5acc3dc7e1f",
+      "size_bytes": 92623,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e04_exact_safe_pruning_arguana.png",
+      "sha256": "f448c2f4706dd2e7abb1910a2207dc5f0da058b0b2cf82719de5c64a924b4497",
+      "size_bytes": 104211,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e04_exact_safe_pruning_nfcorpus.png",
+      "sha256": "15d3d647e8b51e19d59ff83ab9fc67c88aa4dc269e95d6f5b5a318c63cd43705",
+      "size_bytes": 99287,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e04_exact_safe_pruning_scidocs.png",
+      "sha256": "c21d5383fc1c3c88d2d6bd6442012791cd5d860902d9a5921d06311175b2058d",
+      "size_bytes": 106105,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e04_exact_safe_pruning_scifact.png",
+      "sha256": "45886cccd4949cc31f09d098bf573497f52f6127e0bf10f933891f6f2960c233",
+      "size_bytes": 95955,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e05_approximate_recall_sweep_nfcorpus.png",
+      "sha256": "c97644d3cf43d03fe9bfb441525871d90feb1caf57fd9903f77915ba00092a2f",
+      "size_bytes": 147767,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e05_approximate_recall_sweep_scifact.png",
+      "sha256": "ea1b7634523672f28f7c0a4ff3fd9b885b1a1e77b6e12006a087be465c5a88df",
+      "size_bytes": 142261,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e06_threshold_policy_ablation_arguana.png",
+      "sha256": "f64c34dabf7bd3caa25de13fadcf4626c3e45d19723c0ed52858a2f6d6050fa3",
+      "size_bytes": 62646,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e06_threshold_policy_ablation_nfcorpus.png",
+      "sha256": "6bb67da201a3a0b936ed89a35dfd00d4bd73256df388d8674434581ac7e52c9e",
+      "size_bytes": 62889,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e06_threshold_policy_ablation_scidocs.png",
+      "sha256": "111bd825d6fa2f17af8602868b1fdbc32c6c842b569eedd4c737dc5f2fd42616",
+      "size_bytes": 61012,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e06_threshold_policy_ablation_scifact.png",
+      "sha256": "2db80ec88b556b450d9e2f91eaa44ced42ea46c5b5d8c63eef8b6d6893515fa7",
+      "size_bytes": 62584,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_arguana.png",
+      "sha256": "27564ad9a5779109c751d3adcd19d740e1c1a2e8fa3a81f91e0f20ff1619d150",
+      "size_bytes": 117443,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_nfcorpus.png",
+      "sha256": "296f00c60af3000eb847097e177d0df32aad4bfa275979be70b6b487555201d1",
+      "size_bytes": 109835,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_scifact.png",
+      "sha256": "ed56521267b594c19c38bebf60d6b3475f84ffdb2b65e8a9c5fcc511bccea11b",
+      "size_bytes": 114175,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e08_checkpoint_ablation_arguana.png",
+      "sha256": "84242dfaf5622b7d42355c0c985f2918f10d39133d98ade377258b91c3f71f5e",
+      "size_bytes": 94183,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e08_checkpoint_ablation_nfcorpus.png",
+      "sha256": "a45735cc726c3a673512fa31a789c862797c51eca42704e1c3f3c6aecaa3c9a4",
+      "size_bytes": 94305,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e08_checkpoint_ablation_scidocs.png",
+      "sha256": "1b04977e889907b467a99280b3dd55aa93cf5c0dd84eae16d54fd2930d52b7cd",
+      "size_bytes": 94858,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e08_checkpoint_ablation_scifact.png",
+      "sha256": "902cacb560f2b6ab7f76d5d771bc229e412d5b78989a880599e5ef3bd78de297",
+      "size_bytes": 94977,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e09_bound_tightness_ablation_arguana.png",
+      "sha256": "f32576bededd030290f8d0562d968f90c0d655b793c6840f705205f674103d8e",
+      "size_bytes": 147148,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e09_bound_tightness_ablation_nfcorpus.png",
+      "sha256": "3a17b1a3595319b47324a10e4eae0651f3deedf9239f93cac537e39a0342eb33",
+      "size_bytes": 133809,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e09_bound_tightness_ablation_scidocs.png",
+      "sha256": "60e6b0ddbd8db3821c02f5de10d6d60811576f984e023de5125ff2b8e2700262",
+      "size_bytes": 148889,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage3_mechanism/e09_bound_tightness_ablation_scifact.png",
+      "sha256": "b0ccccc61d798940c5e5d4aeeaee190aff5b712fbf44f38d91d491e2e04a6239",
+      "size_bytes": 146272,
+      "stage": "stage3_mechanism"
+    },
+    {
+      "path": "results/figures/stage4_integration/e01_fixed_candidate_arms_arguana.png",
+      "sha256": "bf363d73cf633e90151d6ed7f2f22cba87982b6e27351da581d0664dd3e1db66",
+      "size_bytes": 171392,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e01_fixed_candidate_arms_nfcorpus.png",
+      "sha256": "a59237ae8305e8a684d8cc87defcfdfd24a80bde24fa760222a56a60ee58f99c",
+      "size_bytes": 171188,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e01_fixed_candidate_arms_scidocs.png",
+      "sha256": "673c098780a470f589aecef9a866c13948cb0317e69ab36f122b6dab6df7b276",
+      "size_bytes": 165729,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e01_fixed_candidate_arms_scifact.png",
+      "sha256": "f9b71ba7e6677ebc40e88417d6de07bc5627dc5ec3245b3dae8df023d4905043",
+      "size_bytes": 168876,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e03_partitioned_fused_scan_arguana.png",
+      "sha256": "c26eab85c15e6c22ceb78bc79d3a1203ce228559d6561fdeb1f8b6e9767991df",
+      "size_bytes": 121266,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e03_partitioned_fused_scan_nfcorpus.png",
+      "sha256": "b218325d83b174958b7d4f9d40be83c288ef67c44c23b0739a3856753d6a120f",
+      "size_bytes": 125859,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e03_partitioned_fused_scan_scidocs.png",
+      "sha256": "988a2a66e01b391669750de696f865ca04dd88bdd8da9485b68adf388835a5cc",
+      "size_bytes": 122542,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage4_integration/e03_partitioned_fused_scan_scifact.png",
+      "sha256": "5b2fe4343d8e093ccd1b66e188823c6823d9b2341b2da31099842ea2621f8a37",
+      "size_bytes": 122024,
+      "stage": "stage4_integration"
+    },
+    {
+      "path": "results/figures/stage5_corect/e01_ir_evaluation_arguana.png",
+      "sha256": "b94acef5a36574e1ddcca8436f440c8f8b817ad9c0b1224479db96a6321eef7b",
+      "size_bytes": 202652,
+      "stage": "stage5_corect"
+    },
+    {
+      "path": "results/figures/stage5_corect/e01_ir_evaluation_nfcorpus.png",
+      "sha256": "13a970ce5670a6540830ac8566ed884bb31174873be67066aea7b1fe00f586e4",
+      "size_bytes": 111018,
+      "stage": "stage5_corect"
+    },
+    {
+      "path": "results/figures/stage5_corect/e01_ir_evaluation_scidocs.png",
+      "sha256": "79fd420f9d7b4df95d06068304840ba2f586a0de7dc24a389cf5b973995ab2a8",
+      "size_bytes": 194755,
+      "stage": "stage5_corect"
+    },
+    {
+      "path": "results/figures/stage5_corect/e01_ir_evaluation_scifact.png",
+      "sha256": "00308361053985096995f2d861bf23398803f60db93ad5f1251bcf5c6303f559",
+      "size_bytes": 105056,
+      "stage": "stage5_corect"
+    }
+  ],
+  "historical_shapes": [
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_01__stage2_testbed_exact_agreement_arguana_wide_pca.json",
+      "matching_file_count": 20,
+      "shape_id": "historical-01",
+      "source": "results/json/stage2_testbed_exact_agreement_arguana_wide_pca.json",
+      "source_sha256": "a60cb3e7955781bdad6bf6419f2f07d93cba72e5c35976cd84c4c0b78536f950",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_02__stage3_mechanism_e02_pruning_rate_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-02",
+      "source": "results/json/stage3_mechanism_e02_pruning_rate_nfcorpus.json",
+      "source_sha256": "73aa338798ed503e4b4c2d3849a95eb6386b20d84dee7c62e31f12aa5f3b9fc2",
+      "top_level_keys": [
+        "D",
+        "arms",
+        "dataset",
+        "experiment",
+        "fetch_boundary_dims",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "numpy_crosscheck",
+        "orders",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_03__stage3_mechanism_e01_bound_slack_scifact.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-03",
+      "source": "results/json/stage3_mechanism_e01_bound_slack_scifact.json",
+      "source_sha256": "d0853308968cbb2e12895ab614bfee21dcfc4c038f2b12273a9cb8e9a8fc0a2e",
+      "top_level_keys": [
+        "D",
+        "dataset",
+        "experiment",
+        "k_top",
+        "n_queries",
+        "orders",
+        "prefix_grid",
+        "query_seed",
+        "results"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_04__stage3_mechanism_e07_cache_layout_sensitivity_scifact.json",
+      "matching_file_count": 3,
+      "shape_id": "historical-04",
+      "source": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_scifact.json",
+      "source_sha256": "ebcef5bd474defb3682a2053a5a8fb4eb6cfec68d94ecc8104746a34b8aabf49",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "brute_arms",
+        "corpus_prep_s",
+        "dataset",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_05__stage3_mechanism_e03_order_ablation_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-05",
+      "source": "results/json/stage3_mechanism_e03_order_ablation_nfcorpus.json",
+      "source_sha256": "00885ccaba95f55e4fa8e58abc629d6c6ae92147068a997703e9eab8d54bb90e",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "dataset",
+        "experiment",
+        "k",
+        "method_accounting",
+        "methods_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_06__stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-06",
+      "source": "results/json/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json",
+      "source_sha256": "daf7d595e3d1a28e4fc38304397ad77bbedd7b960ab4895ba8a25894df931b48",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_arm",
+        "experiment",
+        "k",
+        "methods",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_07__stage3_mechanism_e08_checkpoint_ablation_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-07",
+      "source": "results/json/stage3_mechanism_e08_checkpoint_ablation_nfcorpus.json",
+      "source_sha256": "47c3d21ff53273b9ee14f5677cf8e0f4b11111f47ae22feeafff6d8ce4e6265c",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_fused_baseline",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_08__stage3_mechanism_e05_approximate_recall_sweep_scifact.json",
+      "matching_file_count": 2,
+      "shape_id": "historical-08",
+      "source": "results/json/stage3_mechanism_e05_approximate_recall_sweep_scifact.json",
+      "source_sha256": "0a76dcf5227042b9910b73b01b3eedb957a680a1369e83da97f8b2edefbee343",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "dense_fused_ms_per_query_mt",
+        "experiment",
+        "fused_arms",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink_values",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_09__stage3_mechanism_e04_exact_safe_pruning_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-09",
+      "source": "results/json/stage3_mechanism_e04_exact_safe_pruning_nfcorpus.json",
+      "source_sha256": "4f1f730061be7d00b0872586a723dbcf97e1fa2c99eb5116032f68ff2ed26346",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "full_n_docs",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policy",
+        "query_seed",
+        "shrink",
+        "sizes"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_10__stage3_mechanism_e06_threshold_policy_ablation_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-10",
+      "source": "results/json/stage3_mechanism_e06_threshold_policy_ablation_nfcorpus.json",
+      "source_sha256": "7806900baf616adbff83055ec2045a1741bdc0e905ab483271f6763df057f3e9",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "fused_confirmation_arm",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_11__stage3_mechanism_r12c_interleaved_exact_safe_mt.json",
+      "matching_file_count": 2,
+      "shape_id": "historical-11",
+      "source": "results/json/stage3_mechanism_r12c_interleaved_exact_safe_mt.json",
+      "source_sha256": "dd52f4cf4fbf12b68130112bfe98924663ff37bc460419a18a1dff00eba680b1",
+      "top_level_keys": [
+        "bound",
+        "checkpoint_sets",
+        "experiment",
+        "k",
+        "n_queries",
+        "order",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "results",
+        "threads"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_12__stage5_corect_e01_ir_evaluation_scifact.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-12",
+      "source": "results/json/stage5_corect_e01_ir_evaluation_scifact.json",
+      "source_sha256": "12ca36ac64095eacbb300b0c56e0cff1124f811ad210b693b4f7f9be5bce05b3",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "embedding_note",
+        "experiment",
+        "faiss",
+        "indexes",
+        "k_eval",
+        "k_retrieve",
+        "kernel",
+        "machine",
+        "n_docs",
+        "n_evaluable_queries",
+        "n_queries",
+        "partitioned",
+        "plaid",
+        "purpose",
+        "query_source",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_13__stage4_integration_e01_fixed_candidate_arms_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-13",
+      "source": "results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json",
+      "source_sha256": "766a9f64d12f1c9fd27a9129806198e7a130b9f24dfcd9d6a4fb3da06cc2e67a",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioned",
+        "pdx_ivf",
+        "plaid",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_14__stage4_integration_e03_partitioned_fused_scan_nfcorpus.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-14",
+      "source": "results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json",
+      "source_sha256": "8ade805838af3fd1dea6b53ab7fb2e6f916779772ce1e5a26fafdfe8bf9718b3",
+      "top_level_keys": [
+        "dataset",
+        "exact_safe_partition_bound",
+        "experiment",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioning",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_15__stage4_integration_e02_seeded_tau_recovery_arguana.json",
+      "matching_file_count": 4,
+      "shape_id": "historical-15",
+      "source": "results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json",
+      "source_sha256": "4f701ba81d2a828ec38123eb3ae253a66c035fcce9d672840716d1671a2734e3",
+      "top_level_keys": [
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "rep_seed_cost_best_of",
+        "runs",
+        "seed_threads"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_16__stage5_corect_e02_paired_significance.json",
+      "matching_file_count": 1,
+      "shape_id": "historical-16",
+      "source": "results/json/stage5_corect_e02_paired_significance.json",
+      "source_sha256": "d5bfdb63c1eb997fe6c595af950f92cc408597745889dbc2930c75d133bbb547",
+      "top_level_keys": [
+        "datasets",
+        "experiment",
+        "faiss",
+        "k_retrieve",
+        "kernel",
+        "n_permutations",
+        "purpose"
+      ]
+    },
+    {
+      "fixture": "artifacts/baseline/fixtures/shape_17__stage5_corect_e03_bm25_baseline.json",
+      "matching_file_count": 1,
+      "shape_id": "historical-17",
+      "source": "results/json/stage5_corect_e03_bm25_baseline.json",
+      "source_sha256": "eb878d149891efe8972de5e66482345d127bf537a531de95d2d4a40e15cebad1",
+      "top_level_keys": [
+        "datasets",
+        "experiment",
+        "k_retrieve",
+        "purpose"
+      ]
+    }
+  ],
+  "paper_assets": [
+    {
+      "generated_inputs": [],
+      "image_sources": [],
+      "kind": "table",
+      "labels": [
+        "tab:experiments"
+      ],
+      "line": 560,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [
+        "e01_bound_slack_scifact"
+      ],
+      "kind": "figure",
+      "labels": [
+        "fig:e01"
+      ],
+      "line": 593,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [
+        "e02_pruning_rate_scifact"
+      ],
+      "kind": "figure",
+      "labels": [
+        "fig:e02"
+      ],
+      "line": 605,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [
+        "e08_checkpoint_ablation_scifact"
+      ],
+      "kind": "figure",
+      "labels": [
+        "fig:e08"
+      ],
+      "line": 635,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [],
+      "kind": "table",
+      "labels": [
+        "tab:dense"
+      ],
+      "line": 645,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [],
+      "kind": "table",
+      "labels": [
+        "tab:exactsafe"
+      ],
+      "line": 700,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [
+        "e01_fixed_candidate_arms_scidocs"
+      ],
+      "kind": "figure",
+      "labels": [
+        "fig:s01"
+      ],
+      "line": 723,
+      "numeric_body": "handwritten_or_figure_only"
+    },
+    {
+      "generated_inputs": [],
+      "image_sources": [],
+      "kind": "table*",
+      "labels": [
+        "tab:ir"
+      ],
+      "line": 817,
+      "numeric_body": "handwritten_or_figure_only"
+    }
+  ],
+  "result_drivers": [
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "extern/PDX or extern/PDX-sigmod"
+      ],
+      "path": "experiments/stage2_testbed/s02_exact_agreement.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "extern/PDX or extern/PDX-sigmod"
+      ],
+      "path": "experiments/stage2_testbed/s03_two_mode_smoke.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e01_bound_slack.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e02_pruning_rate.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "extern/PDX or extern/PDX-sigmod"
+      ],
+      "path": "experiments/stage3_mechanism/e03_order_ablation.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e04_exact_safe_pruning.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e05_approximate_recall_sweep.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e06_threshold_policy_ablation.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e07_cache_layout_sensitivity.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e08_checkpoint_ablation.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/e09_bound_tightness_ablation.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz"
+      ],
+      "path": "experiments/stage3_mechanism/r12c_interleaved_exact_safe.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "data/faiss_indexes/<dataset>.faiss",
+        "data/plaid_indexes/<dataset>/",
+        "extern/PDX or extern/PDX-sigmod"
+      ],
+      "path": "experiments/stage4_integration/e01_fixed_candidate_arms.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "data/faiss_indexes/<dataset>.faiss"
+      ],
+      "path": "experiments/stage4_integration/e02_seeded_tau_recovery.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "extern/PDX or extern/PDX-sigmod"
+      ],
+      "path": "experiments/stage4_integration/e03_partitioned_fused_scan.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "data/embeddings/<dataset>_test_queries.npz where required",
+        "data/faiss_indexes/<dataset>.faiss",
+        "data/plaid_indexes/<dataset>/",
+        "data/qrels/<dataset>.tsv"
+      ],
+      "path": "experiments/stage5_corect/e01_ir_evaluation.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "data/embeddings/<dataset>_test_queries.npz where required",
+        "data/faiss_indexes/<dataset>.faiss",
+        "data/qrels/<dataset>.tsv"
+      ],
+      "path": "experiments/stage5_corect/e02_paired_significance.py"
+    },
+    {
+      "expected_inputs": [
+        "data/embeddings/<dataset>.npz",
+        "data/embeddings/<dataset>_test_queries.npz where required",
+        "data/qrels/<dataset>.tsv"
+      ],
+      "path": "experiments/stage5_corect/e03_bm25_baseline.py"
+    },
+    {
+      "expected_inputs": [
+        "data/plaid_indexes/<dataset>/"
+      ],
+      "path": "experiments/stage5_corect/render_ir_table.py"
+    }
+  ],
+  "results": [
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_bond.json",
+      "sha256": "1b38831606a8abe886c98692276c4cbd94260e1be3f3b9181734bfe14d1e343f",
+      "size_bytes": 620,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_natural.json",
+      "sha256": "21da0bf37f4e80f51c7801a6088e24945912db445fcea866f56dd05b4ceca855",
+      "size_bytes": 622,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_pca.json",
+      "sha256": "a60cb3e7955781bdad6bf6419f2f07d93cba72e5c35976cd84c4c0b78536f950",
+      "size_bytes": 618,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_bond.json",
+      "sha256": "96d6c01014bb866d9b1c7d5e5efdfc259625b6decf81f9b507cd5628de433eee",
+      "size_bytes": 620,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_natural.json",
+      "sha256": "b60660fefcb617487cd4121cea9553184fdaa93548e1c768f96e965377c6cf59",
+      "size_bytes": 623,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_pca.json",
+      "sha256": "99e1317a18c5f1f29fe3079a66bf60d04e3fbd4a34de802420b9c2b0db690854",
+      "size_bytes": 619,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_bond.json",
+      "sha256": "f88d4ae999a9a0500c3584b99d729819a126e3bc5eb13b67872c5ee0aa515cd1",
+      "size_bytes": 622,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_natural.json",
+      "sha256": "7aa87ae238647d13dd6307408457e42e5d4804710a5445c75625893865d8679c",
+      "size_bytes": 624,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_pca.json",
+      "sha256": "e63f65fd490ad833ad4e90e9acf0280d004a3a2563ac7872c7c5a3e4d5a18db1",
+      "size_bytes": 621,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact.json",
+      "sha256": "98bfad1e6b05f0698dba2ba9bf850a7ba01d003e89d9e8f62bec2edf828acbeb",
+      "size_bytes": 633,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_bond.json",
+      "sha256": "7c4ec0ea18d5efc7896ccb672832514881ac0fa7a1319c62233bbea59ff402d6",
+      "size_bytes": 627,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_natural.json",
+      "sha256": "bab35d39b7728ca7bc00d756030a60d3fa10c4ece4ed36c1b3e45386cf915edb",
+      "size_bytes": 631,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_pca.json",
+      "sha256": "de4e3c1e5d4c5e3022eeccb75016d3070ab09d451f9f1933fa2ebb2c43587e03",
+      "size_bytes": 626,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_bond.json",
+      "sha256": "e3eb2eb4cf3809fa13656284c1d9ddce4453921d753b77c41d177a79f11bb784",
+      "size_bytes": 620,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_natural.json",
+      "sha256": "0d83c60ed2da597d28a7079ec0d0cabb3b49657c3c6fdde58ecdb46d76bc03df",
+      "size_bytes": 621,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_pca.json",
+      "sha256": "7f0c16ae77172a4dc3dcc56ead9e416183c70f8ece9f0ce5c9243077b787f4e4",
+      "size_bytes": 618,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_accounting.json",
+      "sha256": "f360402322d5e51a989dad2a8ccab4e38ebba02a989ab5da1e2999661b1d5f37",
+      "size_bytes": 650,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_throughput.json",
+      "sha256": "ba5295d117dd03615549e75e17411c13cedc2104aabd520a68b04b82c8d92bfd",
+      "size_bytes": 638,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_wide_accounting.json",
+      "sha256": "cb78b5dba06a4f651f293294628f0afec4d6b9c3cf7d362b97bb17c81a051307",
+      "size_bytes": 662,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_wide_throughput.json",
+      "sha256": "680d95879153c3b9029e02d92a2727dda0add0cf8a35ea4106421d139c0c4007",
+      "size_bytes": 650,
+      "stage": "stage2_testbed",
+      "top_level_keys": [
+        "CoRECT_RC_metrics",
+        "MRR_at_10",
+        "bound_checks_per_query",
+        "candidate_budget",
+        "cells_scanned_pct",
+        "dataset",
+        "dimension_order",
+        "machine",
+        "method",
+        "ms_per_query",
+        "nDCG_at_10",
+        "notes",
+        "num_docs",
+        "num_queries",
+        "os",
+        "pruned_docs_pct",
+        "qps",
+        "recall_at_100",
+        "recall_vs_exact_at_10",
+        "shrink",
+        "thread_count",
+        "threshold_policy",
+        "tokens_pruned_pct"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e01_bound_slack_arguana.json",
+      "sha256": "b38cfc8895e8ee67df9a42020ec277aadbc60b51305a834341b9e94d4183fb2a",
+      "size_bytes": 9562,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "dataset",
+        "experiment",
+        "k_top",
+        "n_queries",
+        "orders",
+        "prefix_grid",
+        "query_seed",
+        "results"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e01_bound_slack_nfcorpus.json",
+      "sha256": "02d8b7b2fb56f4e550810db7026092fe7e8a69299e7e824f67d8724f56c425e4",
+      "size_bytes": 9574,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "dataset",
+        "experiment",
+        "k_top",
+        "n_queries",
+        "orders",
+        "prefix_grid",
+        "query_seed",
+        "results"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e01_bound_slack_scidocs.json",
+      "sha256": "2225f06691c7324b78e82dbe408c623c11a1eb1fe836346cb404c2c7dafb7b5e",
+      "size_bytes": 9570,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "dataset",
+        "experiment",
+        "k_top",
+        "n_queries",
+        "orders",
+        "prefix_grid",
+        "query_seed",
+        "results"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e01_bound_slack_scifact.json",
+      "sha256": "d0853308968cbb2e12895ab614bfee21dcfc4c038f2b12273a9cb8e9a8fc0a2e",
+      "size_bytes": 9556,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "dataset",
+        "experiment",
+        "k_top",
+        "n_queries",
+        "orders",
+        "prefix_grid",
+        "query_seed",
+        "results"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_arguana.json",
+      "sha256": "16ab5cf3eaf8e7333cb07eeecefba4ca734d75e5545f8fa6fe0db8824762ffdd",
+      "size_bytes": 8138,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "arms",
+        "dataset",
+        "experiment",
+        "fetch_boundary_dims",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "numpy_crosscheck",
+        "orders",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_nfcorpus.json",
+      "sha256": "73aa338798ed503e4b4c2d3849a95eb6386b20d84dee7c62e31f12aa5f3b9fc2",
+      "size_bytes": 7905,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "arms",
+        "dataset",
+        "experiment",
+        "fetch_boundary_dims",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "numpy_crosscheck",
+        "orders",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_scidocs.json",
+      "sha256": "c05c2e90b63371c237e011b2ce00fb26daa860b66762c52fe647cb597d1af286",
+      "size_bytes": 8246,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "arms",
+        "dataset",
+        "experiment",
+        "fetch_boundary_dims",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "numpy_crosscheck",
+        "orders",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_scifact.json",
+      "sha256": "22c316e2b7fa53f3bcccb5ff03c569af51386985d276a06a0fdbd331922b8314",
+      "size_bytes": 8098,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "D",
+        "arms",
+        "dataset",
+        "experiment",
+        "fetch_boundary_dims",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "numpy_crosscheck",
+        "orders",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e03_order_ablation_arguana.json",
+      "sha256": "44b604bcfcce24e07a5327181b18836a76c71a539008fabb96b8ce3281b2ffba",
+      "size_bytes": 4601,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "dataset",
+        "experiment",
+        "k",
+        "method_accounting",
+        "methods_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e03_order_ablation_nfcorpus.json",
+      "sha256": "00885ccaba95f55e4fa8e58abc629d6c6ae92147068a997703e9eab8d54bb90e",
+      "size_bytes": 4528,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "dataset",
+        "experiment",
+        "k",
+        "method_accounting",
+        "methods_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e03_order_ablation_scidocs.json",
+      "sha256": "87f9bd4e3ced11cb7567211d6a83bb3d51df1463519c10603e5d791e155a55af",
+      "size_bytes": 4594,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "dataset",
+        "experiment",
+        "k",
+        "method_accounting",
+        "methods_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e03_order_ablation_scifact.json",
+      "sha256": "74ce5addc5bdcd3f7c8cadc620cb59441af0efc824fc1a5883b27c1611d1da4f",
+      "size_bytes": 4594,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "dataset",
+        "experiment",
+        "k",
+        "method_accounting",
+        "methods_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_arguana.json",
+      "sha256": "9a11b76ae685cd90da58185259a0eec92ecef1b2ef13358c16fe5a93fc20607e",
+      "size_bytes": 3706,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "full_n_docs",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policy",
+        "query_seed",
+        "shrink",
+        "sizes"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_nfcorpus.json",
+      "sha256": "4f1f730061be7d00b0872586a723dbcf97e1fa2c99eb5116032f68ff2ed26346",
+      "size_bytes": 3681,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "full_n_docs",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policy",
+        "query_seed",
+        "shrink",
+        "sizes"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_scidocs.json",
+      "sha256": "3793ec98aa03cee927f6f7366605321c0518e76eed889c7e7c8db5ab52478b51",
+      "size_bytes": 3721,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "full_n_docs",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policy",
+        "query_seed",
+        "shrink",
+        "sizes"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_scifact.json",
+      "sha256": "4536a2be69c9a101f8e7ae621f0c533eccd8b9b1eb814a0401ee0b1a4a10fc90",
+      "size_bytes": 3694,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "full_n_docs",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policy",
+        "query_seed",
+        "shrink",
+        "sizes"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e05_approximate_recall_sweep_nfcorpus.json",
+      "sha256": "5bf68e541f1b46def36f7297152a40e912837dee027aa122c1d4ef5079abf531",
+      "size_bytes": 10005,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "dense_fused_ms_per_query_mt",
+        "experiment",
+        "fused_arms",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink_values",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e05_approximate_recall_sweep_scifact.json",
+      "sha256": "0a76dcf5227042b9910b73b01b3eedb957a680a1369e83da97f8b2edefbee343",
+      "size_bytes": 9925,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "dense_fused_ms_per_query_mt",
+        "experiment",
+        "fused_arms",
+        "k",
+        "method_accounting",
+        "method_wallclock",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink_values",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_arguana.json",
+      "sha256": "b3050282eaed0661f99df47383e9ca5354d85a573a1aa91fe9dc9802c642cf86",
+      "size_bytes": 1451,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "fused_confirmation_arm",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_nfcorpus.json",
+      "sha256": "7806900baf616adbff83055ec2045a1741bdc0e905ab483271f6763df057f3e9",
+      "size_bytes": 1436,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "fused_confirmation_arm",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_scidocs.json",
+      "sha256": "89fea76c04c63e1fe680056aa0dd2f53bdb0ce39477a2c613dbebed96a953f3d",
+      "size_bytes": 1455,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "fused_confirmation_arm",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_scifact.json",
+      "sha256": "5ac46ae9deb828d8ea317552998ad2b03fbcc2559402d8bb25c3aa5bcb3a5967",
+      "size_bytes": 1452,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "dataset",
+        "experiment",
+        "fused_confirmation_arm",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "order",
+        "policies",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_arguana.json",
+      "sha256": "48f893cd93cfd9154a3c97bb2d51802c7aaf4a4edcd083883e7f4d74016304cd",
+      "size_bytes": 2327,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "brute_arms",
+        "corpus_prep_s",
+        "dataset",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_nfcorpus.json",
+      "sha256": "57e588eb420cd4f123df002cd5c0320ec78235f5b5071e757405e1dd5bea8cc1",
+      "size_bytes": 2299,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "brute_arms",
+        "corpus_prep_s",
+        "dataset",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_scifact.json",
+      "sha256": "ebcef5bd474defb3682a2053a5a8fb4eb6cfec68d94ecc8104746a34b8aabf49",
+      "size_bytes": 2275,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "baselines",
+        "brute_arms",
+        "corpus_prep_s",
+        "dataset",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_arguana.json",
+      "sha256": "546d45ad6218ee946ed9ebb10e022883c1f7930aef5b067e92fdc26f11b9cd66",
+      "size_bytes": 7221,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_fused_baseline",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_nfcorpus.json",
+      "sha256": "47c3d21ff53273b9ee14f5677cf8e0f4b11111f47ae22feeafff6d8ce4e6265c",
+      "size_bytes": 7132,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_fused_baseline",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_scidocs.json",
+      "sha256": "446d161e090f0fe09d2c95d98dbbc92b4ea4f0d7049ade9def71b9eb26df4c2b",
+      "size_bytes": 7256,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_fused_baseline",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_scifact.json",
+      "sha256": "4c281c3d928f1cba605eeaa38704306c4cc1bbc05eaaa26a0f273916268ce31f",
+      "size_bytes": 7216,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_fused_baseline",
+        "experiment",
+        "k",
+        "method",
+        "n_docs",
+        "n_queries",
+        "n_repeats_throughput",
+        "orders",
+        "policy",
+        "query_seed",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_arguana.json",
+      "sha256": "3207810e339d0c2b21ce206177154135930d93aa2326afb9c74f120a39b9ce85",
+      "size_bytes": 7369,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_arm",
+        "experiment",
+        "k",
+        "methods",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json",
+      "sha256": "daf7d595e3d1a28e4fc38304397ad77bbedd7b960ab4895ba8a25894df931b48",
+      "size_bytes": 7358,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_arm",
+        "experiment",
+        "k",
+        "methods",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_scidocs.json",
+      "sha256": "5342bc0881e4cf1583faedfaddb44e74776a7f54e5301a24483f1aeadf756782",
+      "size_bytes": 7372,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_arm",
+        "experiment",
+        "k",
+        "methods",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_scifact.json",
+      "sha256": "e3d7af096dd18862bba3d0b61f7b2f4642b5e6974514ca4ff1085b9ca3addc71",
+      "size_bytes": 7375,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "arms",
+        "checkpoint_sets",
+        "dataset",
+        "dense_arm",
+        "experiment",
+        "k",
+        "methods",
+        "n_docs",
+        "n_queries",
+        "n_repeats",
+        "orders",
+        "policy",
+        "shrink",
+        "total_tokens"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_r12c_interleaved_exact_safe_1t.json",
+      "sha256": "512ca1f9c4598c7abb37d9473fa5385989e0c48720d00f322e12c72302651911",
+      "size_bytes": 7586,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "bound",
+        "checkpoint_sets",
+        "experiment",
+        "k",
+        "n_queries",
+        "order",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "results",
+        "threads"
+      ]
+    },
+    {
+      "path": "results/json/stage3_mechanism_r12c_interleaved_exact_safe_mt.json",
+      "sha256": "dd52f4cf4fbf12b68130112bfe98924663ff37bc460419a18a1dff00eba680b1",
+      "size_bytes": 7580,
+      "stage": "stage3_mechanism",
+      "top_level_keys": [
+        "bound",
+        "checkpoint_sets",
+        "experiment",
+        "k",
+        "n_queries",
+        "order",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "results",
+        "threads"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json",
+      "sha256": "16ca14432a6a6b667ca1c9807405916dd0918dba0679d8874f8eaeff66b183b4",
+      "size_bytes": 18156,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioned",
+        "pdx_ivf",
+        "plaid",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json",
+      "sha256": "766a9f64d12f1c9fd27a9129806198e7a130b9f24dfcd9d6a4fb3da06cc2e67a",
+      "size_bytes": 18057,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioned",
+        "pdx_ivf",
+        "plaid",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_scidocs.json",
+      "sha256": "d7f1b6270bef9db4608fcf3f5aa2db9059ca61c801e72c9b0a694789754fc526",
+      "size_bytes": 18192,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioned",
+        "pdx_ivf",
+        "plaid",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json",
+      "sha256": "02da6ce31223849daaf17219a68241e70e7d2d885dfef8ae93d8386220da442d",
+      "size_bytes": 18125,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioned",
+        "pdx_ivf",
+        "plaid",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json",
+      "sha256": "4f701ba81d2a828ec38123eb3ae253a66c035fcce9d672840716d1671a2734e3",
+      "size_bytes": 7022,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "rep_seed_cost_best_of",
+        "runs",
+        "seed_threads"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json",
+      "sha256": "3274a7cca6095528c3efba429e24f9645ee9304a679b135ae0266d1448c9dbd3",
+      "size_bytes": 7033,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "rep_seed_cost_best_of",
+        "runs",
+        "seed_threads"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json",
+      "sha256": "c64f93b98cdad9b358645c9bbb0cc6311df17aaff8b3e145e7ee784b1220eff4",
+      "size_bytes": 7026,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "rep_seed_cost_best_of",
+        "runs",
+        "seed_threads"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json",
+      "sha256": "ddf45053b28ee6f1515552401b19c3d845af7963d33b9b16576bceac19997745",
+      "size_bytes": 7049,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "experiment",
+        "faiss",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "rep_seed_cost_best_of",
+        "runs",
+        "seed_threads"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_arguana.json",
+      "sha256": "5f2cd5e1eabaffe049d437410de7ae1a31b93218d6d900d5c25b8cc99bcb387a",
+      "size_bytes": 12674,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "exact_safe_partition_bound",
+        "experiment",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioning",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json",
+      "sha256": "8ade805838af3fd1dea6b53ab7fb2e6f916779772ce1e5a26fafdfe8bf9718b3",
+      "size_bytes": 12623,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "exact_safe_partition_bound",
+        "experiment",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioning",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_scidocs.json",
+      "sha256": "5fc4506df966d805282e64065771b554cf8e743cbcb6a234f5d8e8a879f8c18c",
+      "size_bytes": 12632,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "exact_safe_partition_bound",
+        "experiment",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioning",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_scifact.json",
+      "sha256": "04da8af70b5c5b94e0d9580ae57c05ba70705397129b985e2a2f5942521562fa",
+      "size_bytes": 12733,
+      "stage": "stage4_integration",
+      "top_level_keys": [
+        "dataset",
+        "exact_safe_partition_bound",
+        "experiment",
+        "k",
+        "kernel",
+        "n_docs",
+        "n_queries",
+        "partitioning",
+        "purpose",
+        "query_seed",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e01_ir_evaluation_arguana.json",
+      "sha256": "2288a4d1cb8940b1e1f4e727f490425ac1835252b67f003d2c1480bba5882617",
+      "size_bytes": 30674,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "embedding_note",
+        "experiment",
+        "faiss",
+        "indexes",
+        "k_eval",
+        "k_retrieve",
+        "kernel",
+        "machine",
+        "n_docs",
+        "n_evaluable_queries",
+        "n_queries",
+        "partitioned",
+        "plaid",
+        "purpose",
+        "query_source",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e01_ir_evaluation_nfcorpus.json",
+      "sha256": "3765c0d57a9401611bf1c5a2ae53adf307f8d1578a35db1f64cd6a1e94c2aa9a",
+      "size_bytes": 17361,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "embedding_note",
+        "experiment",
+        "faiss",
+        "indexes",
+        "k_eval",
+        "k_retrieve",
+        "kernel",
+        "machine",
+        "n_docs",
+        "n_evaluable_queries",
+        "n_queries",
+        "partitioned",
+        "plaid",
+        "purpose",
+        "query_source",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e01_ir_evaluation_scidocs.json",
+      "sha256": "563686dfb778b97720237401e9a5b465ed4c4a58bb46612aacb77f2221ca31b5",
+      "size_bytes": 31025,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "embedding_note",
+        "experiment",
+        "faiss",
+        "indexes",
+        "k_eval",
+        "k_retrieve",
+        "kernel",
+        "machine",
+        "n_docs",
+        "n_evaluable_queries",
+        "n_queries",
+        "partitioned",
+        "plaid",
+        "purpose",
+        "query_source",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e01_ir_evaluation_scifact.json",
+      "sha256": "12ca36ac64095eacbb300b0c56e0cff1124f811ad210b693b4f7f9be5bce05b3",
+      "size_bytes": 17181,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "budgets",
+        "dataset",
+        "embedding_note",
+        "experiment",
+        "faiss",
+        "indexes",
+        "k_eval",
+        "k_retrieve",
+        "kernel",
+        "machine",
+        "n_docs",
+        "n_evaluable_queries",
+        "n_queries",
+        "partitioned",
+        "plaid",
+        "purpose",
+        "query_source",
+        "rep_best_of",
+        "runs"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e02_paired_significance.json",
+      "sha256": "d5bfdb63c1eb997fe6c595af950f92cc408597745889dbc2930c75d133bbb547",
+      "size_bytes": 4237,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "datasets",
+        "experiment",
+        "faiss",
+        "k_retrieve",
+        "kernel",
+        "n_permutations",
+        "purpose"
+      ]
+    },
+    {
+      "path": "results/json/stage5_corect_e03_bm25_baseline.json",
+      "sha256": "eb878d149891efe8972de5e66482345d127bf537a531de95d2d4a40e15cebad1",
+      "size_bytes": 4888,
+      "stage": "stage5_corect",
+      "top_level_keys": [
+        "datasets",
+        "experiment",
+        "k_retrieve",
+        "purpose"
+      ]
+    }
+  ],
+  "snapshot_kind": "pre_contract_development_inventory"
+}

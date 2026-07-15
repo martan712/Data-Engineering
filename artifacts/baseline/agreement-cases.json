@@ -1,0 +1,31 @@
+{
+  "captured_at_revision": "b38abb6caffd2a10ebe0131bc5adcb051fea0cb4",
+  "cases": [
+    {
+      "case": "strict_identical_top_k",
+      "exact_ids": [1, 2, 3],
+      "exact_scores": [10.0, 9.0, 8.0],
+      "pruned_ids": [1, 2, 3],
+      "historical_exact_agreement": 1.0,
+      "status": "valid"
+    },
+    {
+      "case": "genuine_boundary_tie_but_replacement_score_not_accepted_by_api",
+      "exact_ids": [1, 2, 3],
+      "exact_scores": [10.0, 9.0, 8.0],
+      "pruned_ids": [1, 2, 99],
+      "independent_replacement_scores": {"99": 8.0},
+      "historical_exact_agreement": 1.0,
+      "status": "mathematically_valid_but_historical_api_did_not_verify_replacement"
+    },
+    {
+      "case": "known_false_pass_below_boundary_replacement",
+      "exact_ids": [1, 2, 3],
+      "exact_scores": [10.0, 9.0, 8.0],
+      "pruned_ids": [1, 2, 99],
+      "independent_replacement_scores": {"99": 7.0},
+      "historical_exact_agreement": 1.0,
+      "status": "invalid_result_accepted_by_historical_gate"
+    }
+  ]
+}
