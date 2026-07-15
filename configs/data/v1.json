@@ -1,37 +1,59 @@
 {
   "schema_name": "bondmaxsim.data-config",
   "schema_version": "1.0.0",
-  "resolution_status": "recovery_required",
+  "resolution_status": "frozen_for_regeneration",
+  "resolution_date": "2026-07-15",
   "datasets": {
-    "arguana": {},
-    "nfcorpus": {},
-    "scidocs": {},
-    "scifact": {}
+    "arguana": {
+      "corpus_queries_revision": "9bcf8fc0320c4e3860e25b8b85fa205fcdd7078f",
+      "qrels_revision": "ae5468c6f1c198109a8af5f0d4dc58bd18b6fea7",
+      "expected_corpus_rows": 8674,
+      "expected_query_rows": 1406,
+      "expected_test_qrels_queries": 1406
+    },
+    "nfcorpus": {
+      "corpus_queries_revision": "b5026a0e96e8a7ac4f95f482a596389289d46269",
+      "qrels_revision": "a451b3b26d3ae1358f259c1a3a4dd61fcea35a65",
+      "expected_corpus_rows": 3633,
+      "expected_query_rows": 3237,
+      "expected_test_qrels_queries": 323
+    },
+    "scidocs": {
+      "corpus_queries_revision": "acebceec772628c6679d76d6cff30ad517d17f4e",
+      "qrels_revision": "735ea1048e37b1ebce14c6dc3d33a5edaf66d3dc",
+      "expected_corpus_rows": 25657,
+      "expected_query_rows": 1000,
+      "expected_test_qrels_queries": 1000
+    },
+    "scifact": {
+      "corpus_queries_revision": "b3b5335604bf5ee3c4447671af975ea25143d4f5",
+      "qrels_revision": "2938d17dc3b09882fdb8c12bbbe2e2dc0e75a029",
+      "expected_corpus_rows": 5183,
+      "expected_query_rows": 1109,
+      "expected_test_qrels_queries": 300
+    }
   },
   "sources": {
     "corpus_and_queries": {
       "repository_template": "BeIR/{dataset}",
-      "revision": null,
-      "revision_status": "unknown_original_revision",
       "corpus_split": "corpus",
-      "queries_split": "queries"
+      "queries_split": "queries",
+      "revision_source": "local Hugging Face refs/snapshot recovered from the original machine"
     },
     "qrels": {
-      "preferred_repository_template": "BeIR/{dataset}-qrels",
-      "fallback_repository_template": "mteb/{dataset}",
-      "revision": null,
-      "revision_status": "unknown_original_revision",
-      "split": "test"
+      "repository_template": "BeIR/{dataset}-qrels",
+      "split": "test",
+      "revision_source": "local Hugging Face refs/snapshot recovered from the original machine"
     },
     "model": {
       "repository": "lightonai/GTE-ModernColBERT-v1",
-      "revision": null,
-      "revision_status": "unknown_original_revision"
+      "revision": "cbbe53366e564450558f5e639dd499171f127538",
+      "trust_remote_code": false
     },
     "tokenizer": {
       "repository": "lightonai/GTE-ModernColBERT-v1",
-      "revision": null,
-      "revision_status": "unknown_original_revision"
+      "revision": "cbbe53366e564450558f5e639dd499171f127538",
+      "use_fast": true
     }
   },
   "text": {
@@ -42,34 +64,75 @@
   },
   "encoding": {
     "batch_size_documents": 64,
-    "batch_size_queries": 32,
+    "batch_size_mechanism_queries": 64,
+    "batch_size_quality_queries": 32,
     "device": "cpu",
     "dimension": 128,
-    "document_max_length": null,
-    "document_max_length_status": "recover_effective_default",
+    "document_length": 300,
+    "query_length": 48,
     "dtype": "float32",
+    "precision": "float32",
+    "normalize_embeddings": true,
     "is_query_documents": false,
     "is_query_queries": true,
-    "normalization": "unit_l2_per_token",
-    "padding": null,
-    "padding_status": "recover_effective_default",
-    "precision": "float32_output",
-    "query_max_length": null,
-    "query_max_length_status": "recover_effective_default",
-    "special_tokens": null,
-    "special_tokens_status": "recover_effective_default",
-    "truncation": null,
-    "truncation_status": "recover_effective_default"
+    "query_prefix": "[Q] ",
+    "document_prefix": "[D] ",
+    "do_query_expansion": false,
+    "attend_to_expansion_tokens": false,
+    "truncation": true,
+    "truncation_strategy": "longest_first",
+    "padding_argument": false,
+    "effective_tokenizer_padding": "batch_longest",
+    "padding_tokens_retained": false,
+    "document_skiplist": "ascii_punctuation",
+    "query_skiplist": "none",
+    "special_tokens": {
+      "cls": "[CLS]",
+      "sep": "[SEP]",
+      "mask_and_pad": "[MASK]",
+      "prefix_position": "after_cls"
+    },
+    "pool_factor": 1,
+    "protected_tokens": 1,
+    "output_value": "token_embeddings",
+    "convert_to_numpy": true
+  },
+  "software": {
+    "final_lockfile": "uv.lock",
+    "pylate": "1.6.0",
+    "legacy_callsite": "archive/preliminaries/02_bond_variance/bond_variance_analysis.py",
+    "legacy_exact_package_versions": "unavailable",
+    "legacy_resolution": "do not infer equivalence; apply the bitwise decision gate"
   },
   "workloads": {
-    "mechanism": "beir-<dataset>-mechanism-seed42-n50-v1",
-    "quality": "beir-<dataset>-qrels-test-v1"
+    "mechanism": {
+      "selection": "seed42_without_replacement_sorted_source_indices",
+      "query_count": 50,
+      "workload_id_template": "beir-{dataset}-mechanism-seed42-n50-v1"
+    },
+    "quality": {
+      "selection": "qrels_test_ids_in_queries_source_order",
+      "workload_id_template": "beir-{dataset}-qrels-test-v1"
+    }
+  },
+  "indexes": {
+    "faiss": {
+      "metric": "inner_product",
+      "seed": 42,
+      "n_lists_policy": "power_of_two_nearest_4sqrt_total_tokens"
+    },
+    "plaid": {
+      "implementation": "pylate-1.6.0-public-api",
+      "seed": 42,
+      "n_ivf_probe": 8
+    }
   },
   "outputs": {
     "embedding_format": "npz-flat-token-major",
     "id_sidecar_format": "json-ordered-ids",
     "qrels_format": "beir-tsv",
+    "manifest_format": "bondmaxsim.data-manifest-1.0.0",
     "atomic": true,
-    "resumable_unit": "dataset_or_shard"
+    "resumable_unit": "dataset"
   }
 }

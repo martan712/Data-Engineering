@@ -56,18 +56,22 @@ def test_environment_capture_has_required_provenance(tmp_path):
     assert not list(tmp_path.glob(".*.tmp"))
 
 
-def test_data_config_keeps_every_unknown_explicit():
+def test_data_config_freezes_recovered_sources_and_encoder_behavior():
     config = json.loads((REPO_ROOT / "configs/data/v1.json").read_text())
-    assert config["resolution_status"] == "recovery_required"
+    assert config["resolution_status"] == "frozen_for_regeneration"
     assert set(config["datasets"]) == {"scifact", "nfcorpus", "arguana", "scidocs"}
     assert config["text"]["document_fields"] == ["text"]
     assert config["text"]["include_title"] is False
-    for source in config["sources"].values():
-        assert source["revision"] is None
-        assert source["revision_status"] == "unknown_original_revision"
-    for field in ("document_max_length", "query_max_length", "padding", "truncation"):
-        assert config["encoding"][field] is None
-        assert config["encoding"][f"{field}_status"] == "recover_effective_default"
+    assert all(
+        len(dataset[revision]) == 40
+        for dataset in config["datasets"].values()
+        for revision in ("corpus_queries_revision", "qrels_revision")
+    )
+    assert config["sources"]["model"]["revision"] == config["sources"]["tokenizer"]["revision"]
+    assert config["encoding"]["document_length"] == 300
+    assert config["encoding"]["query_length"] == 48
+    assert config["encoding"]["truncation"] is True
+    assert config["encoding"]["padding_tokens_retained"] is False
 
 
 def test_setup_script_is_syntactically_valid_and_requires_a_mode():
