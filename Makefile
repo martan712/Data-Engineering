@@ -2,11 +2,14 @@ PYTHON ?= .venv/bin/python
 BUILD ?= portable
 DATASET ?=
 
+STAGE7_DRYRUN_ROOT ?= build/stage7/dry-runs
+
 .PHONY: setup-paper data-small verify reproduce-core paper artifact-smoke \
 	data-full reproduce-full audit-results audit-evidence audit-paper \
 	test-unit test-native test-integration test-artifact test-reproduction \
 	test-sanitize test-sanitizer test-full native-portable clean-clone-smoke \
-	native-paper native-clean research-audit
+	native-paper native-clean research-audit native-sanitize native-all \
+	stage7-dry-runs stage7-preflight
 
 setup-paper:
 	./setup.sh --full --frozen
@@ -55,10 +58,42 @@ native-paper:
 	$(MAKE) -C cpp/wide_block_maxsim_bond BUILD=paper-native
 	$(MAKE) -C cpp/fused_panel_maxsim BUILD=paper-native
 
+native-sanitize:
+	$(MAKE) -C cpp/per_document_oracle BUILD=sanitize manifest
+	$(MAKE) -C cpp/wide_block_maxsim_bond BUILD=sanitize manifest
+	$(MAKE) -C cpp/fused_panel_maxsim BUILD=sanitize manifest
+
+# Build every release profile the Stage 7 candidate provenance requires.
+# paper-native runs last so the active .so stays the paper-native artifact.
+native-all:
+	$(MAKE) native-portable
+	$(MAKE) native-sanitize
+	$(MAKE) native-paper
+
 native-clean:
 	$(MAKE) -C cpp/per_document_oracle clean
 	$(MAKE) -C cpp/wide_block_maxsim_bond clean
 	$(MAKE) -C cpp/fused_panel_maxsim clean
+
+# Fixture-scale, fail-closed dry runs of every usable final experiment CLI.
+stage7-dry-runs:
+	rm -rf $(STAGE7_DRYRUN_ROOT)
+	$(PYTHON) -m bondmaxsim.release.dry_runs --output-root $(STAGE7_DRYRUN_ROOT)
+
+# Single serial gate before any final run: all build profiles, unit and native
+# gates, sanitizer checks, schema/catalog/evidence audits, fixture reproduction,
+# fixture experiment dry runs, and paper compilation. Does not create the
+# production release candidate, which stays gated on the Stage 6 data freeze.
+stage7-preflight:
+	$(MAKE) native-all
+	$(MAKE) test-unit
+	$(MAKE) test-native
+	$(MAKE) test-sanitize
+	$(MAKE) test-artifact
+	$(MAKE) reproduce-core
+	$(MAKE) stage7-dry-runs
+	$(MAKE) paper
+	@echo "Stage 7 preflight complete."
 
 # Deterministic data-fixture foundation; the clean-clone target below adds
 # representative Stage 3--5 experiment drivers.
