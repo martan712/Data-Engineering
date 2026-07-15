@@ -218,6 +218,42 @@ def test_partitioned_scan_partial_probe_is_sane():
         np.testing.assert_allclose(scores, full[ids], rtol=1e-4, atol=1e-4)
 
 
+def test_partitioned_scan_caps_topk_to_each_partition():
+    """A global top-k may exceed each partition's local document count."""
+    from bondmaxsim.oracle.agreement import validate_boundary_tie_equivalence
+
+    lib = _fused_lib_or_skip()
+    tokens, starts, queries = _synthetic_corpus(seed=5)
+    idx = _partitioned_index(tokens, starts, n_partitions=16)
+    k = 100
+    assert any(part.n_docs < k for part in idx.partitions)
+
+    ids, scores, _ = idx.search(
+        lib,
+        queries[0],
+        k=k,
+        nprobe=len(idx.partitions),
+        checkpoints=(16,),
+        n_threads=1,
+    )
+    full_scores = exact_maxsim_scores(queries[0], tokens, starts)
+    expected_ids, expected_scores = exact_maxsim_topk(
+        queries[0], tokens, starts, k
+    )
+    agreement = validate_boundary_tie_equivalence(
+        ids,
+        expected_ids,
+        expected_scores,
+        k=k,
+        num_documents=len(starts),
+        exact_scores_by_id=full_scores,
+    )
+    assert agreement.exact_gate_passed
+    np.testing.assert_allclose(
+        np.sort(scores), np.sort(expected_scores), rtol=1e-4, atol=1e-4
+    )
+
+
 # ---------------------------------------------------------------------------
 # PLAID wrapper smoke gate
 # ---------------------------------------------------------------------------

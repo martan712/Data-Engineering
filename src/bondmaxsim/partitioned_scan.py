@@ -224,15 +224,20 @@ class PartitionedFusedScan:
         docs_pruned = 0
         for p in probe:
             part = self.partitions[p]
+            # Native top-k validation is partition-local: a valid global K may
+            # exceed the number of documents in an individual partition.
+            # Request only the locally available results and keep ``k`` for
+            # the final merge across all probed partitions.
+            local_k = min(k, part.n_docs)
             if scanner == "bond":
                 ids, scores, stats = run_fused_panel_bond_validated(
                     lib, part.corpus, Q, order, Qcum,
-                    shrink=1.0, tau_seed=tau, K=k, n_threads=n_threads,
+                    shrink=1.0, tau_seed=tau, K=local_k, n_threads=n_threads,
                     level="doc", checkpoints=cps, bound=bound)
                 docs_pruned += int(stats[1])
             else:
                 ids, scores = run_fused_panel_brute_validated(
-                    lib, part.corpus, Q, k, n_threads=n_threads)
+                    lib, part.corpus, Q, local_k, n_threads=n_threads)
             valid = (ids < part.n_docs) & np.isfinite(scores)
             all_ids.append(part.doc_ids[ids[valid].astype(np.int64)])
             all_scores.append(scores[valid])
