@@ -168,7 +168,7 @@ def run_wide_accounting_mode(
         nDCG_at_10            = None,
         recall_at_100         = None,
         MRR_at_10             = None,
-        CoRECT_RC_metrics     = None,
+        corect_standard_metrics=None,
         ms_per_query          = None,
         qps                   = None,
         cells_scanned_pct     = cells_scanned_pct,
@@ -269,7 +269,7 @@ def run_wide_throughput_mode(
         nDCG_at_10            = None,
         recall_at_100         = None,
         MRR_at_10             = None,
-        CoRECT_RC_metrics     = None,
+        corect_standard_metrics=None,
         ms_per_query          = ms_per_query,
         qps                   = qps,
         cells_scanned_pct     = None,   # not meaningful in throughput mode

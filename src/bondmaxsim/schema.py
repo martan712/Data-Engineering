@@ -80,8 +80,8 @@ class ResultRecord:
     MRR_at_10: Optional[float]
     """MRR@10 against qrels.  None when qrels not available."""
 
-    CoRECT_RC_metrics: Optional[dict[str, Any]]
-    """CoRECT RC metric dict, or None when CoRECT evaluation not run."""
+    corect_standard_metrics: Optional[dict[str, Any]]
+    """Ordinary qrels metrics cross-validated through CoRECT, or None."""
 
     # ------------------------------------------------------------------
     # Throughput (throughput-mode kernel, Stage 1 §6)
@@ -172,4 +172,6 @@ class ResultRecord:
         """Load a ResultRecord from a JSON file written by to_json()."""
         with Path(path).open("r", encoding="utf-8") as fh:
             data = json.load(fh)
+        if "CoRECT_RC_metrics" in data and "corect_standard_metrics" not in data:
+            data["corect_standard_metrics"] = data.pop("CoRECT_RC_metrics")
         return cls(**data)

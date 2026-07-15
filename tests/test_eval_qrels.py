@@ -86,7 +86,16 @@ def test_qrels_tsv_round_trip(tmp_path):
 
 def test_corect_agreement_with_ranx():
     pytest.importorskip("pytrec_eval")
-    from bondmaxsim.eval.corect import corect_smoke_test
+    from bondmaxsim.eval.corect import corect_metric_crosscheck
 
-    assert corect_smoke_test()  # synthetic fixture
-    assert corect_smoke_test(RUN, QRELS)  # this file's fixture
+    assert corect_metric_crosscheck()  # synthetic fixture
+    assert corect_metric_crosscheck(RUN, QRELS)  # this file's fixture
+
+
+def test_historical_corect_alias_warns():
+    pytest.importorskip("pytrec_eval")
+    from bondmaxsim.eval.corect import compute_rc_metrics
+
+    with pytest.deprecated_call(match="compute_corect_standard_metrics"):
+        metrics = compute_rc_metrics(RUN, QRELS)
+    assert "NDCG@10" in metrics

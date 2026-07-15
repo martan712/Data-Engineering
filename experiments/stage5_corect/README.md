@@ -3,7 +3,8 @@
 Rescoped 2026-07-09 (plan doc R9): one driver, not the earlier e01–e05 list.
 Stage 5 is the paper's FINAL SECTION — take the best method per family from
 the Stage 3–4 verdicts and evaluate them as retrieval systems in the proper IR
-framework: qrels metrics (nDCG@10, recall@100, MRR@10), CoRECT RC metrics,
+framework: qrels metrics (nDCG@10, recall@100, MRR@10), CoRECT-backed metric
+cross-validation,
 recall-vs-exact, and interleaved wall-clock latency, with index build cost and
 memory reported separately.
 
@@ -83,12 +84,14 @@ Output: `results/json/stage5_corect_e03_bm25_baseline.json`
 ## How extern/CoRECT is used (and what is deliberately not used)
 
 We execute the actual pinned checkout (`extern/CoRECT` @ `fedf8bb2`), never a
-copy: `bondmaxsim.eval.corect` puts `extern/CoRECT/src` on `sys.path` and
+copy: `bondmaxsim.compat.corect` temporarily puts `extern/CoRECT/src` on
+`sys.path` and
 calls CoRECT's own `corect.utils.evaluate_results` (pytrec_eval-based
-NDCG/MAP/Recall/P/MRR at cutoffs).  Every `CoRECT_RC_metrics` value in the
-Stage 5 results is produced by CoRECT code.  Their package has a real circular
+NDCG/MAP/Recall/P/MRR at cutoffs). Every `corect_standard_metrics` value in
+Stage 5 results is produced by CoRECT code. This is ordinary qrels evaluation,
+not CoRECT's separate Relevance Composition evaluation. Their package has a circular
 import (`corect.utils` ↔ `corect.model_wrappers`); the adapter imports
-`model_wrappers` first to break it (documented in `_import_evaluate_results`).
+`model_wrappers` first to break it inside the compatibility boundary.
 
 We deliberately do NOT route retrieval through CoRECT's evaluation pipeline
 (`corect.cli.evaluate` → `eval_utils`), for three structural reasons:
@@ -110,10 +113,10 @@ placed at the interface where the systems genuinely meet: our arms produce the
 run (`query_id → doc_id → score`), CoRECT's evaluator judges it — which is
 also how their own pipeline ends.
 
-Gate: `bondmaxsim.eval.corect.corect_smoke_test` verifies CoRECT's metrics
+Gate: `bondmaxsim.eval.corect.corect_metric_crosscheck` verifies CoRECT's metrics
 agree with our independent ranx metrics (to CoRECT's own `round(…, 5)`) on a
 synthetic fixture (unit test) AND on the real `dense_fused` run inside the
-driver, before any RC metric is reported.
+driver, before any CoRECT-backed standard metric is reported.
 
 Not used and deferred with R7 (future work): CoRECT's CoRE corpus pools — the
 controlled 100k–1M+ scale axis.  At BEIR scale their dataset utilities wrap

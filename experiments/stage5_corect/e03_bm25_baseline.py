@@ -33,7 +33,7 @@ from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.beir_ids import load_qrels_tsv, qrels_path
 from bondmaxsim.data.loader import load_eval_queries
 from bondmaxsim.baselines.bm25 import BM25Baseline
-from bondmaxsim.eval.corect import compute_rc_metrics
+from bondmaxsim.eval.corect import compute_corect_standard_metrics
 from bondmaxsim.eval.qrels import compute_quality_metrics
 
 DATASETS = ["scifact", "nfcorpus", "arguana", "scidocs"]
@@ -84,7 +84,7 @@ def run_dataset(dataset: str) -> dict:
     ranked = [bm25.search([t], k=K_RETRIEVE)[0] for t in query_texts]
     run = _to_run(list(zip(query_ids, ranked)))
     row = compute_quality_metrics(run, qrels)
-    row["CoRECT_RC_metrics"] = compute_rc_metrics(run, qrels)
+    row["corect_standard_metrics"] = compute_corect_standard_metrics(run, qrels)
     print(f"  BM25 nDCG@10={row['nDCG_at_10']:.4f} "
           f"R@100={row['recall_at_100']:.4f} MRR@10={row['MRR_at_10']:.4f}")
 

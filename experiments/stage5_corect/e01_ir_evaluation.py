@@ -2,7 +2,7 @@
 
 Single responsibility: take the best method per family from the R8 verdict and
 evaluate them as RETRIEVAL SYSTEMS — standard qrels metrics (nDCG@10,
-recall@100, MRR@10), CoRECT RC metrics, and recall-vs-exact — alongside
+recall@100, MRR@10), CoRECT-backed standard metrics, and recall-vs-exact — alongside
 interleaved wall-clock latency, on all evaluable test queries.  This is the
 paper's final section: the exact arms inherit exact MaxSim's IR quality by
 construction; the approximate arms show what the qrels metrics hide vs
@@ -60,7 +60,10 @@ from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.beir_ids import load_ids, load_qrels_tsv, qrels_path
 from bondmaxsim.data.loader import load_dataset, load_eval_queries, unpack_embeddings
 from bondmaxsim.data.packing import build_qcum
-from bondmaxsim.eval.corect import compute_rc_metrics, corect_smoke_test
+from bondmaxsim.eval.corect import (
+    compute_corect_standard_metrics,
+    corect_metric_crosscheck,
+)
 from bondmaxsim.eval.qrels import compute_quality_metrics
 from bondmaxsim.kernels.fused_panel import (
     load_fused_panel_kernel,
@@ -288,7 +291,7 @@ def run_dataset(dataset: str, nt: int) -> None:
             print(f"    quality: {label}")
         run = _to_run(results, query_ids, corpus_ids)
         row = compute_quality_metrics(run, qrels)
-        row["CoRECT_RC_metrics"] = compute_rc_metrics(run, qrels)
+        row["corect_standard_metrics"] = compute_corect_standard_metrics(run, qrels)
         row["recall_vs_exact_at_10"] = float(np.mean(
             [recall_at_k(ids[:K_EVAL], e_ids) for (ids, _), (e_ids, _)
              in zip(results, exact10)]))
@@ -303,11 +306,10 @@ def run_dataset(dataset: str, nt: int) -> None:
     run_dense(collect=got)
     dense_results = got
     dense_run = _to_run(dense_results, query_ids, corpus_ids)
-    # CoRECT wrapper smoke test on the REAL dense run before any RC metric
-    # is reported (plan gate: verify before scaling).
-    corect_smoke_test(dense_run, qrels)
-    print("  CoRECT smoke test on dense_fused run: OK (agrees with ranx)")
-    print("  scoring quality rows (qrels + CoRECT RC metrics per arm)...")
+    # Cross-check the REAL dense run before reporting CoRECT-backed metrics.
+    corect_metric_crosscheck(dense_run, qrels)
+    print("  CoRECT metric crosscheck on dense_fused run: OK (agrees with ranx)")
+    print("  scoring quality rows (qrels + CoRECT standard metrics per arm)...")
     quality["dense_fused"], _ = quality_row(dense_results, "dense_fused")
     dense_agreements = [
         validate_boundary_tie_equivalence(
@@ -414,7 +416,7 @@ def run_dataset(dataset: str, nt: int) -> None:
             "nDCG_at_10": q["nDCG_at_10"],
             "recall_at_100": q["recall_at_100"],
             "MRR_at_10": q["MRR_at_10"],
-            "CoRECT_RC_metrics": q["CoRECT_RC_metrics"],
+            "corect_standard_metrics": q["corect_standard_metrics"],
             "ms_per_query": kern,
             "ms_per_query_reps": reps[name],
             "ms_per_query_mean": float(np.mean(reps[name])),
@@ -467,7 +469,7 @@ def run_dataset(dataset: str, nt: int) -> None:
     payload = {
         "experiment": "e01_ir_evaluation",
         "purpose": "R9/Stage 5: best Stage 3-4 methods evaluated as retrieval "
-                   "systems (qrels + CoRECT RC metrics, interleaved latency, "
+                   "systems (qrels + CoRECT standard metrics, interleaved latency, "
                    "build cost separate) — the paper's final section",
         "dataset": dataset, "n_docs": n_docs,
         "n_queries": len(queries), "n_evaluable_queries": evaluable,

@@ -230,7 +230,7 @@ class Runner:
             nDCG_at_10            = None,
             recall_at_100         = None,
             MRR_at_10             = None,
-            CoRECT_RC_metrics     = None,
+            corect_standard_metrics=None,
             ms_per_query          = ms_per_query,
             qps                   = qps,
             cells_scanned_pct     = None,

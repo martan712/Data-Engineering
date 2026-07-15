@@ -33,7 +33,7 @@ pruning, candidate generation, kernel/layout acceleration, and reranking.
 | FAISS-IVF | FAISS inverted-file candidate generation followed by exact or approximate scoring. | Present in the branch plan as a reusable baseline; not yet a tracked main-branch implementation artifact. | Candidate generation | Strong engineering baseline. Keep reranker fixed when comparing candidate generators. |
 | PLAID | ColBERT-specific ANN indexing and retrieval with centroid probing and full-score candidates. | PyLate `indexes.PLAID` and `retrieve.ColBERT` in tracked ColBERT scripts. | Candidate generation plus ColBERT-specific scoring | Must be tuned at realistic scale. Small CPU settings are smoke tests, not final evidence. |
 | Exact rerank | Score a fixed candidate set with exact MaxSim. | Available through PyLate scorer in current ColBERT scripts; final shared reranker still needs Stage 4 extraction. | Reranking | Used to isolate candidate-generation quality from final scoring quality. |
-| CoRECT RC metrics | Ranking composition metrics separating relevant, distractor, and random pools. | CoRECT JSON result schema includes `rc_at_*`; current tracked scripts use ranx metrics and need a ColBERT/MaxSim CoRECT adapter in Stage 5. | IR evaluation | Required for final IR claims, alongside nDCG@10, recall@100, and MRR@10. |
+| CoRECT standard-metric cross-validation | CoRECT's ordinary qrels-based `evaluate_results` function. | The pinned adapter cross-checks NDCG/MAP/Recall/P/MRR against the local evaluator. | IR evaluation | Used to detect metric-definition drift. Relevance Composition requires controlled pools and is not computed here. |
 
 ## Baseline Matrix
 
@@ -60,8 +60,8 @@ pruning, candidate generation, kernel/layout acceleration, and reranking.
    Otherwise a candidate-generation improvement can be mistaken for a dimension
    pruning improvement.
 4. Final retrieval claims require qrels metrics. Exact MaxSim agreement is a
-   correctness signal, not a substitute for nDCG, recall, MRR, and CoRECT RC
-   metrics.
+   correctness signal, not a substitute for nDCG, recall, and MRR; those
+   standard metrics are independently cross-validated through CoRECT.
 5. Wall-clock timings must be same-machine, same-OS, same-thread-count, and
    same-dataset. Cross-branch exploratory timings remain hypothesis-generating
    only.

@@ -1,66 +1,27 @@
-"""CoRECT IR evaluation framework wrapper.
+"""Standard IR metric cross-validation through the pinned CoRECT checkout.
 
-Single responsibility: wrap extern/CoRECT/ to compute CoRECT RC metrics for a
-retrieval run and populate the CoRECT_RC_metrics field of ResultRecord.
-
-Ported artifact: CoRECT framework from
-  extern/CoRECT/ (pinned commit fedf8bb2, padas-lab-de/CoRECT); we call its
-  corect.utils.evaluate_results (pytrec_eval-based NDCG/MAP/Recall/P/MRR at
-  cutoffs) via a sys.path shim — the repo is referenced in place, never
-  copied.  Its CoRE corpus pools (100k-1M scale axis) are future work with R7.
-Stage 1 reference: docs/project_b_analysis_and_research_plan.md Stage 5 section
-  (CoRECT RC metrics are a primary quality signal alongside nDCG@10; CoRECT
-  wrapper smoke test required before scaling).
+This module calls CoRECT's ordinary qrels-based ``evaluate_results`` function.
+It does not run CoRECT's separate Relevance Composition evaluation.
 """
 
 from __future__ import annotations
 
-import sys
+import warnings
 from typing import Any
 
-from bondmaxsim.config import EXTERN_DIR
+from bondmaxsim.compat.corect import load_corect_evaluate_results
 
-CORECT_DIR = EXTERN_DIR / "CoRECT"
-
-RC_K_VALUES: tuple[int, ...] = (10, 100)
-"""Default RC metric cutoffs — matched to the qrels metrics (@10, @100)."""
+CORECT_K_VALUES: tuple[int, ...] = (10, 100)
+"""Default standard metric cutoffs, matched to the local qrels metrics."""
 
 
-def _import_evaluate_results():
-    """Import corect.utils.evaluate_results from the pinned checkout.
-
-    corect.utils and corect.model_wrappers import each other; importing
-    model_wrappers FIRST binds AbstractModelWrapper before utils' back-edge
-    runs, which breaks the cycle (the order CoRECT's own CLI happens to use).
-    """
-    src = str(CORECT_DIR / "src")
-    if src not in sys.path:
-        sys.path.insert(0, src)
-    import corect.model_wrappers  # noqa: F401  (must precede corect.utils)
-    from corect.utils import evaluate_results
-
-    return evaluate_results
-
-
-def compute_rc_metrics(
+def compute_corect_standard_metrics(
     run: dict[str, dict[str, float]],
     qrels: dict[str, dict[str, int]],
-    k_values: tuple[int, ...] = RC_K_VALUES,
+    k_values: tuple[int, ...] = CORECT_K_VALUES,
 ) -> dict[str, Any]:
-    """Compute CoRECT RC metrics for a retrieval run.
-
-    Parameters
-    ----------
-    run      : {query_id: {doc_id: score}} — ranked results
-    qrels    : {query_id: {doc_id: relevance}} — relevance judgments
-    k_values : metric cutoffs (CoRECT computes NDCG/MAP/Recall/P/MRR at each)
-
-    Returns
-    -------
-    flat dict of CoRECT RC metric values, keys following CoRECT conventions
-    (e.g. "NDCG@10", "MAP@10", "Recall@100", "P@10", "MRR@10")
-    """
-    evaluate_results = _import_evaluate_results()
+    """Compute ordinary NDCG/MAP/Recall/P/MRR via CoRECT."""
+    evaluate_results = load_corect_evaluate_results()
 
     judged = {qid: docs for qid, docs in run.items() if qid in qrels}
     if not judged:
@@ -68,35 +29,22 @@ def compute_rc_metrics(
             "No overlap between run queries and qrels — check the ID sidecar "
             "(bondmaxsim.data.beir_ids) and test-query encoding."
         )
-    # Restrict qrels to the judged run so pytrec_eval averages over the same
-    # query subset as ranx (bondmaxsim.eval.qrels); otherwise unretrieved qrels
-    # queries score zero and the two metric sources diverge on a subset run.
     sub_qrels = {qid: qrels[qid] for qid in judged}
     metric_dicts = evaluate_results(sub_qrels, judged, list(k_values))
 
     flat: dict[str, float] = {}
-    for d in metric_dicts:
-        for key, value in d.items():
+    for metric_dict in metric_dicts:
+        for key, value in metric_dict.items():
             flat[key] = float(value)
     return flat
 
 
-def corect_smoke_test(
+def corect_metric_crosscheck(
     run: dict[str, dict[str, float]] | None = None,
     qrels: dict[str, dict[str, int]] | None = None,
     atol: float = 5e-5,
 ) -> bool:
-    """Verify CoRECT metrics agree with our ranx qrels metrics on one run.
-
-    With no arguments, checks a small deterministic synthetic run; the Stage 5
-    driver calls it again with the real dense_fused run before scaling (the
-    plan's "CoRECT wrapper smoke test" gate).
-
-    Returns True if nDCG@10, recall@100 and MRR@10 agree within atol; raises
-    AssertionError (with both values) otherwise.  The default atol absorbs
-    CoRECT's round(..., 5) on each metric while still catching definitional
-    mismatches.
-    """
+    """Verify CoRECT standard metrics agree with local ranx-backed metrics."""
     from bondmaxsim.eval.qrels import compute_quality_metrics
 
     if run is None or qrels is None:
@@ -112,16 +60,39 @@ def corect_smoke_test(
         }
 
     ours = compute_quality_metrics(run, qrels)
-    rc = compute_rc_metrics(run, qrels)
-
+    corect_standard = compute_corect_standard_metrics(run, qrels)
     pairs = [
         ("nDCG_at_10", "NDCG@10"),
         ("recall_at_100", "Recall@100"),
         ("MRR_at_10", "MRR@10"),
     ]
-    for ranx_key, rc_key in pairs:
-        a, b = ours[ranx_key], rc[rc_key]
-        assert abs(a - b) <= atol, (
-            f"CoRECT smoke test FAILED: {rc_key}={b} vs ranx {ranx_key}={a}"
+    for local_key, corect_key in pairs:
+        local_value = ours[local_key]
+        corect_value = corect_standard[corect_key]
+        assert abs(local_value - corect_value) <= atol, (
+            f"CoRECT metric crosscheck failed: {corect_key}={corect_value} "
+            f"vs local {local_key}={local_value}"
         )
     return True
+
+
+# Historical API compatibility. New code must use the standard-metric names.
+RC_K_VALUES = CORECT_K_VALUES
+
+
+def compute_rc_metrics(*args, **kwargs):
+    warnings.warn(
+        "compute_rc_metrics is deprecated; use compute_corect_standard_metrics",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return compute_corect_standard_metrics(*args, **kwargs)
+
+
+def corect_smoke_test(*args, **kwargs):
+    warnings.warn(
+        "corect_smoke_test is deprecated; use corect_metric_crosscheck",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return corect_metric_crosscheck(*args, **kwargs)
