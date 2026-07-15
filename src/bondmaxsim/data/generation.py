@@ -178,10 +178,10 @@ def _validate_public_source(
             if (
                 isinstance(relevance, bool)
                 or not isinstance(relevance, int)
-                or relevance <= 0
+                or relevance < 0
             ):
                 raise DataGenerationError(
-                    f"{dataset}: qrels relevance must be a positive integer"
+                    f"{dataset}: qrels relevance must be a non-negative integer"
                 )
             # Qrels may judge documents absent from the pinned corpus (a known
             # BeIR arguana property). Such dangling judgments are retained to
@@ -305,10 +305,10 @@ def load_public_source(dataset: str, frozen: FrozenDataConfiguration) -> PublicS
         if (
             isinstance(raw_relevance, bool)
             or not isinstance(raw_relevance, (int, np.integer))
-            or int(raw_relevance) <= 0
+            or int(raw_relevance) < 0
         ):
             raise DataGenerationError(
-                f"{dataset}: source qrels relevance must be a positive integer"
+                f"{dataset}: source qrels relevance must be a non-negative integer"
             )
         if document_id in qrels.setdefault(query_id, {}):
             raise DataGenerationError(
@@ -472,9 +472,9 @@ def _read_qrels(
             raise DataGenerationError(
                 f"{dataset}: invalid qrels relevance at row {row_number}"
             ) from None
-        if str(relevance) != raw_relevance or relevance <= 0:
+        if str(relevance) != raw_relevance or relevance < 0:
             raise DataGenerationError(
-                f"{dataset}: qrels relevance must be a canonical positive integer"
+                f"{dataset}: qrels relevance must be a canonical non-negative integer"
             )
         qrels.setdefault(query_id, {})[document_id] = relevance
     if not seen:

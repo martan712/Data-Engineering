@@ -183,8 +183,8 @@ def test_validation_rejects_duplicate_or_reordered_ids(
             "unknown qrels query",
         ),
         (
-            "query-id\tcorpus-id\tscore\nq01\td1\t0\nq03\td4\t2\n",
-            "canonical positive integer",
+            "query-id\tcorpus-id\tscore\nq01\td1\t-1\nq03\td4\t2\n",
+            "canonical non-negative integer",
         ),
     ],
 )
@@ -226,6 +226,34 @@ def test_dangling_qrels_documents_are_retained_and_counted(tmp_path: Path):
     assert manifest["counts"]["qrels_queries"] == 2
     # The dangling judgment is retained verbatim in the written qrels file.
     assert "absent-doc" in (tmp_path / "qrels/scifact.tsv").read_text(encoding="utf-8")
+
+
+def _zero_relevance_source(dataset, frozen):
+    documents = tuple(f"d{index}" for index in range(6))
+    queries = tuple(f"q{index:02d}" for index in range(60))
+    return PublicSource(
+        documents,
+        tuple(f"document {index}" for index in range(6)),
+        queries,
+        tuple(f"query {index}" for index in range(60)),
+        # q01 carries an explicit non-relevant judgment, as BeIR scidocs does.
+        {"q01": {"d1": 1, "d2": 0}, "q03": {"d4": 2}},
+    )
+
+
+def test_zero_relevance_judgments_are_retained(tmp_path: Path):
+    frozen = load_data_configuration()
+    generate_dataset(
+        "scifact",
+        output_root=tmp_path,
+        frozen=frozen,
+        source_loader=_zero_relevance_source,
+        encoder=_FixtureEncoder(),
+        fixture=True,
+    )
+    validate_generated_dataset(tmp_path, "scifact", frozen=frozen, fixture=True)
+    rows = (tmp_path / "qrels/scifact.tsv").read_text(encoding="utf-8").splitlines()
+    assert "q01\td2\t0" in rows
 
 
 def test_completed_legacy_manifest_refreezes_without_encoding(tmp_path: Path):
