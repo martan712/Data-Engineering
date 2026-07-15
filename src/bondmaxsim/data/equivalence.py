@@ -153,6 +153,49 @@ def _legacy_quality(legacy_root: Path, dataset: str) -> tuple[np.ndarray, np.nda
     return query_values, query_starts, [str(value) for value in sidecar["query_ids"][: len(query_starts)]]
 
 
+def _align_quality_queries(
+    legacy_values: np.ndarray,
+    legacy_starts: np.ndarray,
+    legacy_ids: Sequence[str],
+    generated_values: np.ndarray,
+    generated_starts: np.ndarray,
+    generated_ids: Sequence[str],
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Realign generated packed queries to legacy ID order, rejecting ambiguity."""
+    if len(legacy_ids) != len(legacy_starts) or len(generated_ids) != len(generated_starts):
+        raise EquivalenceError("quality query ID/offset counts differ")
+    if len(set(legacy_ids)) != len(legacy_ids):
+        raise EquivalenceError("legacy quality query IDs contain duplicates")
+    if len(set(generated_ids)) != len(generated_ids):
+        raise EquivalenceError("generated quality query IDs contain duplicates")
+    if set(legacy_ids) != set(generated_ids):
+        missing = sorted(set(legacy_ids) - set(generated_ids))
+        extra = sorted(set(generated_ids) - set(legacy_ids))
+        raise EquivalenceError(
+            f"quality query ID sets differ; missing={missing[:5]}, extra={extra[:5]}"
+        )
+
+    generated_queries = _unpack(generated_values, generated_starts)
+    generated_index = {query_id: index for index, query_id in enumerate(generated_ids)}
+    permutation = [generated_index[query_id] for query_id in legacy_ids]
+    aligned_queries = [generated_queries[index] for index in permutation]
+    aligned_starts = np.zeros(len(aligned_queries), dtype=np.int64)
+    lengths = [len(query) for query in aligned_queries]
+    if len(lengths) > 1:
+        np.cumsum(lengths[:-1], out=aligned_starts[1:])
+    aligned_values = np.ascontiguousarray(np.concatenate(aligned_queries, axis=0))
+    order_equal = list(legacy_ids) == list(generated_ids)
+    return aligned_values, aligned_starts, {
+        "status": "already_aligned" if order_equal else "realigned",
+        "reference_order": "legacy_quality_query_ids",
+        "id_set_equal": True,
+        "legacy_ids_unique": True,
+        "generated_ids_unique": True,
+        "generated_index_for_legacy_order": permutation,
+        "query_count": len(legacy_ids),
+    }
+
+
 def _per_query_quality(
     ranked_ids: np.ndarray,
     corpus_ids: Sequence[str],
@@ -401,6 +444,16 @@ def compare_dataset(
         generated_quality = values["query_values"].copy()
         generated_quality_starts = values["query_starts"].copy()
         generated_quality_ids = [str(value) for value in values["query_ids"]]
+    generated_quality_aligned, generated_quality_starts_aligned, quality_alignment = (
+        _align_quality_queries(
+            legacy_quality,
+            legacy_quality_starts,
+            legacy_quality_ids,
+            generated_quality,
+            generated_quality_starts,
+            generated_quality_ids,
+        )
+    )
     legacy_qrels_path = legacy_root / "qrels" / f"{dataset}.tsv"
     generated_qrels_path = generated_root / "qrels" / f"{dataset}.tsv"
     legacy_qrels = load_qrels_tsv(legacy_qrels_path)
@@ -413,6 +466,7 @@ def compare_dataset(
         "mechanism_query_ids_order_equal": list(legacy_ids["query_ids"][: len(legacy_mechanism_starts)])
         == list(generated_ids["mechanism_query_ids"]),
         "quality_query_ids_order_equal": legacy_quality_ids == generated_quality_ids,
+        "quality_query_ids_set_equal": set(legacy_quality_ids) == set(generated_quality_ids),
         "qrels_checksum_equal": _sha256(legacy_qrels_path)
         == _sha256(generated_qrels_path),
         "qrels_semantically_equal": legacy_qrels == generated_qrels,
@@ -436,6 +490,12 @@ def compare_dataset(
             _lengths(legacy_quality, legacy_quality_starts),
             _lengths(generated_quality, generated_quality_starts),
         ),
+        "quality_queries_aligned": _array_comparison(
+            legacy_quality, generated_quality_aligned
+        ),
+        "quality_query_starts_aligned": _array_comparison(
+            legacy_quality_starts, generated_quality_starts_aligned
+        ),
     }
     ranking = {"mechanism": {"status": "not_comparable", "reason": "identity or shape mismatch"}, "quality": {"status": "not_comparable", "reason": "identity or shape mismatch"}}
     if identity["corpus_ids_order_equal"] and identity["mechanism_query_ids_order_equal"] and arrays["document_starts"]["same_shape"] and arrays["mechanism_query_starts"]["same_shape"]:
@@ -451,7 +511,7 @@ def compare_dataset(
             k=k,
             limit=topk_limit,
         )
-    if identity["corpus_ids_order_equal"] and identity["quality_query_ids_order_equal"] and arrays["document_starts"]["same_shape"] and arrays["quality_query_starts"]["same_shape"]:
+    if identity["corpus_ids_order_equal"] and identity["quality_query_ids_set_equal"] and arrays["document_starts"]["same_shape"] and arrays["quality_query_starts_aligned"]["same_shape"]:
         ranking["quality"] = _topk_comparison(
             legacy_docs,
             legacy_doc_starts,
@@ -459,12 +519,12 @@ def compare_dataset(
             generated_doc_starts,
             legacy_quality,
             legacy_quality_starts,
-            generated_quality,
-            generated_quality_starts,
+            generated_quality_aligned,
+            generated_quality_starts_aligned,
             k=max(k, 100),
             limit=topk_limit,
             left_query_ids=legacy_quality_ids,
-            right_query_ids=generated_quality_ids,
+            right_query_ids=legacy_quality_ids,
             left_corpus_ids=[str(value) for value in legacy_ids["corpus_ids"]],
             right_corpus_ids=[str(value) for value in generated_ids["corpus_ids"]],
             left_qrels=legacy_qrels,
@@ -552,6 +612,7 @@ def compare_dataset(
         "identity": identity,
         "arrays": arrays,
         "rankings": ranking,
+        "quality_alignment": quality_alignment,
         "qrels": qrels_comparison,
         "representative_accounting": accounting,
         "bitwise_equivalent": bitwise_equivalent,

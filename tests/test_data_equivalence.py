@@ -5,9 +5,15 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from bondmaxsim.data.config import DATASETS, load_data_configuration
-from bondmaxsim.data.equivalence import aggregate_equivalence_reports, compare_dataset
+from bondmaxsim.data.equivalence import (
+    EquivalenceError,
+    _align_quality_queries,
+    aggregate_equivalence_reports,
+    compare_dataset,
+)
 from bondmaxsim.data.generation import PublicSource, generate_dataset
 
 
@@ -39,6 +45,27 @@ def _legacy_from_generated(generated: Path, legacy: Path) -> None:
     ids.pop("mechanism_query_ids")
     ids.pop("quality_query_ids")
     sidecar.write_text(json.dumps(ids), encoding="utf-8")
+
+
+def _reverse_legacy_quality_order(legacy: Path) -> None:
+    path = legacy / "embeddings/scifact_test_queries.npz"
+    with np.load(path) as source:
+        values = source["query_values"].copy()
+        starts = source["query_starts"].copy()
+        query_ids = source["query_ids"].copy()
+    ends = np.append(starts[1:], len(values))
+    queries = [values[int(begin) : int(end)] for begin, end in zip(starts, ends)]
+    reordered = list(reversed(queries))
+    reordered_starts = np.zeros(len(reordered), dtype=np.int64)
+    if len(reordered) > 1:
+        np.cumsum([len(query) for query in reordered[:-1]], out=reordered_starts[1:])
+    with path.open("wb") as handle:
+        np.savez(
+            handle,
+            query_values=np.concatenate(reordered, axis=0),
+            query_starts=reordered_starts,
+            query_ids=query_ids[::-1],
+        )
 
 
 def test_bitwise_equivalent_fixture_keeps_non_timing_eligibility(tmp_path: Path):
@@ -205,6 +232,59 @@ def test_qrels_semantic_or_metric_change_forces_rerun(tmp_path: Path):
     assert report["decision"] == (
         "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
     )
+
+
+def test_reordered_quality_queries_are_aligned_for_complete_diagnostic(tmp_path: Path):
+    generated = tmp_path / "generated"
+    legacy = tmp_path / "legacy"
+    frozen = load_data_configuration()
+    generate_dataset(
+        "scifact",
+        output_root=generated,
+        frozen=frozen,
+        source_loader=_source,
+        encoder=_Encoder(),
+        fixture=True,
+    )
+    _legacy_from_generated(generated, legacy)
+    _reverse_legacy_quality_order(legacy)
+
+    report = compare_dataset(
+        "scifact",
+        legacy_root=legacy,
+        generated_root=generated,
+        frozen=frozen,
+        k=2,
+        fixture=True,
+    )
+
+    assert report["identity"]["quality_query_ids_order_equal"] is False
+    assert report["identity"]["quality_query_ids_set_equal"] is True
+    assert report["quality_alignment"]["status"] == "realigned"
+    assert report["arrays"]["quality_queries"]["bitwise_equal"] is False
+    assert report["arrays"]["quality_queries_aligned"]["bitwise_equal"] is True
+    assert report["rankings"]["quality"]["status"] == "complete"
+    assert report["rankings"]["quality"]["boundary_tie_complete"] is True
+    assert report["qrels"]["status"] == "complete"
+    assert report["qrels"]["metrics_equal"] is True
+    assert report["audit_complete"] is True
+    assert report["bitwise_equivalent"] is False
+    assert report["decision"] == (
+        "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    )
+
+
+def test_quality_alignment_rejects_duplicate_or_different_id_sets():
+    values = np.eye(2, dtype=np.float32)
+    starts = np.array([0, 1], dtype=np.int64)
+    with pytest.raises(EquivalenceError, match="duplicates"):
+        _align_quality_queries(
+            values, starts, ["q0", "q0"], values, starts, ["q0", "q1"]
+        )
+    with pytest.raises(EquivalenceError, match="sets differ"):
+        _align_quality_queries(
+            values, starts, ["q0", "q1"], values, starts, ["q0", "q2"]
+        )
 
 
 def _complete_report(dataset: str, *, bitwise: bool = True, complete: bool = True):
