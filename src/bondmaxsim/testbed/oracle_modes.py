@@ -19,7 +19,10 @@ import time
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum
-from bondmaxsim.kernels.per_document import run_accounting, run_throughput
+from bondmaxsim.kernels.per_document import (
+    run_accounting_validated,
+    run_throughput_validated,
+)
 from bondmaxsim.oracle.agreement import exact_agreement
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
 from bondmaxsim.schema import ResultRecord
@@ -54,14 +57,14 @@ def run_accounting_mode(
     recall_list: list[float]  = []
 
     for query in queries:
-        flat_eff, offs_eff, Q_eff, order = packing.dispatch_order(
+        corpus, Q_eff, order = packing.dispatch_order_corpus(
             query, config.dimension_order
         )
         m    = Q_eff.shape[0]
         Qcum = build_qcum(Q_eff, order)
 
-        ids, _scores, stats = run_accounting(
-            lib, flat_eff, offs_eff, Q_eff, order, Qcum,
+        ids, _scores, stats = run_accounting_validated(
+            lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, K=K,
         )
 
@@ -131,18 +134,18 @@ def run_throughput_mode(
     nq     = len(queries)
 
     # Pre-build order and Qcum for every query so timing is kernel-only.
-    prepared: list[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = []
+    prepared: list[tuple] = []
     for query in queries:
-        flat_eff, offs_eff, Q_eff, order = packing.dispatch_order(
+        corpus, Q_eff, order = packing.dispatch_order_corpus(
             query, config.dimension_order
         )
         Qcum = build_qcum(Q_eff, order)
-        prepared.append((flat_eff, offs_eff, Q_eff, order, Qcum))
+        prepared.append((corpus, Q_eff, order, Qcum))
 
     def _run_all():
-        for flat_eff, offs_eff, Q_eff, order, Qcum in prepared:
-            run_throughput(
-                lib, flat_eff, offs_eff, Q_eff, order, Qcum,
+        for corpus, Q_eff, order, Qcum in prepared:
+            run_throughput_validated(
+                lib, corpus, Q_eff, order, Qcum,
                 shrink=config.shrink, K=K,
             )
 
@@ -161,9 +164,9 @@ def run_throughput_mode(
 
     # Recall check (informational; uses last pass's ids — re-run once to get them).
     recall_list: list[float] = []
-    for query, (flat_eff, offs_eff, Q_eff, order, Qcum) in zip(queries, prepared):
-        ids, _scores, _stats = run_throughput(
-            lib, flat_eff, offs_eff, Q_eff, order, Qcum,
+    for query, (corpus, Q_eff, order, Qcum) in zip(queries, prepared):
+        ids, _scores, _stats = run_throughput_validated(
+            lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, K=K,
         )
         exact_ids, _ = exact_maxsim_topk(

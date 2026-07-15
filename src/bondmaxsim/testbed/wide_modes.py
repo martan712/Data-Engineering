@@ -22,7 +22,10 @@ from typing import Optional
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum
-from bondmaxsim.kernels.wide_block import run_wide_block_accounting, run_wide_block_throughput
+from bondmaxsim.kernels.wide_block import (
+    run_wide_block_accounting_validated,
+    run_wide_block_throughput_validated,
+)
 from bondmaxsim.oracle.agreement import exact_agreement
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
 from bondmaxsim.schema import ResultRecord
@@ -67,17 +70,16 @@ def run_wide_accounting_mode(
 
     # Pre-prepare all query inputs sequentially (triggers lazy cache builds,
     # resolve_tau_seed, and Qcum computation before parallelism starts).
-    PreparedQuery = tuple  # (group_data, group_offsets, doc_offsets, group_doc_starts,
-    #                         Q_eff, order, Qcum, tau_seed, exact_ids, exact_scores, m)
+    PreparedQuery = tuple  # (corpus, Q_eff, order, Qcum, tau, exact ids/scores, m)
     prepared: list[PreparedQuery] = []
     for query, exact_ids, exact_scores in zip(queries, exact_ids_list, exact_scores_list):
-        gd, go, do_, gds, Q_eff, order = packing.dispatch_order_wide(
+        corpus, Q_eff, order = packing.dispatch_order_wide_corpus(
             query, config.dimension_order
         )
         m    = Q_eff.shape[0]
         Qcum = build_qcum(Q_eff, order)
         tau  = resolve_tau_seed(config, query, order, config.dimension_order, packing)
-        prepared.append((gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m))
+        prepared.append((corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m))
 
     # Parallel kernel calls — accounting mode only.  Wall-clock time is not
     # reported here (ms_per_query = None), so running queries concurrently does
@@ -87,9 +89,9 @@ def run_wide_accounting_mode(
     # ctypes releases the GIL, so threads genuinely run the C++ kernel in
     # parallel; each call allocates its own scratch buffers (no shared state).
     def _run_one(args: PreparedQuery):
-        gd, go, do_, gds, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m = args
-        ids, _s, stats, bdl, btl = run_wide_block_accounting(
-            lib, gd, go, do_, gds, Q_eff, order, Qcum,
+        corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m = args
+        ids, _s, stats, bdl, btl = run_wide_block_accounting_validated(
+            lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K,
             collect_block_stats=True,
         )
@@ -180,20 +182,20 @@ def run_wide_throughput_mode(
     # Pre-build order, Qcum, and tau_seed for every query so timing is kernel-only.
     prepared: list[tuple] = []
     for query in queries:
-        group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order = (
-            packing.dispatch_order_wide(query, config.dimension_order)
+        corpus, Q_eff, order = packing.dispatch_order_wide_corpus(
+            query, config.dimension_order
         )
         Qcum = build_qcum(Q_eff, order)
         tau_seed = resolve_tau_seed(config, query, order, config.dimension_order, packing)
         prepared.append(
-            (group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau_seed)
+            (corpus, Q_eff, order, Qcum, tau_seed)
         )
 
     def _run_all():
-        for group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau_seed in prepared:
-            run_wide_block_throughput(
-                lib, group_data, group_offsets, doc_offsets, group_doc_starts,
-                Q_eff, order, Qcum, shrink=config.shrink, tau_seed=tau_seed, K=K,
+        for corpus, Q_eff, order, Qcum, tau_seed in prepared:
+            run_wide_block_throughput_validated(
+                lib, corpus, Q_eff, order, Qcum,
+                shrink=config.shrink, tau_seed=tau_seed, K=K,
             )
 
     # Warmup pass (not timed).
@@ -217,10 +219,10 @@ def run_wide_throughput_mode(
     ]
     recall_list: list[float] = []
     for query, prep, exact_ids in zip(queries, prepared, exact_ids_list):
-        group_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau_seed = prep
-        ids, _scores, _stats, _bdl, _btl = run_wide_block_throughput(
-            lib, group_data, group_offsets, doc_offsets, group_doc_starts,
-            Q_eff, order, Qcum, shrink=config.shrink, tau_seed=tau_seed, K=K,
+        corpus, Q_eff, order, Qcum, tau_seed = prep
+        ids, _scores, _stats, _bdl, _btl = run_wide_block_throughput_validated(
+            lib, corpus, Q_eff, order, Qcum,
+            shrink=config.shrink, tau_seed=tau_seed, K=K,
         )
         recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
 

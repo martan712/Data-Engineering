@@ -25,6 +25,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "../native_validation.hpp"
+
 extern "C" {
 
 // ---------------------------------------------------------------------------
@@ -75,6 +77,20 @@ uint64_t maxsim_knn_accounting(
         const uint32_t* order, const uint32_t* fetch_schedule, size_t n_fetch,
         const float* Qcum, float shrink, size_t K,
         uint32_t* topk_id, float* topk_score, uint64_t* stats) {
+
+    if (!native_validation::document_corpus(docs, doc_offsets, n_docs, D) ||
+        !native_validation::query(query, m, D) ||
+        !native_validation::scratch_extents(doc_offsets, n_docs + 1, m) ||
+        !native_validation::order(order, D) ||
+        !native_validation::qcum_matches(Qcum, query, order, m, D) ||
+        !native_validation::scalar_parameters(
+            shrink, -std::numeric_limits<float>::infinity()) ||
+        fetch_schedule == nullptr || n_fetch == 0 || K == 0 || K > n_docs ||
+        topk_id == nullptr || topk_score == nullptr || stats == nullptr) {
+        return native_validation::ERROR;
+    }
+    for (size_t i = 0; i < n_fetch; ++i)
+        if (fetch_schedule[i] == 0) return native_validation::ERROR;
 
     // scratch sized to the largest doc
     size_t max_nd = 0;
@@ -213,6 +229,20 @@ uint64_t maxsim_knn_throughput(
         const uint32_t* order, const uint32_t* fetch_schedule, size_t n_fetch,
         const float* Qcum, float shrink, size_t K,
         uint32_t* topk_id, float* topk_score, uint64_t* stats) {
+
+    if (!native_validation::document_corpus(docs, doc_offsets, n_docs, D) ||
+        !native_validation::query(query, m, D) ||
+        !native_validation::scratch_extents(doc_offsets, n_docs + 1, m) ||
+        !native_validation::order(order, D) ||
+        !native_validation::qcum_matches(Qcum, query, order, m, D) ||
+        !native_validation::scalar_parameters(
+            shrink, -std::numeric_limits<float>::infinity()) ||
+        fetch_schedule == nullptr || n_fetch == 0 || K == 0 || K > n_docs ||
+        topk_id == nullptr || topk_score == nullptr || stats == nullptr) {
+        return native_validation::ERROR;
+    }
+    for (size_t i = 0; i < n_fetch; ++i)
+        if (fetch_schedule[i] == 0) return native_validation::ERROR;
 
     size_t max_nd = 0;
     for (size_t d = 0; d < n_docs; ++d)
@@ -365,6 +395,14 @@ uint64_t maxsim_full(
         const float* docs, const uint64_t* doc_offsets, size_t n_docs,
         const float* query, size_t m, size_t D, size_t K,
         uint32_t* topk_id, float* topk_score) {
+
+    if (!native_validation::document_corpus(docs, doc_offsets, n_docs, D) ||
+        !native_validation::query(query, m, D) ||
+        !native_validation::scratch_extents(doc_offsets, n_docs + 1, m) ||
+        K == 0 || K > n_docs ||
+        topk_id == nullptr || topk_score == nullptr) {
+        return native_validation::ERROR;
+    }
 
     size_t max_nd = 0;
     for (size_t d = 0; d < n_docs; ++d)

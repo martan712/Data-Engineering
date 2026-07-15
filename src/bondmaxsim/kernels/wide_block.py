@@ -34,7 +34,22 @@ import numpy as np
 
 from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.packing import DEFAULT_FETCH
-from bondmaxsim.kernels._ctypes_util import f32p, fp, load_library, lp, u32p, u64p, up, csz
+from bondmaxsim.kernels._ctypes_util import (
+    NativeInputError,
+    PackedCorpusWide,
+    csz,
+    f32p,
+    fp,
+    load_library,
+    lp,
+    u32p,
+    u64p,
+    up,
+    validate_k,
+    validate_order,
+    validate_qcum,
+    validate_query,
+)
 
 _WIDE_BLOCK_LIB_PATH = REPO_ROOT / "cpp" / "wide_block_maxsim_bond" / "wide_block_maxsim_bond.so"
 
@@ -103,19 +118,45 @@ def _run_wide_block(
     collect_block_stats: bool,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
     """Shared calling convention for wide_block_maxsim_{accounting,throughput}."""
-    group_data       = np.ascontiguousarray(group_data,       dtype=np.float32)
-    group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
-    doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
-    group_doc_starts = np.ascontiguousarray(group_doc_starts, dtype=np.uint64)
-    Q    = np.ascontiguousarray(Q,    dtype=np.float32)
-    Qcum = np.ascontiguousarray(Qcum, dtype=np.float32)
-    order_u32 = np.ascontiguousarray(order, dtype=np.uint32)
+    Q = validate_query(Q)
+    corpus = PackedCorpusWide.from_arrays(
+        group_data, group_offsets, doc_offsets, group_doc_starts, Q.shape[1]
+    )
+    return _run_wide_block_validated(
+        fn, corpus, Q, order, Qcum, shrink, tau_seed, K, collect_block_stats
+    )
+
+
+def _run_wide_block_validated(
+    fn,
+    corpus: PackedCorpusWide,
+    Q: np.ndarray,
+    order: np.ndarray,
+    Qcum: np.ndarray,
+    shrink: float,
+    tau_seed: float,
+    K: int,
+    collect_block_stats: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+    """Shared calling convention with reusable corpus validation."""
+    if not isinstance(corpus, PackedCorpusWide):
+        raise TypeError("corpus must be PackedCorpusWide")
+    Q = validate_query(Q, corpus.dimension)
+    order_u32 = validate_order(order, corpus.dimension)
+    Qcum = validate_qcum(Qcum, Q, order_u32)
+    K = validate_k(K, corpus.n_documents)
+    if not np.isfinite(shrink) or not 0.0 <= shrink <= 1.0:
+        raise NativeInputError("shrink must be finite and in [0, 1]")
+    if np.isnan(tau_seed) or tau_seed == np.inf:
+        raise NativeInputError("tau_seed must be finite or -inf")
+    if not isinstance(collect_block_stats, (bool, np.bool_)):
+        raise NativeInputError("collect_block_stats must be boolean")
     fetch     = np.ascontiguousarray(DEFAULT_FETCH, dtype=np.uint32)
 
     m = Q.shape[0]
-    D = Q.shape[1]
-    n_groups = len(group_offsets) - 1
-    n_docs   = len(doc_offsets) - 1
+    D = corpus.dimension
+    n_groups = corpus.n_groups
+    n_docs   = corpus.n_documents
     n_fetch  = len(fetch)
 
     ids    = np.empty(K, dtype=np.uint32)
@@ -133,17 +174,39 @@ def _run_wide_block(
         bdl_ptr = None
         btl_ptr = None
 
-    fn(
-        fp(group_data), lp(group_offsets), csz(n_groups),
-        lp(doc_offsets), csz(n_docs),
-        lp(group_doc_starts),
+    status = fn(
+        fp(corpus.data), lp(corpus.group_offsets), csz(n_groups),
+        lp(corpus.doc_offsets), csz(n_docs),
+        lp(corpus.group_doc_starts),
         fp(Q), csz(m), csz(D),
         up(order_u32), up(fetch), csz(n_fetch),
         fp(Qcum), ctypes.c_float(shrink), ctypes.c_float(tau_seed), csz(K),
         up(ids), fp(scores), lp(stats),
         bdl_ptr, btl_ptr,
     )
+    if status == np.iinfo(np.uint64).max:
+        raise RuntimeError(f"{fn.__name__} rejected the native call")
     return ids, scores, stats, block_doc_live, block_token_live
+
+
+def run_wide_block_accounting_validated(
+    lib, corpus, Q, order, Qcum, shrink, tau_seed, K, collect_block_stats=False
+):
+    """Accounting call with reusable corpus validation."""
+    return _run_wide_block_validated(
+        lib.wide_block_maxsim_accounting,
+        corpus, Q, order, Qcum, shrink, tau_seed, K, collect_block_stats,
+    )
+
+
+def run_wide_block_throughput_validated(
+    lib, corpus, Q, order, Qcum, shrink, tau_seed, K, collect_block_stats=False
+):
+    """Throughput call with reusable corpus validation."""
+    return _run_wide_block_validated(
+        lib.wide_block_maxsim_throughput,
+        corpus, Q, order, Qcum, shrink, tau_seed, K, collect_block_stats,
+    )
 
 
 def run_wide_block_accounting(

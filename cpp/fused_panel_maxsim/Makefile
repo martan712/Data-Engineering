@@ -5,7 +5,7 @@ BUILD ?= portable
 
 TARGET := fused_panel_maxsim.so
 SOURCES := brute.cpp bond_doc.cpp bond_token.cpp
-HEADERS := common.hpp microkernel.hpp microkernel_avx512.hpp microkernel_portable.hpp
+HEADERS := common.hpp microkernel.hpp microkernel_avx512.hpp microkernel_portable.hpp ../native_validation.hpp
 PROFILE_DIR := build/$(BUILD)
 PROFILE_TARGET := $(PROFILE_DIR)/$(TARGET)
 OBJECTS := $(addprefix $(PROFILE_DIR)/,$(SOURCES:.cpp=.o))
@@ -26,11 +26,13 @@ $(error BUILD must be portable, paper-native, or sanitize)
 endif
 CXXFLAGS := $(COMMON_FLAGS) $(PROFILE_FLAGS)
 LDFLAGS := -shared -fopenmp
+SANITIZER_HARNESS := build/sanitize/sanitizer_harness
+SANITIZER_FLAGS := -std=c++20 -fopenmp -O1 -g -march=x86-64-v2 -fsanitize=address,undefined -fno-omit-frame-pointer
 ifeq ($(BUILD),sanitize)
 LDFLAGS += -fsanitize=address,undefined
 endif
 
-.PHONY: all clean FORCE manifest
+.PHONY: all clean FORCE manifest sanitize-check
 
 all: $(TARGET)
 
@@ -49,6 +51,13 @@ $(PROFILE_DIR)/%.o: %.cpp $(HEADERS)
 manifest: $(MANIFEST)
 
 $(MANIFEST): $(PROFILE_TARGET)
+
+sanitize-check: $(SANITIZER_HARNESS)
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 $(SANITIZER_HARNESS)
+
+$(SANITIZER_HARNESS): $(SOURCES) sanitizer_harness.cpp $(HEADERS)
+	mkdir -p $(@D)
+	$(CXX) $(SANITIZER_FLAGS) -o $@ $(SOURCES) sanitizer_harness.cpp
 
 FORCE:
 

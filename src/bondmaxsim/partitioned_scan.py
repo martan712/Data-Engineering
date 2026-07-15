@@ -33,7 +33,11 @@ from __future__ import annotations
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum, pack_corpus_panels
-from bondmaxsim.kernels.fused_panel import run_fused_panel_bond, run_fused_panel_brute
+from bondmaxsim.kernels._ctypes_util import PackedCorpusPanels
+from bondmaxsim.kernels.fused_panel import (
+    run_fused_panel_bond_validated,
+    run_fused_panel_brute_validated,
+)
 
 # Safety margin against cross-implementation fp32 noise at near-tie
 # thresholds (same rationale as testbed.thresholds._TAU_SEED_EPS).
@@ -41,12 +45,19 @@ _TAU_EPS = 1e-3
 
 
 class _Partition:
-    __slots__ = ("doc_ids", "panel", "n_docs", "radius")
+    __slots__ = ("doc_ids", "panel", "corpus", "n_docs", "radius")
 
     def __init__(self, doc_ids: np.ndarray, panel: tuple, n_docs: int,
-                 radius: float) -> None:
+                 radius: float, dimension: int) -> None:
         self.doc_ids = doc_ids
-        self.panel = panel
+        self.corpus = PackedCorpusPanels(*panel[:4], dimension)
+        self.panel = (
+            self.corpus.data,
+            self.corpus.group_offsets,
+            self.corpus.doc_offsets,
+            self.corpus.group_doc_starts,
+            panel[4],
+        )
         self.n_docs = n_docs
         self.radius = radius
 
@@ -140,7 +151,9 @@ class PartitionedFusedScan:
             radius = float(np.sqrt(
                 np.max(np.sum((part_tokens - c) ** 2, axis=1))))
             centroids.append(c)
-            self.partitions.append(_Partition(doc_ids, panel, len(doc_ids), radius))
+            self.partitions.append(
+                _Partition(doc_ids, panel, len(doc_ids), radius, self.D)
+            )
         self.centroids = np.asarray(centroids, dtype=np.float32)
         self.radii = np.asarray([p.radius for p in self.partitions],
                                 dtype=np.float32)
@@ -203,16 +216,15 @@ class PartitionedFusedScan:
         docs_pruned = 0
         for p in probe:
             part = self.partitions[p]
-            pd, go, do, gd, _ = part.panel
             if scanner == "bond":
-                ids, scores, stats = run_fused_panel_bond(
-                    lib, pd, go, do, gd, Q, order, Qcum,
+                ids, scores, stats = run_fused_panel_bond_validated(
+                    lib, part.corpus, Q, order, Qcum,
                     shrink=1.0, tau_seed=tau, K=k, n_threads=n_threads,
                     level="doc", checkpoints=cps, bound=bound)
                 docs_pruned += int(stats[1])
             else:
-                ids, scores = run_fused_panel_brute(
-                    lib, pd, go, do, gd, Q, k, n_threads=n_threads)
+                ids, scores = run_fused_panel_brute_validated(
+                    lib, part.corpus, Q, k, n_threads=n_threads)
             valid = (ids < part.n_docs) & np.isfinite(scores)
             all_ids.append(part.doc_ids[ids[valid].astype(np.int64)])
             all_scores.append(scores[valid])

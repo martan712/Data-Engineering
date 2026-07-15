@@ -26,6 +26,7 @@ def test_each_makefile_defines_consistent_profiles():
         assert "-march=x86-64-v2" in source
         assert "-march=native" in source
         assert "-fsanitize=address,undefined" in source
+        assert "sanitize-check" in source
         assert "native_build_manifest.py" in source
 
 

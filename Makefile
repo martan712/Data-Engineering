@@ -3,7 +3,7 @@ BUILD ?= portable
 DATASET ?=
 
 .PHONY: setup-paper data-small verify reproduce-core paper artifact-smoke \
-	data-full reproduce-full audit-results audit-evidence
+	data-full reproduce-full audit-results audit-evidence test-sanitize
 
 setup-paper:
 	./setup.sh --full --frozen
@@ -13,6 +13,11 @@ data-small:
 
 verify:
 	$(PYTHON) -m pytest -q
+
+test-sanitize:
+	$(MAKE) -C cpp/per_document_oracle sanitize-check
+	$(MAKE) -C cpp/wide_block_maxsim_bond sanitize-check
+	$(MAKE) -C cpp/fused_panel_maxsim sanitize-check
 
 # Stage 2 scaffold: validates the deterministic fixture. Stage 4 extends this
 # target with representative mechanism and system experiment drivers.

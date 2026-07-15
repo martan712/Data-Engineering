@@ -13,6 +13,11 @@ from typing import Optional
 import numpy as np
 
 from bondmaxsim.data.packing import pack_corpus, pack_corpus_panels, pack_corpus_wide
+from bondmaxsim.kernels._ctypes_util import (
+    PackedCorpusDimMajor,
+    PackedCorpusPanels,
+    PackedCorpusWide,
+)
 from bondmaxsim.ordering.orders import pca_order, bond_order, natural_order
 
 
@@ -45,6 +50,8 @@ class PackingCache:
 
         # Per-doc dim-major packed corpus for the oracle kernel.
         self._flat, self._offs = pack_corpus(docs)
+        self._corpus = PackedCorpusDimMajor(self._flat, self._offs, self.D)
+        self._flat, self._offs = self._corpus.data, self._corpus.doc_offsets
 
         # Corpus token mean for BOND order.
         self._mu = self.flat_tokens.mean(axis=0).astype(np.float32)
@@ -54,10 +61,13 @@ class PackingCache:
         self._flat_rot: Optional[np.ndarray] = None
         self._offs_rot: Optional[np.ndarray] = None
         self._flat_tokens_rot: Optional[np.ndarray] = None  # token-major rotated corpus
+        self._corpus_rot: Optional[PackedCorpusDimMajor] = None
 
         # Wide-block kernel packings — built lazily.
         self._wide: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
         self._wide_rot: Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = None
+        self._wide_corpus: Optional[PackedCorpusWide] = None
+        self._wide_corpus_rot: Optional[PackedCorpusWide] = None
 
         # Fused-panel kernel packings (Stage 3b) — built lazily.
         self._panel: Optional[
@@ -66,6 +76,8 @@ class PackingCache:
         self._panel_rot: Optional[
             tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         ] = None
+        self._panel_corpus: Optional[PackedCorpusPanels] = None
+        self._panel_corpus_rot: Optional[PackedCorpusPanels] = None
 
     # ------------------------------------------------------------------
     # Lazy accessors
@@ -97,12 +109,24 @@ class PackingCache:
             R = self.get_pca_rotation()
             rotated_docs = [(d @ R).astype(np.float32) for d in self._docs]
             self._flat_rot, self._offs_rot = pack_corpus(rotated_docs)
+            self._corpus_rot = PackedCorpusDimMajor(
+                self._flat_rot, self._offs_rot, self.D
+            )
+            self._flat_rot = self._corpus_rot.data
+            self._offs_rot = self._corpus_rot.doc_offsets
         return self._flat_rot, self._offs_rot
 
     def _get_wide_packing(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Wide packing of the ORIGINAL (un-rotated) corpus (natural/bond orders)."""
         if self._wide is None:
             self._wide = pack_corpus_wide(self.flat_tokens, self.doc_starts)
+            self._wide_corpus = PackedCorpusWide(*self._wide, self.D)
+            self._wide = (
+                self._wide_corpus.data,
+                self._wide_corpus.group_offsets,
+                self._wide_corpus.doc_offsets,
+                self._wide_corpus.group_doc_starts,
+            )
         return self._wide
 
     def _get_wide_packing_rot(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -110,6 +134,13 @@ class PackingCache:
         if self._wide_rot is None:
             flat_rot = self.get_flat_tokens_rot()
             self._wide_rot = pack_corpus_wide(flat_rot, self.doc_starts)
+            self._wide_corpus_rot = PackedCorpusWide(*self._wide_rot, self.D)
+            self._wide_rot = (
+                self._wide_corpus_rot.data,
+                self._wide_corpus_rot.group_offsets,
+                self._wide_corpus_rot.doc_offsets,
+                self._wide_corpus_rot.group_doc_starts,
+            )
         return self._wide_rot
 
     def _get_panel_packing(
@@ -122,6 +153,14 @@ class PackingCache:
         L1-resident panel, so natural and bond orders share this packing."""
         if self._panel is None:
             self._panel = pack_corpus_panels(self.flat_tokens, self.doc_starts)
+            self._panel_corpus = PackedCorpusPanels(*self._panel[:4], self.D)
+            self._panel = (
+                self._panel_corpus.data,
+                self._panel_corpus.group_offsets,
+                self._panel_corpus.doc_offsets,
+                self._panel_corpus.group_doc_starts,
+                self._panel[4],
+            )
         return self._panel
 
     def _get_panel_packing_rot(
@@ -132,7 +171,42 @@ class PackingCache:
         if self._panel_rot is None:
             flat_rot = self.get_flat_tokens_rot()
             self._panel_rot = pack_corpus_panels(flat_rot, self.doc_starts)
+            self._panel_corpus_rot = PackedCorpusPanels(*self._panel_rot[:4], self.D)
+            self._panel_rot = (
+                self._panel_corpus_rot.data,
+                self._panel_corpus_rot.group_offsets,
+                self._panel_corpus_rot.doc_offsets,
+                self._panel_corpus_rot.group_doc_starts,
+                self._panel_rot[4],
+            )
         return self._panel_rot
+
+    def dispatch_order_corpus(
+        self, query: np.ndarray, dimension_order: str
+    ) -> tuple[PackedCorpusDimMajor, np.ndarray, np.ndarray]:
+        """Return a reusable validated per-document corpus, query, and order."""
+        flat, offsets, query_eff, order = self.dispatch_order(query, dimension_order)
+        corpus = self._corpus_rot if dimension_order == "pca" else self._corpus
+        assert corpus is not None and corpus.data is flat and corpus.doc_offsets is offsets
+        return corpus, query_eff, order
+
+    def dispatch_order_wide_corpus(
+        self, query: np.ndarray, dimension_order: str
+    ) -> tuple[PackedCorpusWide, np.ndarray, np.ndarray]:
+        """Return a reusable validated wide corpus, query, and order."""
+        *_, query_eff, order = self.dispatch_order_wide(query, dimension_order)
+        corpus = self._wide_corpus_rot if dimension_order == "pca" else self._wide_corpus
+        assert corpus is not None
+        return corpus, query_eff, order
+
+    def dispatch_order_panel_corpus(
+        self, query: np.ndarray, dimension_order: str
+    ) -> tuple[PackedCorpusPanels, np.ndarray, np.ndarray]:
+        """Return a reusable validated panel corpus, query, and order."""
+        *_, query_eff, order = self.dispatch_order_panel(query, dimension_order)
+        corpus = self._panel_corpus_rot if dimension_order == "pca" else self._panel_corpus
+        assert corpus is not None
+        return corpus, query_eff, order
 
     def dispatch_order_panel(
         self,

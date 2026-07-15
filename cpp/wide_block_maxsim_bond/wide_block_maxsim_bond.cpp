@@ -110,6 +110,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "../native_validation.hpp"
+
 // float32 guard on the per-document UB < tau pruning test.  P_ij accumulates
 // in float32 (error ≈ D * eps_machine per term).  1e-4 covers the worst-case
 // accumulated error (m * D * eps_mach ≈ 1.5e-5 per query token) with margin.
@@ -165,7 +167,20 @@ uint64_t wide_block_maxsim_accounting(
         uint32_t* topk_id, float* topk_score, uint64_t* stats,
         uint64_t* block_doc_live, uint64_t* block_token_live) {
 
-    (void)n_docs;
+    if (!native_validation::grouped_corpus(
+            group_data, group_offsets, n_groups, doc_offsets, n_docs,
+            group_doc_starts, D) ||
+        !native_validation::query(query, m, D) ||
+        !native_validation::scratch_extents(group_offsets, n_groups + 1, m) ||
+        !native_validation::order(order, D) ||
+        !native_validation::qcum_matches(Qcum, query, order, m, D) ||
+        !native_validation::scalar_parameters(shrink, tau_seed) ||
+        fetch_schedule == nullptr || n_fetch == 0 || K == 0 || K > n_docs ||
+        topk_id == nullptr || topk_score == nullptr || stats == nullptr) {
+        return native_validation::ERROR;
+    }
+    for (size_t i = 0; i < n_fetch; ++i)
+        if (fetch_schedule[i] == 0) return native_validation::ERROR;
 
     size_t max_G = 0;
     for (size_t g = 0; g < n_groups; ++g)
@@ -333,6 +348,21 @@ uint64_t wide_block_maxsim_throughput(
         const float* Qcum, float shrink, float tau_seed, size_t K,
         uint32_t* topk_id, float* topk_score, uint64_t* stats,
         uint64_t* block_doc_live, uint64_t* block_token_live) {
+
+    if (!native_validation::grouped_corpus(
+            group_data, group_offsets, n_groups, doc_offsets, n_docs,
+            group_doc_starts, D) ||
+        !native_validation::query(query, m, D) ||
+        !native_validation::scratch_extents(group_offsets, n_groups + 1, m) ||
+        !native_validation::order(order, D) ||
+        !native_validation::qcum_matches(Qcum, query, order, m, D) ||
+        !native_validation::scalar_parameters(shrink, tau_seed) ||
+        fetch_schedule == nullptr || n_fetch == 0 || K == 0 || K > n_docs ||
+        topk_id == nullptr || topk_score == nullptr || stats == nullptr) {
+        return native_validation::ERROR;
+    }
+    for (size_t i = 0; i < n_fetch; ++i)
+        if (fetch_schedule[i] == 0) return native_validation::ERROR;
 
     size_t max_G = 0;
     for (size_t g = 0; g < n_groups; ++g)

@@ -20,7 +20,10 @@ import time
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum
-from bondmaxsim.kernels.fused_panel import run_fused_panel_bond, run_fused_panel_brute
+from bondmaxsim.kernels.fused_panel import (
+    run_fused_panel_bond_validated,
+    run_fused_panel_brute_validated,
+)
 from bondmaxsim.oracle.agreement import exact_agreement
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
 from bondmaxsim.schema import ResultRecord
@@ -57,9 +60,9 @@ def run_fused_brute_mode(
     n_docs = packing.num_docs
     nq     = len(queries)
 
-    panel_data, group_offsets, doc_offsets, group_doc_starts, _ = (
-        packing._get_panel_packing()
-    )
+    packing._get_panel_packing()
+    corpus = packing._panel_corpus
+    assert corpus is not None
 
     Qs: list[np.ndarray] = [
         np.ascontiguousarray(q, dtype=np.float32) for q in queries
@@ -67,9 +70,8 @@ def run_fused_brute_mode(
 
     def _run_all():
         for Q in Qs:
-            run_fused_panel_brute(
-                lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
-                Q, K, n_threads=n_threads,
+            run_fused_panel_brute_validated(
+                lib, corpus, Q, K, n_threads=n_threads,
             )
 
     # Warmup.
@@ -91,9 +93,8 @@ def run_fused_brute_mode(
         exact_ids, exact_scores = exact_maxsim_topk(
             Q, packing.flat_tokens, packing.doc_starts, k=K
         )
-        ids, _ = run_fused_panel_brute(
-            lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
-            Q, K, n_threads=n_threads,
+        ids, _ = run_fused_panel_brute_validated(
+            lib, corpus, Q, K, n_threads=n_threads,
         )
         recall_list.append(
             exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
@@ -164,22 +165,21 @@ def run_fused_bond_mode(
     # Pre-build all per-query inputs so timing is kernel-only.
     prepared = []
     for q in queries:
-        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order = (
-            packing.dispatch_order_panel(q, config.dimension_order)
+        corpus, Q_eff, order = packing.dispatch_order_panel_corpus(
+            q, config.dimension_order
         )
         Qcum = build_qcum(Q_eff, order)
         tau  = resolve_tau_seed(config, q, order, config.dimension_order, packing)
         prepared.append(
-            (panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau)
+            (corpus, Q_eff, order, Qcum, tau)
         )
 
     cps = np.asarray(config.checkpoints, dtype=np.uint32) if config.checkpoints else None
 
     def _run_all():
-        for panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau in prepared:
-            run_fused_panel_bond(
-                lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
-                Q_eff, order, Qcum,
+        for corpus, Q_eff, order, Qcum, tau in prepared:
+            run_fused_panel_bond_validated(
+                lib, corpus, Q_eff, order, Qcum,
                 shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
                 level=level, checkpoints=cps, bound=bound,
             )
@@ -211,12 +211,11 @@ def run_fused_bond_mode(
     recall_list: list[float] = []
     docs_pruned_total = 0
     tokens_pruned_total = 0
-    total_tokens_padded = int(prepared[0][2][-1]) if prepared else 0  # doc_offsets[-1]
+    total_tokens_padded = int(prepared[0][0].doc_offsets[-1]) if prepared else 0
     for prep, exact_ids, exact_scores in zip(prepared, exact_ids_list, exact_scores_list):
-        panel_data, group_offsets, doc_offsets, group_doc_starts, Q_eff, order, Qcum, tau = prep
-        ids, _, stats = run_fused_panel_bond(
-            lib, panel_data, group_offsets, doc_offsets, group_doc_starts,
-            Q_eff, order, Qcum,
+        corpus, Q_eff, order, Qcum, tau = prep
+        ids, _, stats = run_fused_panel_bond_validated(
+            lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
             level=level, checkpoints=cps, bound=bound,
         )

@@ -47,9 +47,28 @@
 #include <algorithm>
 #include <new>
 
+#include "../native_validation.hpp"
+
 static constexpr size_t PT = 16;          // panel width (tokens)
 static constexpr size_t TILE_MAX = 24;    // largest query tile (register budget)
 static constexpr uint64_t NATIVE_ERROR = std::numeric_limits<uint64_t>::max();
+
+static inline bool validate_fused_base(
+        const float* panel_data,
+        const uint64_t* group_offsets, size_t n_groups,
+        const uint64_t* doc_offsets, const uint64_t* group_doc_starts,
+        const float* query, size_t m, size_t D, size_t K,
+        const uint32_t* topk_id, const float* topk_score) {
+    if (n_groups == 0 ||
+        !native_validation::offsets(group_doc_starts, n_groups + 1)) return false;
+    size_t n_docs = static_cast<size_t>(group_doc_starts[n_groups]);
+    return native_validation::grouped_corpus(
+               panel_data, group_offsets, n_groups, doc_offsets, n_docs,
+               group_doc_starts, D, PT) &&
+           native_validation::query(query, m, D) &&
+           native_validation::scratch_extents(doc_offsets, n_docs + 1, TILE_MAX) &&
+           K > 0 && K <= n_docs && topk_id != nullptr && topk_score != nullptr;
+}
 
 // float32 guard on the per-document UB < tau pruning test (same constant and
 // rationale as cpp/wide_block_maxsim_bond).

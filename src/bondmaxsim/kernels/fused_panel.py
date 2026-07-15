@@ -44,7 +44,22 @@ import ctypes
 import numpy as np
 
 from bondmaxsim.config import REPO_ROOT
-from bondmaxsim.kernels._ctypes_util import f32p, fp, load_library, lp, u32p, u64p, up, csz
+from bondmaxsim.kernels._ctypes_util import (
+    NativeInputError,
+    PackedCorpusPanels,
+    f32p,
+    fp,
+    load_library,
+    lp,
+    u32p,
+    u64p,
+    up,
+    csz,
+    validate_k,
+    validate_order,
+    validate_qcum,
+    validate_query,
+)
 
 _FUSED_PANEL_LIB_PATH = REPO_ROOT / "cpp" / "fused_panel_maxsim" / "fused_panel_maxsim.so"
 
@@ -122,15 +137,35 @@ def run_fused_panel_brute(
     ids    : uint32 [K]
     scores : float32 [K]
     """
-    panel_data       = np.ascontiguousarray(panel_data,       dtype=np.float32)
-    group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
-    doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
-    group_doc_starts = np.ascontiguousarray(group_doc_starts, dtype=np.uint64)
-    Q = np.ascontiguousarray(Q, dtype=np.float32)
+    Q = validate_query(Q)
+    corpus = PackedCorpusPanels.from_arrays(
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q.shape[1]
+    )
+    return run_fused_panel_brute_validated(lib, corpus, Q, K, n_threads)
 
-    m = Q.shape[0]
-    D = Q.shape[1]
-    n_groups = len(group_offsets) - 1
+
+def run_fused_panel_brute_validated(
+    lib: ctypes.CDLL,
+    corpus: PackedCorpusPanels,
+    Q: np.ndarray,
+    K: int,
+    n_threads: int = 1,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Call the dense kernel with corpus validation already completed."""
+    if not isinstance(corpus, PackedCorpusPanels):
+        raise TypeError("corpus must be PackedCorpusPanels")
+    Q = validate_query(Q, corpus.dimension)
+    K = validate_k(K, corpus.n_documents)
+    if isinstance(n_threads, bool) or not isinstance(n_threads, (int, np.integer)):
+        raise NativeInputError("n_threads must be an integer")
+    if not -(2**31) <= int(n_threads) < 2**31:
+        raise NativeInputError("n_threads is not representable as a C int")
+    panel_data = corpus.data
+    group_offsets = corpus.group_offsets
+    doc_offsets = corpus.doc_offsets
+    group_doc_starts = corpus.group_doc_starts
+    m, D = Q.shape
+    n_groups = corpus.n_groups
 
     ids    = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
@@ -214,24 +249,73 @@ def run_fused_panel_bond(
     if bound == "cheap" and level != "doc":
         raise ValueError("bound='cheap' is only implemented for level='doc'.")
 
-    panel_data       = np.ascontiguousarray(panel_data,       dtype=np.float32)
-    group_offsets    = np.ascontiguousarray(group_offsets,    dtype=np.uint64)
-    doc_offsets      = np.ascontiguousarray(doc_offsets,      dtype=np.uint64)
-    group_doc_starts = np.ascontiguousarray(group_doc_starts, dtype=np.uint64)
-    Q         = np.ascontiguousarray(Q,     dtype=np.float32)
-    Qcum      = np.ascontiguousarray(Qcum,  dtype=np.float32)
-    order_u32 = np.ascontiguousarray(order, dtype=np.uint32)
+    Q = validate_query(Q)
+    corpus = PackedCorpusPanels.from_arrays(
+        panel_data, group_offsets, doc_offsets, group_doc_starts, Q.shape[1]
+    )
+    return run_fused_panel_bond_validated(
+        lib, corpus, Q, order, Qcum, shrink, tau_seed, K, n_threads,
+        level, checkpoints, bound,
+    )
 
-    m = Q.shape[0]
-    D = Q.shape[1]
-    n_groups = len(group_offsets) - 1
+
+def run_fused_panel_bond_validated(
+    lib: ctypes.CDLL,
+    corpus: PackedCorpusPanels,
+    Q: np.ndarray,
+    order: np.ndarray,
+    Qcum: np.ndarray,
+    shrink: float,
+    tau_seed: float,
+    K: int,
+    n_threads: int = 1,
+    level: str = "doc",
+    checkpoints: np.ndarray | list[int] | None = None,
+    bound: str = "tight",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Call a BOND kernel with corpus validation already completed."""
+    if not isinstance(corpus, PackedCorpusPanels):
+        raise TypeError("corpus must be PackedCorpusPanels")
+    Q = validate_query(Q, corpus.dimension)
+    order_u32 = validate_order(order, corpus.dimension)
+    Qcum = validate_qcum(Qcum, Q, order_u32)
+    K = validate_k(K, corpus.n_documents)
+    if level not in ("doc", "token"):
+        raise NativeInputError(f"unknown bond level: {level!r}")
+    if bound not in ("tight", "cheap"):
+        raise NativeInputError(f"unknown bound: {bound!r}")
+    if bound == "cheap" and level != "doc":
+        raise NativeInputError("bound='cheap' is only implemented for level='doc'")
+    if not np.isfinite(shrink) or not 0.0 <= shrink <= 1.0:
+        raise NativeInputError("shrink must be finite and in [0, 1]")
+    if np.isnan(tau_seed) or tau_seed == np.inf:
+        raise NativeInputError("tau_seed must be finite or -inf")
+    if isinstance(n_threads, bool) or not isinstance(n_threads, (int, np.integer)):
+        raise NativeInputError("n_threads must be an integer")
+    if not -(2**31) <= int(n_threads) < 2**31:
+        raise NativeInputError("n_threads is not representable as a C int")
+    panel_data = corpus.data
+    group_offsets = corpus.group_offsets
+    doc_offsets = corpus.doc_offsets
+    group_doc_starts = corpus.group_doc_starts
+    m, D = Q.shape
+    n_groups = corpus.n_groups
 
     ids    = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
     stats  = np.zeros(3, dtype=np.uint64)
 
     if checkpoints is not None:
-        cps_u32 = np.ascontiguousarray(checkpoints, dtype=np.uint32)
+        raw_checkpoints = np.asarray(checkpoints)
+        if raw_checkpoints.ndim != 1 or not np.issubdtype(raw_checkpoints.dtype, np.integer):
+            raise NativeInputError("checkpoints must be a one-dimensional integer sequence")
+        if raw_checkpoints.size > 8:
+            raise NativeInputError("at most eight bound checkpoints are supported")
+        if raw_checkpoints.size and (
+            np.min(raw_checkpoints) < 0 or int(np.max(raw_checkpoints)) > np.iinfo(np.uint32).max
+        ):
+            raise NativeInputError("checkpoints are not representable as uint32")
+        cps_u32 = np.ascontiguousarray(raw_checkpoints, dtype=np.uint32)
         cps_ptr, n_cps = up(cps_u32), len(cps_u32)
     else:
         cps_ptr, n_cps = None, 0

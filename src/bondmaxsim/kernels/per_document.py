@@ -33,7 +33,22 @@ import numpy as np
 
 from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.packing import DEFAULT_FETCH
-from bondmaxsim.kernels._ctypes_util import f32p, fp, load_library, lp, u32p, u64p, up, csz
+from bondmaxsim.kernels._ctypes_util import (
+    NativeInputError,
+    PackedCorpusDimMajor,
+    f32p,
+    fp,
+    load_library,
+    lp,
+    u32p,
+    u64p,
+    up,
+    csz,
+    validate_k,
+    validate_order,
+    validate_qcum,
+    validate_query,
+)
 
 _PER_DOC_LIB_PATH = REPO_ROOT / "cpp" / "per_document_oracle" / "per_document_oracle.so"
 
@@ -123,26 +138,16 @@ def run_accounting(
     scores : float32 [K]
     stats  : uint64 [3] — [cells_scanned, docs_pruned, tokens_pruned]
     """
-    Q    = np.ascontiguousarray(Q,    dtype=np.float32)
-    Qcum = np.ascontiguousarray(Qcum, dtype=np.float32)
-    order_u32 = np.ascontiguousarray(order, dtype=np.uint32)
-    fetch     = np.ascontiguousarray(DEFAULT_FETCH, dtype=np.uint32)
+    Q = validate_query(Q)
+    corpus = PackedCorpusDimMajor.from_arrays(flat, offs, Q.shape[1])
+    return run_accounting_validated(lib, corpus, Q, order, Qcum, shrink, K)
 
-    m      = Q.shape[0]
-    n_docs = len(offs) - 1
 
-    ids    = np.empty(K, dtype=np.uint32)
-    scores = np.empty(K, dtype=np.float32)
-    stats  = np.zeros(3,  dtype=np.uint64)
-
-    lib.maxsim_knn_accounting(
-        fp(flat), lp(offs), csz(n_docs),
-        fp(Q), csz(m), csz(Q.shape[1]),
-        up(order_u32), up(fetch), csz(len(fetch)),
-        fp(Qcum), ctypes.c_float(shrink), csz(K),
-        up(ids), fp(scores), lp(stats),
+def run_accounting_validated(lib, corpus, Q, order, Qcum, shrink, K):
+    """Accounting call with reusable corpus validation."""
+    return _run_knn_validated(
+        lib.maxsim_knn_accounting, corpus, Q, order, Qcum, shrink, K
     )
-    return ids, scores, stats
 
 
 def run_throughput(
@@ -161,25 +166,40 @@ def run_throughput(
     stats[0] (cells_scanned) is NOT the true algorithmic work in this mode
     (warm dense phase inflates the count) — see Stage 1 §6.
     """
-    Q    = np.ascontiguousarray(Q,    dtype=np.float32)
-    Qcum = np.ascontiguousarray(Qcum, dtype=np.float32)
-    order_u32 = np.ascontiguousarray(order, dtype=np.uint32)
-    fetch     = np.ascontiguousarray(DEFAULT_FETCH, dtype=np.uint32)
+    Q = validate_query(Q)
+    corpus = PackedCorpusDimMajor.from_arrays(flat, offs, Q.shape[1])
+    return run_throughput_validated(lib, corpus, Q, order, Qcum, shrink, K)
 
-    m      = Q.shape[0]
-    n_docs = len(offs) - 1
 
-    ids    = np.empty(K, dtype=np.uint32)
+def run_throughput_validated(lib, corpus, Q, order, Qcum, shrink, K):
+    """Throughput call with reusable corpus validation."""
+    return _run_knn_validated(
+        lib.maxsim_knn_throughput, corpus, Q, order, Qcum, shrink, K
+    )
+
+
+def _run_knn_validated(fn, corpus, Q, order, Qcum, shrink, K):
+    if not isinstance(corpus, PackedCorpusDimMajor):
+        raise TypeError("corpus must be PackedCorpusDimMajor")
+    Q = validate_query(Q, corpus.dimension)
+    order_u32 = validate_order(order, corpus.dimension)
+    Qcum = validate_qcum(Qcum, Q, order_u32)
+    K = validate_k(K, corpus.n_documents)
+    if not np.isfinite(shrink) or not 0.0 <= shrink <= 1.0:
+        raise NativeInputError("shrink must be finite and in [0, 1]")
+    fetch = np.ascontiguousarray(DEFAULT_FETCH, dtype=np.uint32)
+    ids = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
-    stats  = np.zeros(3,  dtype=np.uint64)
-
-    lib.maxsim_knn_throughput(
-        fp(flat), lp(offs), csz(n_docs),
-        fp(Q), csz(m), csz(Q.shape[1]),
+    stats = np.zeros(3, dtype=np.uint64)
+    status = fn(
+        fp(corpus.data), lp(corpus.doc_offsets), csz(corpus.n_documents),
+        fp(Q), csz(Q.shape[0]), csz(corpus.dimension),
         up(order_u32), up(fetch), csz(len(fetch)),
         fp(Qcum), ctypes.c_float(shrink), csz(K),
         up(ids), fp(scores), lp(stats),
     )
+    if status == np.iinfo(np.uint64).max:
+        raise RuntimeError(f"{fn.__name__} rejected the native call")
     return ids, scores, stats
 
 
@@ -200,17 +220,27 @@ def run_full(
     Q    : float32 [m, D]
     K    : int
     """
-    Q = np.ascontiguousarray(Q, dtype=np.float32)
-    m      = Q.shape[0]
-    n_docs = len(offs) - 1
+    Q = validate_query(Q)
+    corpus = PackedCorpusDimMajor.from_arrays(flat, offs, Q.shape[1])
+    return run_full_validated(lib, corpus, Q, K)
+
+
+def run_full_validated(lib, corpus, Q, K):
+    """Dense per-document call with reusable corpus validation."""
+    if not isinstance(corpus, PackedCorpusDimMajor):
+        raise TypeError("corpus must be PackedCorpusDimMajor")
+    Q = validate_query(Q, corpus.dimension)
+    K = validate_k(K, corpus.n_documents)
 
     ids    = np.empty(K, dtype=np.uint32)
     scores = np.empty(K, dtype=np.float32)
 
-    lib.maxsim_full(
-        fp(flat), lp(offs), csz(n_docs),
-        fp(Q), csz(m), csz(Q.shape[1]),
+    status = lib.maxsim_full(
+        fp(corpus.data), lp(corpus.doc_offsets), csz(corpus.n_documents),
+        fp(Q), csz(Q.shape[0]), csz(corpus.dimension),
         csz(K),
         up(ids), fp(scores),
     )
+    if status == np.iinfo(np.uint64).max:
+        raise RuntimeError("maxsim_full rejected the native call")
     return ids, scores

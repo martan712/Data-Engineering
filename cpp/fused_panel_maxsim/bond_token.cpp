@@ -208,14 +208,19 @@ uint64_t fused_panel_maxsim_bond_token(
         float shrink, float tau_seed, size_t K, int n_threads,
         uint32_t* topk_id, float* topk_score, uint64_t* stats) {
 
-    (void)group_offsets;
-    QueryTiles qt(query, m, D);
-    if (!qt.valid || panel_data == nullptr || group_offsets == nullptr ||
-        doc_offsets == nullptr || group_doc_starts == nullptr || order == nullptr ||
-        Qcum == nullptr || topk_id == nullptr || topk_score == nullptr ||
-        n_groups == 0 || K == 0 || K > (size_t)group_doc_starts[n_groups]) {
+    if (!validate_fused_base(
+            panel_data, group_offsets, n_groups, doc_offsets, group_doc_starts,
+            query, m, D, K, topk_id, topk_score) ||
+        !native_validation::order(order, D) ||
+        !native_validation::qcum_matches(Qcum, query, order, m, D) ||
+        !native_validation::scalar_parameters(shrink, tau_seed) ||
+        !native_validation::checked_product(m, MAX_CPS) ||
+        n_checkpoints > MAX_CPS - 1 ||
+        (n_checkpoints > 0 && checkpoints == nullptr)) {
         return NATIVE_ERROR;
     }
+    QueryTiles qt(query, m, D);
+    if (!qt.valid) return NATIVE_ERROR;
     TopK global(K);
     std::atomic<float> shared_tau{-std::numeric_limits<float>::infinity()};
     std::atomic<uint64_t> cells{0}, docs_pruned{0}, tokens_pruned{0};

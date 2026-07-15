@@ -48,12 +48,11 @@ uint64_t fused_panel_maxsim_brute(
         size_t K, int n_threads,
         uint32_t* topk_id, float* topk_score) {
 
-    (void)group_offsets;
+    if (!validate_fused_base(
+            panel_data, group_offsets, n_groups, doc_offsets, group_doc_starts,
+            query, m, D, K, topk_id, topk_score)) return NATIVE_ERROR;
     QueryTiles qt(query, m, D);
-    if (!qt.valid || panel_data == nullptr || group_offsets == nullptr ||
-        doc_offsets == nullptr || group_doc_starts == nullptr ||
-        topk_id == nullptr || topk_score == nullptr || n_groups == 0 || K == 0 ||
-        K > (size_t)group_doc_starts[n_groups]) return NATIVE_ERROR;
+    if (!qt.valid) return NATIVE_ERROR;
     TopK global(K);
 
 #ifdef _OPENMP
