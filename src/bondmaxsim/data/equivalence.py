@@ -14,8 +14,12 @@ import numpy as np
 
 from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.config import DATASETS, FrozenDataConfiguration, load_data_configuration
-from bondmaxsim.data.generation import DataGenerationError, validate_generated_dataset
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.data.beir_ids import load_qrels_tsv
+from bondmaxsim.data.generation import validate_generated_dataset
+from bondmaxsim.data.packing import build_qcum
+from bondmaxsim.oracle.agreement import validate_boundary_tie_equivalence
+from bondmaxsim.oracle.checkpoint_sim import simulate_fused_doc_pruning
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 
 
 class EquivalenceError(RuntimeError):
@@ -62,16 +66,55 @@ def _lengths(values: np.ndarray, starts: np.ndarray) -> np.ndarray:
     return np.append(starts[1:], len(values)) - starts
 
 
+_DIFFERENCE_THRESHOLDS = (0.0, 1e-7, 1e-6, 1e-5, 1e-4)
+_DIFFERENCE_CHUNK = 1_000_000
+_QUANTILE_SAMPLE = 100_000
+
+
 def _array_comparison(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
     same_shape = left.shape == right.shape
     same_dtype = left.dtype == right.dtype
     bitwise = bool(same_shape and same_dtype and np.array_equal(left, right))
     maximum = None
     mean = None
+    quantiles = None
+    difference_counts = None
+    difference_sample_size = 0
     if same_shape and np.issubdtype(left.dtype, np.number) and np.issubdtype(right.dtype, np.number):
-        difference = np.abs(left.astype(np.float64) - right.astype(np.float64))
-        maximum = float(difference.max(initial=0.0))
-        mean = float(difference.mean()) if difference.size else 0.0
+        left_flat = left.reshape(-1)
+        right_flat = right.reshape(-1)
+        maximum = 0.0
+        total = 0.0
+        counts = {threshold: 0 for threshold in _DIFFERENCE_THRESHOLDS}
+        for begin in range(0, left_flat.size, _DIFFERENCE_CHUNK):
+            end = min(begin + _DIFFERENCE_CHUNK, left_flat.size)
+            difference = np.abs(
+                left_flat[begin:end].astype(np.float64)
+                - right_flat[begin:end].astype(np.float64)
+            )
+            maximum = max(maximum, float(difference.max(initial=0.0)))
+            total += float(difference.sum(dtype=np.float64))
+            for threshold in counts:
+                counts[threshold] += int(np.count_nonzero(difference > threshold))
+        mean = total / left_flat.size if left_flat.size else 0.0
+        difference_counts = {
+            f"gt_{threshold:.0e}": count for threshold, count in counts.items()
+        }
+        if left_flat.size:
+            difference_sample_size = min(_QUANTILE_SAMPLE, left_flat.size)
+            indices = np.linspace(
+                0, left_flat.size - 1, difference_sample_size, dtype=np.int64
+            )
+            sample = np.abs(
+                left_flat[indices].astype(np.float64)
+                - right_flat[indices].astype(np.float64)
+            )
+            quantiles = {
+                "p50": float(np.quantile(sample, 0.50)),
+                "p90": float(np.quantile(sample, 0.90)),
+                "p99": float(np.quantile(sample, 0.99)),
+                "p99_9": float(np.quantile(sample, 0.999)),
+            }
     return {
         "left_shape": list(left.shape),
         "right_shape": list(right.shape),
@@ -82,6 +125,10 @@ def _array_comparison(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
         "bitwise_equal": bitwise,
         "max_abs_difference": maximum,
         "mean_abs_difference": mean,
+        "difference_counts": difference_counts,
+        "difference_quantiles": quantiles,
+        "difference_quantile_method": "evenly_spaced_deterministic_sample",
+        "difference_quantile_sample_size": difference_sample_size,
     }
 
 
@@ -106,6 +153,43 @@ def _legacy_quality(legacy_root: Path, dataset: str) -> tuple[np.ndarray, np.nda
     return query_values, query_starts, [str(value) for value in sidecar["query_ids"][: len(query_starts)]]
 
 
+def _per_query_quality(
+    ranked_ids: np.ndarray,
+    corpus_ids: Sequence[str],
+    judgments: Mapping[str, int],
+) -> tuple[float, float, float]:
+    relevances = [int(judgments.get(str(corpus_ids[int(index)]), 0)) for index in ranked_ids]
+    dcg = sum(
+        (2.0**relevance - 1.0) / np.log2(rank + 2.0)
+        for rank, relevance in enumerate(relevances[:10])
+        if relevance > 0
+    )
+    ideal = sorted((int(value) for value in judgments.values()), reverse=True)[:10]
+    idcg = sum(
+        (2.0**relevance - 1.0) / np.log2(rank + 2.0)
+        for rank, relevance in enumerate(ideal)
+        if relevance > 0
+    )
+    relevant = sum(int(value) > 0 for value in judgments.values())
+    retrieved = sum(relevance > 0 for relevance in relevances[:100])
+    reciprocal_rank = next(
+        (1.0 / (rank + 1.0) for rank, relevance in enumerate(relevances[:10]) if relevance > 0),
+        0.0,
+    )
+    return (dcg / idcg if idcg else 0.0, retrieved / relevant if relevant else 0.0, reciprocal_rank)
+
+
+def _mean_quality(rows: Sequence[tuple[float, float, float]]) -> dict[str, float] | None:
+    if not rows:
+        return None
+    values = np.asarray(rows, dtype=np.float64)
+    return {
+        "ndcg_at_10": float(values[:, 0].mean()),
+        "recall_at_100": float(values[:, 1].mean()),
+        "mrr_at_10": float(values[:, 2].mean()),
+    }
+
+
 def _topk_comparison(
     legacy_docs: np.ndarray,
     legacy_starts: np.ndarray,
@@ -118,6 +202,12 @@ def _topk_comparison(
     *,
     k: int,
     limit: int | None,
+    left_query_ids: Sequence[str] | None = None,
+    right_query_ids: Sequence[str] | None = None,
+    left_corpus_ids: Sequence[str] | None = None,
+    right_corpus_ids: Sequence[str] | None = None,
+    left_qrels: Mapping[str, Mapping[str, int]] | None = None,
+    right_qrels: Mapping[str, Mapping[str, int]] | None = None,
 ) -> dict[str, Any]:
     if len(legacy_starts) != len(generated_starts):
         return {"status": "not_comparable", "reason": "document count differs"}
@@ -128,21 +218,50 @@ def _topk_comparison(
     query_count = len(left_queries) if limit is None else min(limit, len(left_queries))
     equal_sets = 0
     equal_scores = 0
+    boundary_equal = 0
     maximum_score_difference = 0.0
     failures: list[int] = []
+    boundary_failures: list[dict[str, Any]] = []
+    left_quality: list[tuple[float, float, float]] = []
+    right_quality: list[tuple[float, float, float]] = []
     for index, (left_query, right_query) in enumerate(
         zip(left_queries[:query_count], right_queries[:query_count], strict=True)
     ):
-        left_ids, left_scores = exact_maxsim_topk(
-            left_query, legacy_docs, legacy_starts, min(k, len(legacy_starts))
-        )
-        right_ids, right_scores = exact_maxsim_topk(
-            right_query, generated_docs, generated_starts, min(k, len(generated_starts))
-        )
+        actual_k = min(k, len(legacy_starts), len(generated_starts))
+        left_all_scores = exact_maxsim_scores(left_query, legacy_docs, legacy_starts)
+        right_all_scores = exact_maxsim_scores(right_query, generated_docs, generated_starts)
+        left_ids, left_scores = topk_from_scores(left_all_scores, actual_k)
+        right_ids, right_scores = topk_from_scores(right_all_scores, actual_k)
         set_equal = set(left_ids.tolist()) == set(right_ids.tolist())
         score_equal = np.array_equal(left_scores, right_scores)
         equal_sets += int(set_equal)
         equal_scores += int(score_equal)
+        forward = validate_boundary_tie_equivalence(
+            right_ids,
+            left_ids,
+            left_scores,
+            k=actual_k,
+            num_documents=len(legacy_starts),
+            exact_scores_by_id=left_all_scores,
+        )
+        reverse = validate_boundary_tie_equivalence(
+            left_ids,
+            right_ids,
+            right_scores,
+            k=actual_k,
+            num_documents=len(generated_starts),
+            exact_scores_by_id=right_all_scores,
+        )
+        tie_equal = forward.exact_gate_passed and reverse.exact_gate_passed
+        boundary_equal += int(tie_equal)
+        if not tie_equal and len(boundary_failures) < 20:
+            boundary_failures.append(
+                {
+                    "query_index": index,
+                    "legacy_oracle_failures": list(forward.failure_codes),
+                    "generated_oracle_failures": list(reverse.failure_codes),
+                }
+            )
         if left_scores.shape == right_scores.shape:
             maximum_score_difference = max(
                 maximum_score_difference,
@@ -150,13 +269,100 @@ def _topk_comparison(
             )
         if not set_equal:
             failures.append(index)
+        if (
+            left_qrels is not None
+            and right_qrels is not None
+            and left_query_ids is not None
+            and right_query_ids is not None
+            and left_corpus_ids is not None
+            and right_corpus_ids is not None
+        ):
+            left_qid = str(left_query_ids[index])
+            right_qid = str(right_query_ids[index])
+            if left_qid in left_qrels and right_qid in right_qrels:
+                left_quality.append(
+                    _per_query_quality(left_ids, left_corpus_ids, left_qrels[left_qid])
+                )
+                right_quality.append(
+                    _per_query_quality(right_ids, right_corpus_ids, right_qrels[right_qid])
+                )
     return {
         "status": "complete" if limit is None or query_count == len(left_queries) else "sampled",
         "query_count": query_count,
         "topk_set_equal_count": equal_sets,
         "topk_score_bitwise_equal_count": equal_scores,
+        "boundary_tie_equivalent_count": boundary_equal,
+        "boundary_tie_complete": boundary_equal == query_count,
         "max_topk_score_abs_difference": maximum_score_difference,
         "first_set_mismatch_indices": failures[:20],
+        "first_boundary_tie_failures": boundary_failures,
+        "qrels_metrics": {
+            "legacy": _mean_quality(left_quality),
+            "generated": _mean_quality(right_quality),
+            "evaluated_queries": len(left_quality),
+        },
+    }
+
+
+def _built_in_accounting(
+    documents: np.ndarray,
+    document_starts: np.ndarray,
+    queries: np.ndarray,
+    query_starts: np.ndarray,
+    *,
+    k: int,
+) -> dict[str, Any]:
+    """Deterministic, bounded NumPy mechanism accounting for one query."""
+    if len(document_starts) == 0 or len(query_starts) == 0:
+        return {"status": "not_comparable", "reason": "empty documents or queries"}
+    document_count = min(256, len(document_starts))
+    token_end = (
+        int(document_starts[document_count])
+        if document_count < len(document_starts)
+        else len(documents)
+    )
+    subset_documents = np.ascontiguousarray(documents[:token_end])
+    subset_starts = np.ascontiguousarray(document_starts[:document_count])
+    query_end = int(query_starts[1]) if len(query_starts) > 1 else len(queries)
+    query = np.ascontiguousarray(queries[:query_end])
+    dimension = int(query.shape[1])
+    order = np.arange(dimension, dtype=np.int64)
+    qcum = build_qcum(query, order)
+    scores = exact_maxsim_scores(query, subset_documents, subset_starts)
+    _, top_scores = topk_from_scores(scores, min(k, document_count))
+    checkpoint = min(112, dimension - 1)
+    result = simulate_fused_doc_pruning(
+        query,
+        subset_documents,
+        subset_starts,
+        order,
+        qcum,
+        (checkpoint,),
+        float(top_scores[-1]) - 1e-3,
+        shrink=1.0,
+    )
+    return {
+        "status": "complete",
+        "method": "numpy-fused-doc-oracle-tau",
+        "query_index": 0,
+        "document_count": document_count,
+        "checkpoints": result.checkpoints,
+        "documents_pruned": result.docs_pruned_total,
+        "documents_pruned_per_checkpoint": result.docs_pruned_per_checkpoint.tolist(),
+        "cells_scanned_pct": result.cells_scanned_pct,
+        "cells_scanned_pct_padded": result.cells_scanned_pct_padded,
+    }
+
+
+def _accounting_comparison(
+    legacy: Mapping[str, Any], generated: Mapping[str, Any]
+) -> dict[str, Any]:
+    complete = legacy.get("status") == "complete" and generated.get("status") == "complete"
+    return {
+        "status": "complete" if complete else "not_comparable",
+        "legacy": dict(legacy),
+        "generated": dict(generated),
+        "equal": bool(complete and legacy == generated),
     }
 
 
@@ -169,10 +375,13 @@ def compare_dataset(
     k: int = 10,
     topk_limit: int | None = None,
     representative_accounting: Callable[[Path, str], Mapping[str, Any]] | None = None,
+    fixture: bool = False,
 ) -> Mapping[str, Any]:
     """Compare every identity/data axis and return the predeclared decision."""
     frozen = frozen or load_data_configuration()
-    validate_generated_dataset(generated_root, dataset, frozen=frozen)
+    validate_generated_dataset(
+        generated_root, dataset, frozen=frozen, fixture=fixture
+    )
     legacy_ids = _ids(legacy_root / "beir_ids" / f"{dataset}_ids.json")
     generated_ids = _ids(generated_root / "beir_ids" / f"{dataset}_ids.json")
     with np.load(legacy_root / "embeddings" / f"{dataset}.npz") as values:
@@ -192,14 +401,21 @@ def compare_dataset(
         generated_quality = values["query_values"].copy()
         generated_quality_starts = values["query_starts"].copy()
         generated_quality_ids = [str(value) for value in values["query_ids"]]
+    legacy_qrels_path = legacy_root / "qrels" / f"{dataset}.tsv"
+    generated_qrels_path = generated_root / "qrels" / f"{dataset}.tsv"
+    legacy_qrels = load_qrels_tsv(legacy_qrels_path)
+    generated_qrels = load_qrels_tsv(generated_qrels_path)
 
     identity = {
         "corpus_ids_order_equal": list(legacy_ids["corpus_ids"]) == list(generated_ids["corpus_ids"]),
+        "source_query_ids_order_equal": list(legacy_ids["query_ids"])
+        == list(generated_ids["query_ids"]),
         "mechanism_query_ids_order_equal": list(legacy_ids["query_ids"][: len(legacy_mechanism_starts)])
         == list(generated_ids["mechanism_query_ids"]),
         "quality_query_ids_order_equal": legacy_quality_ids == generated_quality_ids,
-        "qrels_checksum_equal": _sha256(legacy_root / "qrels" / f"{dataset}.tsv")
-        == _sha256(generated_root / "qrels" / f"{dataset}.tsv"),
+        "qrels_checksum_equal": _sha256(legacy_qrels_path)
+        == _sha256(generated_qrels_path),
+        "qrels_semantically_equal": legacy_qrels == generated_qrels,
     }
     arrays = {
         "documents": _array_comparison(legacy_docs, generated_docs),
@@ -216,6 +432,10 @@ def compare_dataset(
         ),
         "quality_queries": _array_comparison(legacy_quality, generated_quality),
         "quality_query_starts": _array_comparison(legacy_quality_starts, generated_quality_starts),
+        "quality_token_lengths": _array_comparison(
+            _lengths(legacy_quality, legacy_quality_starts),
+            _lengths(generated_quality, generated_quality_starts),
+        ),
     }
     ranking = {"mechanism": {"status": "not_comparable", "reason": "identity or shape mismatch"}, "quality": {"status": "not_comparable", "reason": "identity or shape mismatch"}}
     if identity["corpus_ids_order_equal"] and identity["mechanism_query_ids_order_equal"] and arrays["document_starts"]["same_shape"] and arrays["mechanism_query_starts"]["same_shape"]:
@@ -241,24 +461,89 @@ def compare_dataset(
             legacy_quality_starts,
             generated_quality,
             generated_quality_starts,
-            k=k,
+            k=max(k, 100),
             limit=topk_limit,
+            left_query_ids=legacy_quality_ids,
+            right_query_ids=generated_quality_ids,
+            left_corpus_ids=[str(value) for value in legacy_ids["corpus_ids"]],
+            right_corpus_ids=[str(value) for value in generated_ids["corpus_ids"]],
+            left_qrels=legacy_qrels,
+            right_qrels=generated_qrels,
         )
-    accounting = None
-    if representative_accounting is not None:
-        accounting = {
-            "legacy": dict(representative_accounting(legacy_root, dataset)),
-            "generated": dict(representative_accounting(generated_root, dataset)),
+    if representative_accounting is None:
+        legacy_accounting = _built_in_accounting(
+            legacy_docs,
+            legacy_doc_starts,
+            legacy_mechanism,
+            legacy_mechanism_starts,
+            k=k,
+        )
+        generated_accounting = _built_in_accounting(
+            generated_docs,
+            generated_doc_starts,
+            generated_mechanism,
+            generated_mechanism_starts,
+            k=k,
+        )
+    else:
+        legacy_accounting = {
+            "status": "complete",
+            "method": "external-callback",
+            "values": dict(representative_accounting(legacy_root, dataset)),
         }
+        generated_accounting = {
+            "status": "complete",
+            "method": "external-callback",
+            "values": dict(representative_accounting(generated_root, dataset)),
+        }
+    accounting = _accounting_comparison(legacy_accounting, generated_accounting)
+
+    qrels_metrics = ranking["quality"].get("qrels_metrics", {})
+    metrics_complete = bool(
+        ranking["quality"].get("status") == "complete"
+        and qrels_metrics.get("evaluated_queries") == len(legacy_quality_ids)
+        and qrels_metrics.get("legacy") is not None
+        and qrels_metrics.get("generated") is not None
+    )
+    qrels_comparison = {
+        "status": "complete" if metrics_complete else "not_comparable",
+        "checksum_equal": identity["qrels_checksum_equal"],
+        "semantic_equal": identity["qrels_semantically_equal"],
+        "legacy_metrics": qrels_metrics.get("legacy"),
+        "generated_metrics": qrels_metrics.get("generated"),
+        "metrics_equal": bool(
+            metrics_complete
+            and qrels_metrics.get("legacy") == qrels_metrics.get("generated")
+        ),
+    }
     bitwise_equivalent = bool(
         all(identity.values())
         and all(row["bitwise_equal"] for row in arrays.values())
     )
-    decision = (
-        "bitwise_equivalent_non_timing_evidence_may_remain_eligible"
-        if bitwise_equivalent
-        else "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    ranking_complete = all(
+        row.get("status") == "complete" and row.get("boundary_tie_complete") is True
+        for row in ranking.values()
     )
+    audit_complete = bool(
+        topk_limit is None
+        and ranking_complete
+        and qrels_comparison["status"] == "complete"
+        and accounting["status"] == "complete"
+    )
+    cross_checks_equal = bool(
+        ranking_complete
+        and qrels_comparison["semantic_equal"]
+        and qrels_comparison["metrics_equal"]
+        and accounting["equal"]
+    )
+    if not bitwise_equivalent:
+        decision = "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    elif not audit_complete:
+        decision = "diagnostic_incomplete_no_eligibility_decision"
+    elif cross_checks_equal:
+        decision = "bitwise_equivalent_dataset_audit_complete_aggregate_required"
+    else:
+        decision = "audit_inconsistency_stop_no_eligibility_decision"
     return {
         "schema_name": "bondmaxsim.data-equivalence",
         "schema_version": "1.0.0",
@@ -267,8 +552,59 @@ def compare_dataset(
         "identity": identity,
         "arrays": arrays,
         "rankings": ranking,
+        "qrels": qrels_comparison,
         "representative_accounting": accounting,
         "bitwise_equivalent": bitwise_equivalent,
+        "audit_complete": audit_complete,
+        "cross_checks_equal": cross_checks_equal,
+        "final_eligibility": False,
+        "decision": decision,
+    }
+
+
+def aggregate_equivalence_reports(
+    reports: Sequence[Mapping[str, Any]], selected_datasets: Sequence[str]
+) -> Mapping[str, Any]:
+    """Issue final eligibility only for one complete, unsampled four-dataset audit."""
+    selected = tuple(selected_datasets)
+    report_datasets = tuple(str(report.get("dataset")) for report in reports)
+    scope_complete = (
+        len(selected) == len(DATASETS)
+        and len(set(selected)) == len(DATASETS)
+        and set(selected) == set(DATASETS)
+        and len(report_datasets) == len(DATASETS)
+        and set(report_datasets) == set(DATASETS)
+    )
+    audits_complete = bool(
+        scope_complete and all(report.get("audit_complete") is True for report in reports)
+    )
+    bitwise_equivalent = bool(
+        audits_complete and all(report.get("bitwise_equivalent") is True for report in reports)
+    )
+    cross_checks_equal = bool(
+        audits_complete and all(report.get("cross_checks_equal") is True for report in reports)
+    )
+    final_eligibility = bitwise_equivalent and cross_checks_equal
+    if not scope_complete:
+        decision = "diagnostic_subset_no_eligibility_decision"
+    elif any(report.get("bitwise_equivalent") is False for report in reports):
+        decision = "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    elif not audits_complete:
+        decision = "diagnostic_incomplete_no_eligibility_decision"
+    elif final_eligibility:
+        decision = "bitwise_equivalent_non_timing_evidence_may_remain_eligible"
+    else:
+        decision = "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    return {
+        "schema_name": "bondmaxsim.data-equivalence-suite",
+        "schema_version": "1.0.0",
+        "selected_datasets": list(selected),
+        "scope_complete": scope_complete,
+        "audits_complete": audits_complete,
+        "bitwise_equivalent": bitwise_equivalent,
+        "cross_checks_equal": cross_checks_equal,
+        "final_eligibility": final_eligibility,
+        "reports": list(reports),
         "decision": decision,
     }
 
@@ -291,16 +627,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         for dataset in selected
     ]
-    aggregate = {
-        "schema_name": "bondmaxsim.data-equivalence-suite",
-        "schema_version": "1.0.0",
-        "reports": reports,
-        "decision": (
-            "bitwise_equivalent_non_timing_evidence_may_remain_eligible"
-            if all(report["bitwise_equivalent"] for report in reports)
-            else "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
-        ),
-    }
+    aggregate = aggregate_equivalence_reports(reports, selected)
     _atomic_json(arguments.output, aggregate)
     print(json.dumps({"output": str(arguments.output), "decision": aggregate["decision"]}, sort_keys=True))
     return 0
