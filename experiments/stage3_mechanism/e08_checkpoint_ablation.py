@@ -156,11 +156,22 @@ def run_dataset(dataset: str) -> None:
             elapsed = time.perf_counter() - t1
 
             recall = min(rec_1t.recall_vs_exact_at_10, rec_mt.recall_vs_exact_at_10)
+            agreement_records = (rec_1t, rec_mt)
             arm = {
                 "dimension_order": order,
                 "checkpoints": list(cps),
                 "threshold_policy": POLICY,
                 "recall_vs_exact_at_10": recall,
+                "strict_top_k_set_equal": all(
+                    r.strict_top_k_set_equal for r in agreement_records
+                ),
+                "boundary_tie_equivalent": all(
+                    r.boundary_tie_equivalent for r in agreement_records
+                ),
+                "agreement_failure_codes": sorted({
+                    code for r in agreement_records
+                    for code in (r.agreement_failure_codes or [])
+                }),
                 "ms_per_query_1t": rec_1t.ms_per_query,
                 "ms_per_query_mt": rec_mt.ms_per_query,
                 "pruned_docs_pct_fused": rec_mt.pruned_docs_pct,
@@ -173,10 +184,10 @@ def run_dataset(dataset: str) -> None:
                   f"prune={arm['pruned_docs_pct_fused']:.2f}%  "
                   f"sim_cells={sim_cells:.1f}%  [{elapsed:.1f}s]")
 
-            if recall < 1.0:
+            if not arm["boundary_tie_equivalent"]:
                 raise RuntimeError(
-                    f"Exact-agreement failed at shrink=1: order={order!r} "
-                    f"checkpoints={cps} recall={recall}"
+                    f"Verified exact gate failed: order={order!r} "
+                    f"checkpoints={cps} failures={arm['agreement_failure_codes']}"
                 )
 
     # Dense fused baseline (no checkpoints) at both thread counts.

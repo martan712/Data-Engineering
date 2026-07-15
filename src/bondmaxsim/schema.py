@@ -67,8 +67,9 @@ class ResultRecord:
     # Retrieval quality
     # ------------------------------------------------------------------
     recall_vs_exact_at_10: Optional[float]
-    """Recall@10 vs exact MaxSim (set-agreement; must be 1.0 for shrink=1,
-    Stage 1 §2.5).  None when exact MaxSim is not the reference."""
+    """Set recall@10 against one exact-MaxSim top-k tie-breaking choice.
+    This is not strict equality or verified tie equivalence. None when exact
+    MaxSim is not the reference."""
 
     nDCG_at_10: Optional[float]
     """nDCG@10 against qrels.  None when qrels not available."""
@@ -134,6 +135,16 @@ class ResultRecord:
     before full scoring (Algorithmic work / accounting group, conceptually
     next to `pruned_docs_pct`).  Produced by accounting-mode kernel
     (`stats[2]`, Stage 1 §5.3)."""
+
+    strict_top_k_set_equal: Optional[bool] = field(default=None)
+    """Whether every validated query returned exactly the oracle top-k ID set."""
+
+    boundary_tie_equivalent: Optional[bool] = field(default=None)
+    """Whether every query was strict or differed only by independently
+    exact-scored substitutions at the fp32 top-k boundary."""
+
+    agreement_failure_codes: Optional[list[str]] = field(default=None)
+    """Stable failure codes from the repaired correctness validator."""
 
     # ------------------------------------------------------------------
     # Free-text notes

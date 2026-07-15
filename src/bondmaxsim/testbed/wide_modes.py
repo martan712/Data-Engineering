@@ -26,8 +26,11 @@ from bondmaxsim.kernels.wide_block import (
     run_wide_block_accounting_validated,
     run_wide_block_throughput_validated,
 )
-from bondmaxsim.oracle.agreement import exact_agreement
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import (
+    aggregate_agreement_results,
+    validate_boundary_tie_equivalence,
+)
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
 from bondmaxsim.testbed.packing_cache import PackingCache
@@ -41,6 +44,7 @@ def run_wide_accounting_mode(
     config: RunConfig,
     exact_ids_list: Optional[list[np.ndarray]] = None,
     exact_scores_list: Optional[list[np.ndarray]] = None,
+    exact_full_scores_list: Optional[list[np.ndarray]] = None,
 ) -> tuple[ResultRecord, Optional[np.ndarray], Optional[np.ndarray]]:
     """accounting_mode() dispatch target for method="wide_block_maxsim_bond".
 
@@ -59,27 +63,33 @@ def run_wide_accounting_mode(
 
     # Exact top-k is order-independent: use pre-computed list if provided
     # (Runner caches it across dimension-order calls), else compute here.
-    if exact_ids_list is None:
-        exact_ids_list = [
-            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+    if exact_full_scores_list is None:
+        exact_full_scores_list = [
+            exact_maxsim_scores(q, packing.flat_tokens, packing.doc_starts)
             for q in queries
         ]
-
-    if exact_scores_list is None:
-        exact_scores_list = [None] * len(queries)
+    if exact_ids_list is None or exact_scores_list is None:
+        exact_pairs = [topk_from_scores(scores, K) for scores in exact_full_scores_list]
+        exact_ids_list = [ids for ids, _ in exact_pairs]
+        exact_scores_list = [scores for _, scores in exact_pairs]
 
     # Pre-prepare all query inputs sequentially (triggers lazy cache builds,
     # resolve_tau_seed, and Qcum computation before parallelism starts).
     PreparedQuery = tuple  # (corpus, Q_eff, order, Qcum, tau, exact ids/scores, m)
     prepared: list[PreparedQuery] = []
-    for query, exact_ids, exact_scores in zip(queries, exact_ids_list, exact_scores_list):
+    for query, exact_ids, exact_scores, exact_full_scores in zip(
+        queries, exact_ids_list, exact_scores_list, exact_full_scores_list
+    ):
         corpus, Q_eff, order = packing.dispatch_order_wide_corpus(
             query, config.dimension_order
         )
         m    = Q_eff.shape[0]
         Qcum = build_qcum(Q_eff, order)
         tau  = resolve_tau_seed(config, query, order, config.dimension_order, packing)
-        prepared.append((corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m))
+        prepared.append(
+            (corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores,
+             exact_full_scores, m)
+        )
 
     # Parallel kernel calls — accounting mode only.  Wall-clock time is not
     # reported here (ms_per_query = None), so running queries concurrently does
@@ -89,18 +99,22 @@ def run_wide_accounting_mode(
     # ctypes releases the GIL, so threads genuinely run the C++ kernel in
     # parallel; each call allocates its own scratch buffers (no shared state).
     def _run_one(args: PreparedQuery):
-        corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores, m = args
+        (corpus, Q_eff, order, Qcum, tau, exact_ids, exact_scores,
+         exact_full_scores, m) = args
         ids, _s, stats, bdl, btl = run_wide_block_accounting_validated(
             lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K,
             collect_block_stats=True,
         )
-        recall = exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
+        )
         total_cells = int(T) * D * m
         cells_pct = float(stats[0]) / total_cells if total_cells > 0 else 0.0
         dp_pct    = float(stats[1]) / n_docs      if n_docs > 0     else 0.0
         tp_pct    = float(stats[2]) / T           if T > 0          else 0.0
-        return recall, cells_pct, dp_pct, tp_pct, bdl, btl
+        return agreement, cells_pct, dp_pct, tp_pct, bdl, btl
 
     n_workers = min(os.cpu_count() or 1, len(prepared))
     with ThreadPoolExecutor(max_workers=n_workers) as executor:
@@ -110,11 +124,13 @@ def run_wide_accounting_mode(
     dp_list:     list[float] = []
     tp_list:     list[float] = []
     recall_list: list[float] = []
+    agreement_results = []
     block_doc_live_sum:   Optional[np.ndarray] = None
     block_token_live_sum: Optional[np.ndarray] = None
 
-    for recall, cells_pct, dp_pct, tp_pct, bdl, btl in per_query:
-        recall_list.append(recall)
+    for agreement, cells_pct, dp_pct, tp_pct, bdl, btl in per_query:
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
         cells_list.append(cells_pct)
         dp_list.append(dp_pct)
         tp_list.append(tp_pct)
@@ -138,6 +154,7 @@ def run_wide_accounting_mode(
     pruned_docs_pct     = float(np.mean(dp_list))         * 100.0
     tokens_pruned_pct   = float(np.mean(tp_list))         * 100.0
     recall_vs_exact     = float(np.mean(recall_list))
+    agreement_summary   = aggregate_agreement_results(agreement_results)
 
     record = ResultRecord(
         dataset               = config.dataset,
@@ -163,6 +180,7 @@ def run_wide_accounting_mode(
         shrink                = config.shrink,
         tokens_pruned_pct     = tokens_pruned_pct,
         notes                 = config.notes,
+        **agreement_summary,
     )
     return record, mean_block_doc_live, mean_block_token_live
 
@@ -213,20 +231,31 @@ def run_wide_throughput_mode(
 
     # Recall check (informational; uses a fresh pass to get ids).
     # Exact top-k is order-independent — compute once, share across all queries.
-    exact_ids_list = [
-        exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)[0]
+    exact_full_scores_list = [
+        exact_maxsim_scores(q, packing.flat_tokens, packing.doc_starts)
         for q in queries
     ]
+    exact_pairs = [topk_from_scores(scores, K) for scores in exact_full_scores_list]
     recall_list: list[float] = []
-    for query, prep, exact_ids in zip(queries, prepared, exact_ids_list):
+    agreement_results = []
+    for query, prep, exact_pair, exact_full_scores in zip(
+        queries, prepared, exact_pairs, exact_full_scores_list
+    ):
+        exact_ids, exact_scores = exact_pair
         corpus, Q_eff, order, Qcum, tau_seed = prep
         ids, _scores, _stats, _bdl, _btl = run_wide_block_throughput_validated(
             lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau_seed, K=K,
         )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
+        )
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
 
     recall_vs_exact = float(np.mean(recall_list))
+    agreement_summary = aggregate_agreement_results(agreement_results)
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -252,4 +281,5 @@ def run_wide_throughput_mode(
         shrink                = config.shrink,
         tokens_pruned_pct     = None,   # accounting-only metric
         notes                 = config.notes,
+        **agreement_summary,
     )

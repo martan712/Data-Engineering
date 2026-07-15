@@ -44,7 +44,8 @@ recover? Arms: `self_bound` (-inf; kernel's thread-shared rising tau only),
 `ivf_seed_cheap` / `ivf_seed_strong` (FAISS-IVF candidates + exact scores of
 s∈{10,100} docs; seeding cost measured, pinned to 1 thread — fan-out costs
 more than it saves at this work size), `oracle`. Every arm is exact-safe
-(tie-aware recall gate = 1.0); reports pruned-docs %, kernel ms/q, seed cost,
+(strict set equality or independently verified boundary-tie gate); reports
+ordinary set recall separately from pruned-docs %, kernel ms/q, seed cost,
 and recovery fractions vs oracle.
 
 Usage: `uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery <threads:0|1> [dataset ...]`

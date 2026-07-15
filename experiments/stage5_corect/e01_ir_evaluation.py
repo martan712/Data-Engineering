@@ -67,8 +67,12 @@ from bondmaxsim.kernels.fused_panel import (
     run_fused_panel_bond,
     run_fused_panel_brute,
 )
-from bondmaxsim.oracle.agreement import exact_agreement, recall_at_k
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import recall_at_k, validate_boundary_tie_equivalence
+from bondmaxsim.oracle.exact_maxsim import (
+    exact_maxsim_scores,
+    exact_maxsim_topk,
+    topk_from_scores,
+)
 from bondmaxsim.baselines.faiss_ivf import FaissIVFBaseline
 from bondmaxsim.baselines.plaid import PLAIDBaseline
 from bondmaxsim.partitioned_scan import PartitionedFusedScan
@@ -167,7 +171,8 @@ def run_dataset(dataset: str, nt: int) -> None:
 
     # ---- exact oracle reference (NumPy, independent of the kernels)
     t0 = time.perf_counter()
-    exact = [exact_maxsim_topk(q, flat, starts, k=K_RETRIEVE) for q in queries]
+    exact_full = [exact_maxsim_scores(q, flat, starts) for q in queries]
+    exact = [topk_from_scores(scores, K_RETRIEVE) for scores in exact_full]
     print(f"  exact oracle (k={K_RETRIEVE}) in {time.perf_counter() - t0:.1f}s")
 
     # ---- indexes (built/cached before any timing; cost reported separately)
@@ -304,10 +309,21 @@ def run_dataset(dataset: str, nt: int) -> None:
     print("  CoRECT smoke test on dense_fused run: OK (agrees with ranx)")
     print("  scoring quality rows (qrels + CoRECT RC metrics per arm)...")
     quality["dense_fused"], _ = quality_row(dense_results, "dense_fused")
-    agree = min(exact_agreement(ids[:K_EVAL], e_ids, e_sc)
-                for (ids, _), (e_ids, e_sc) in zip(dense_results, exact10))
-    if agree < 1.0:
-        raise RuntimeError(f"dense_fused exact-agreement@10 failed: {agree}")
+    dense_agreements = [
+        validate_boundary_tie_equivalence(
+            ids[:K_EVAL], e_ids, e_sc, k=K_EVAL, num_documents=n_docs,
+            exact_scores_by_id=full_scores,
+        )
+        for (ids, _), (e_ids, e_sc), full_scores
+        in zip(dense_results, exact10, exact_full)
+    ]
+    quality["dense_fused"].update({
+        "strict_top_k_set_equal": all(r.strict_top_k_set_equal for r in dense_agreements),
+        "boundary_tie_equivalent": all(r.exact_gate_passed for r in dense_agreements),
+        "agreement_failure_codes": sorted({c for r in dense_agreements for c in r.failure_codes}),
+    })
+    if not all(r.exact_gate_passed for r in dense_agreements):
+        raise RuntimeError("dense_fused verified exact gate@10 failed")
 
     # The openblas arm IS the oracle routine, so its results are the already
     # computed `exact` list; only its wall-clock needs a timed pass.
@@ -317,10 +333,20 @@ def run_dataset(dataset: str, nt: int) -> None:
     run_bond(collect=got)
     quality["bond_exact_safe"], _ = quality_row(
         [(i, s) for i, s, _ in got], "bond_exact_safe")
-    agree = min(exact_agreement(ids[:K_EVAL], e_ids, e_sc)
-                for (ids, _, _), (e_ids, e_sc) in zip(got, exact10))
-    if agree < 1.0:
-        raise RuntimeError(f"bond exact-agreement@10 failed: {agree}")
+    bond_agreements = [
+        validate_boundary_tie_equivalence(
+            ids[:K_EVAL], e_ids, e_sc, k=K_EVAL, num_documents=n_docs,
+            exact_scores_by_id=full_scores,
+        )
+        for (ids, _, _), (e_ids, e_sc), full_scores in zip(got, exact10, exact_full)
+    ]
+    quality["bond_exact_safe"].update({
+        "strict_top_k_set_equal": all(r.strict_top_k_set_equal for r in bond_agreements),
+        "boundary_tie_equivalent": all(r.exact_gate_passed for r in bond_agreements),
+        "agreement_failure_codes": sorted({c for r in bond_agreements for c in r.failure_codes}),
+    })
+    if not all(r.exact_gate_passed for r in bond_agreements):
+        raise RuntimeError("bond verified exact gate@10 failed")
     quality["bond_exact_safe"]["pruned_docs_pct"] = float(
         np.mean([s[1] for _, _, s in got])) / n_docs * 100.0
 

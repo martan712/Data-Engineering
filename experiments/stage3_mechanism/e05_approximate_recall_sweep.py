@@ -119,6 +119,9 @@ def run_dataset(dataset: str) -> None:
                 "shrink": shrink,
                 "threshold_policy": POLICY,
                 "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+                "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+                "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+                "agreement_failure_codes": rec.agreement_failure_codes,
                 "cells_scanned_pct": rec.cells_scanned_pct,
                 "pruned_docs_pct": rec.pruned_docs_pct,
                 "tokens_pruned_pct": rec.tokens_pruned_pct,
@@ -152,6 +155,9 @@ def run_dataset(dataset: str) -> None:
                 "shrink": shrink,
                 "threshold_policy": POLICY,
                 "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+                "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+                "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+                "agreement_failure_codes": rec.agreement_failure_codes,
                 "ms_per_query_mt": rec.ms_per_query,
                 "pruned_docs_pct_fused": rec.pruned_docs_pct,
             }
@@ -163,10 +169,10 @@ def run_dataset(dataset: str) -> None:
                   f"prune_docs={farm['pruned_docs_pct_fused']:.2f}%  "
                   f"{elapsed:.1f}s{exact_label}")
 
-            if shrink == 1.0 and farm["recall_vs_exact_at_10"] < 1.0:
+            if shrink == 1.0 and not farm["boundary_tie_equivalent"]:
                 raise RuntimeError(
-                    f"Exact-agreement failed at shrink=1 on the fused kernel: "
-                    f"order={order!r} recall={farm['recall_vs_exact_at_10']}"
+                    f"Verified exact gate failed on the fused kernel: "
+                    f"order={order!r} failures={farm['agreement_failure_codes']}"
                 )
 
     # Fused dense baseline (all cores) — the G2 reference latency.

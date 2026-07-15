@@ -174,7 +174,7 @@ def _fused_lib_or_skip():
 
 def test_partitioned_scan_full_probe_is_exact():
     """nprobe = all partitions degenerates to the exact exhaustive scan."""
-    from bondmaxsim.oracle.agreement import exact_agreement
+    from bondmaxsim.oracle.agreement import validate_boundary_tie_equivalence
 
     lib = _fused_lib_or_skip()
     tokens, starts, queries = _synthetic_corpus(seed=3)
@@ -183,9 +183,14 @@ def test_partitioned_scan_full_probe_is_exact():
     for q in queries:
         ids, scores, stats = idx.search(lib, q, k=k, nprobe=len(idx.partitions),
                                         checkpoints=(16,), n_threads=1)
+        full_scores = exact_maxsim_scores(q, tokens, starts)
         e_ids, e_scores = exact_maxsim_topk(q, tokens, starts, k)
         assert stats["docs_probed_pct"] == pytest.approx(100.0)
-        assert exact_agreement(ids, e_ids, e_scores) == 1.0
+        agreement = validate_boundary_tie_equivalence(
+            ids, e_ids, e_scores, k=k, num_documents=len(starts),
+            exact_scores_by_id=full_scores,
+        )
+        assert agreement.exact_gate_passed
         np.testing.assert_allclose(np.sort(scores), np.sort(e_scores),
                                    rtol=1e-4, atol=1e-4)
 

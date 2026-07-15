@@ -101,6 +101,7 @@ def test_accounting_exact_agreement(runner, order, policy):
     assert rec.recall_vs_exact_at_10 == 1.0, (
         f"accounting/{order}/{policy}: recall={rec.recall_vs_exact_at_10} != 1.0"
     )
+    assert rec.boundary_tie_equivalent
 
 
 @pytest.mark.parametrize("order", ORDERS)
@@ -119,6 +120,7 @@ def test_throughput_exact_agreement(runner, order, policy):
     assert rec.recall_vs_exact_at_10 == 1.0, (
         f"throughput/{order}/{policy}: recall={rec.recall_vs_exact_at_10} != 1.0"
     )
+    assert rec.boundary_tie_equivalent
 
 
 @pytest.mark.parametrize("order", ORDERS)
@@ -138,6 +140,7 @@ def test_accounting_exact_agreement_multigroup(runner_multigroup, order, policy)
     assert rec.recall_vs_exact_at_10 == 1.0, (
         f"multigroup accounting/{order}/{policy}: recall={rec.recall_vs_exact_at_10} != 1.0"
     )
+    assert rec.boundary_tie_equivalent
 
 
 def test_accounting_reports_cost_but_not_time(runner):

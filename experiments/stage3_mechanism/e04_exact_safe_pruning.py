@@ -164,6 +164,9 @@ def run_dataset(dataset: str) -> None:
             "n_docs": n_docs,
             "total_tokens": ft_sub.shape[0],
             "recall_vs_exact_at_10": rec_acc.recall_vs_exact_at_10,
+            "strict_top_k_set_equal": rec_acc.strict_top_k_set_equal,
+            "boundary_tie_equivalent": rec_acc.boundary_tie_equivalent,
+            "agreement_failure_codes": rec_acc.agreement_failure_codes,
             "cells_scanned_pct": rec_acc.cells_scanned_pct,
             "pruned_docs_pct": rec_acc.pruned_docs_pct,
             "tokens_pruned_pct": rec_acc.tokens_pruned_pct,
@@ -190,10 +193,10 @@ def run_dataset(dataset: str) -> None:
               f"dense_numpy={arm['ms_per_query_brute_numpy']:.3f}ms  "
               f"[acc={t_acc:.1f}s thr={t_thr:.1f}s]")
 
-        if rec_acc.recall_vs_exact_at_10 < 1.0:
+        if not rec_acc.boundary_tie_equivalent:
             raise RuntimeError(
-                f"Exact-agreement failed at shrink=1: n_docs={n_docs} "
-                f"recall={rec_acc.recall_vs_exact_at_10}"
+                f"Verified exact gate failed at shrink=1: n_docs={n_docs} "
+                f"failures={rec_acc.agreement_failure_codes}"
             )
 
     # Write JSON.

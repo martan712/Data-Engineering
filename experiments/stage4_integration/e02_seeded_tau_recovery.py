@@ -52,8 +52,8 @@ from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.loader import load_dataset
 from bondmaxsim.data.packing import build_qcum
 from bondmaxsim.kernels.fused_panel import run_fused_panel_bond, run_fused_panel_brute
-from bondmaxsim.oracle.agreement import exact_agreement
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import validate_boundary_tie_equivalence
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.baselines.faiss_ivf import FaissIVFBaseline
 from bondmaxsim.testbed.runner import Runner, RunConfig
 from bondmaxsim.testbed.thresholds import resolve_tau_seed
@@ -146,7 +146,8 @@ def run_dataset(dataset, nt):
     print(f"\n=== e02 {dataset}: {len(starts)} docs, {len(queries)} queries, "
           f"threads={'all' if nt == 0 else nt} ===")
 
-    exact = [exact_maxsim_topk(q, flat, starts, K_TOP) for q in queries]
+    exact_full = [exact_maxsim_scores(q, flat, starts) for q in queries]
+    exact = [topk_from_scores(scores, K_TOP) for scores in exact_full]
 
     # IVF seeding index (shared by both ivf arms; k_token differs per arm).
     ivf = FaissIVFBaseline(flat, starts)
@@ -216,14 +217,28 @@ def run_dataset(dataset, nt):
     for arm in ARM_NAMES:
         got: list = []
         runs[arm](collect=got)
-        rec = min(
-            exact_agreement(ids, e_ids, e_scores)
-            for (ids, _), (e_ids, e_scores) in zip(got, exact)
-        )
+        agreements = [
+            validate_boundary_tie_equivalence(
+                ids, e_ids, e_scores, k=K_TOP, num_documents=n_docs,
+                exact_scores_by_id=full_scores,
+            )
+            for (ids, _), (e_ids, e_scores), full_scores
+            in zip(got, exact, exact_full)
+        ]
+        rec = min(result.recall_vs_oracle_set for result in agreements)
         pruned = float(np.mean([s[1] for _, s in got])) / n_docs * 100.0
-        if rec < 1.0:
-            raise RuntimeError(f"exact-agreement failed: {dataset} arm={arm} recall={rec}")
-        gate_stats[arm] = dict(recall=rec, pruned_docs_pct=pruned)
+        if not all(result.exact_gate_passed for result in agreements):
+            failures = sorted({c for r in agreements for c in r.failure_codes})
+            raise RuntimeError(
+                f"verified exact gate failed: {dataset} arm={arm} failures={failures}"
+            )
+        gate_stats[arm] = dict(
+            recall=rec,
+            strict_top_k_set_equal=all(r.strict_top_k_set_equal for r in agreements),
+            boundary_tie_equivalent=all(r.exact_gate_passed for r in agreements),
+            agreement_failure_codes=[],
+            pruned_docs_pct=pruned,
+        )
 
     # ---- interleaved timing: dense first, then every arm, round-robin
     def ms(fn):
@@ -261,6 +276,9 @@ def run_dataset(dataset, nt):
             "threshold_policy": arm,
             "ivf_params": IVF_ARMS.get(arm),
             "recall_vs_exact_at_10": gate_stats[arm]["recall"],
+            "strict_top_k_set_equal": gate_stats[arm]["strict_top_k_set_equal"],
+            "boundary_tie_equivalent": gate_stats[arm]["boundary_tie_equivalent"],
+            "agreement_failure_codes": gate_stats[arm]["agreement_failure_codes"],
             "pruned_docs_pct": pruned,
             "prune_recovery_vs_oracle": (pruned / oracle_pruned) if oracle_pruned > 0 else None,
             "ms_per_query_kernel": kern,

@@ -199,6 +199,9 @@ def run_dataset(dataset: str) -> None:
             "reorder_fraction": reorder_fraction,
             "qps": rec.qps,
             "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+            "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+            "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+            "agreement_failure_codes": rec.agreement_failure_codes,
         }
         arms.append(arm)
 
@@ -242,6 +245,9 @@ def run_dataset(dataset: str) -> None:
             "reorder_fraction": 0.0,
             "qps": rec.qps,
             "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+            "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+            "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+            "agreement_failure_codes": rec.agreement_failure_codes,
         })
         print(f"  order={label:<12}  total={rec.ms_per_query:.4f}ms  (brute, no reorder)")
 

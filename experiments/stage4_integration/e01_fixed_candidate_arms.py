@@ -58,8 +58,8 @@ from bondmaxsim.config import REPO_ROOT
 from bondmaxsim.data.loader import load_dataset, unpack_embeddings
 from bondmaxsim.data.packing import build_qcum
 from bondmaxsim.kernels.fused_panel import run_fused_panel_bond, run_fused_panel_brute
-from bondmaxsim.oracle.agreement import exact_agreement, recall_at_k
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import recall_at_k, validate_boundary_tie_equivalence
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.baselines.faiss_ivf import FaissIVFBaseline
 from bondmaxsim.baselines.pdx_ivf import PDXIVFBaseline
 from bondmaxsim.baselines.plaid import PLAIDBaseline
@@ -121,7 +121,8 @@ def run_dataset(dataset, nt):
     print(f"\n=== e01 {dataset}: {n_docs} docs, {len(queries)} queries, "
           f"budgets={budgets}, threads={'all' if nt == 0 else nt} ===")
 
-    exact = [exact_maxsim_topk(q, flat, starts, K_TOP) for q in queries]
+    exact_full = [exact_maxsim_scores(q, flat, starts) for q in queries]
+    exact = [topk_from_scores(scores, K_TOP) for scores in exact_full]
 
     # ---- indexes (built/cached before any timing)
     ivf = FaissIVFBaseline(flat, starts)
@@ -271,17 +272,38 @@ def run_dataset(dataset, nt):
     quality = {}
     got: list = []
     run_dense(collect=got)
-    quality["dense_fused"] = dict(recall=min(
-        exact_agreement(ids, e_ids, e_sc) for ids, (e_ids, e_sc) in zip(got, exact)))
+    dense_agreements = [
+        validate_boundary_tie_equivalence(
+            ids, e_ids, e_sc, k=K_TOP, num_documents=n_docs,
+            exact_scores_by_id=full_scores,
+        )
+        for ids, (e_ids, e_sc), full_scores in zip(got, exact, exact_full)
+    ]
+    quality["dense_fused"] = dict(
+        recall=min(r.recall_vs_oracle_set for r in dense_agreements),
+        strict_top_k_set_equal=all(r.strict_top_k_set_equal for r in dense_agreements),
+        boundary_tie_equivalent=all(r.exact_gate_passed for r in dense_agreements),
+        agreement_failure_codes=sorted({c for r in dense_agreements for c in r.failure_codes}),
+    )
 
     got = []
     run_bond(collect=got)
-    rec = min(exact_agreement(ids, e_ids, e_sc)
-              for (ids, _), (e_ids, e_sc) in zip(got, exact))
-    if rec < 1.0:
-        raise RuntimeError(f"exact-agreement failed on seeded BOND arm: {rec}")
+    bond_agreements = [
+        validate_boundary_tie_equivalence(
+            ids, e_ids, e_sc, k=K_TOP, num_documents=n_docs,
+            exact_scores_by_id=full_scores,
+        )
+        for (ids, _), (e_ids, e_sc), full_scores in zip(got, exact, exact_full)
+    ]
+    rec = min(r.recall_vs_oracle_set for r in bond_agreements)
+    if not all(r.exact_gate_passed for r in bond_agreements):
+        failures = sorted({c for r in bond_agreements for c in r.failure_codes})
+        raise RuntimeError(f"verified exact gate failed on seeded BOND arm: {failures}")
     quality["bond"] = dict(
         recall=rec,
+        strict_top_k_set_equal=all(r.strict_top_k_set_equal for r in bond_agreements),
+        boundary_tie_equivalent=all(r.exact_gate_passed for r in bond_agreements),
+        agreement_failure_codes=[],
         pruned_docs_pct=float(np.mean([s[1] for _, s in got])) / n_docs * 100.0)
 
     for b in budgets:

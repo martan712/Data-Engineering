@@ -23,8 +23,11 @@ from bondmaxsim.kernels.per_document import (
     run_accounting_validated,
     run_throughput_validated,
 )
-from bondmaxsim.oracle.agreement import exact_agreement
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import (
+    aggregate_agreement_results,
+    validate_boundary_tie_equivalence,
+)
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
 from bondmaxsim.testbed.packing_cache import PackingCache
@@ -55,6 +58,7 @@ def run_accounting_mode(
     dp_list:    list[float]   = []
     tp_list:    list[float]   = []
     recall_list: list[float]  = []
+    agreement_results = []
 
     for query in queries:
         corpus, Q_eff, order = packing.dispatch_order_corpus(
@@ -69,11 +73,16 @@ def run_accounting_mode(
         )
 
         # Exact oracle uses original (un-rotated) query + token-major flat.
-        exact_ids, _ = exact_maxsim_topk(
-            query, packing.flat_tokens, packing.doc_starts, k=K
+        exact_full_scores = exact_maxsim_scores(
+            query, packing.flat_tokens, packing.doc_starts
         )
-
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        exact_ids, exact_scores = topk_from_scores(exact_full_scores, K)
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
+        )
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
 
         total_cells = int(T) * D * m   # brute-force denominator
         cells_list.append(float(stats[0]) / total_cells if total_cells > 0 else 0.0)
@@ -84,6 +93,7 @@ def run_accounting_mode(
     pruned_docs_pct     = float(np.mean(dp_list))         * 100.0
     tokens_pruned_pct   = float(np.mean(tp_list))         * 100.0
     recall_vs_exact     = float(np.mean(recall_list))
+    agreement_summary   = aggregate_agreement_results(agreement_results)
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -109,6 +119,7 @@ def run_accounting_mode(
         shrink                = config.shrink,
         tokens_pruned_pct     = tokens_pruned_pct,
         notes                 = config.notes,
+        **agreement_summary,
     )
 
 
@@ -164,17 +175,25 @@ def run_throughput_mode(
 
     # Recall check (informational; uses last pass's ids — re-run once to get them).
     recall_list: list[float] = []
+    agreement_results = []
     for query, (corpus, Q_eff, order, Qcum) in zip(queries, prepared):
         ids, _scores, _stats = run_throughput_validated(
             lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, K=K,
         )
-        exact_ids, _ = exact_maxsim_topk(
-            query, packing.flat_tokens, packing.doc_starts, k=K
+        exact_full_scores = exact_maxsim_scores(
+            query, packing.flat_tokens, packing.doc_starts
         )
-        recall_list.append(exact_agreement(ids.astype(np.int64), exact_ids))
+        exact_ids, exact_scores = topk_from_scores(exact_full_scores, K)
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
+        )
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
 
     recall_vs_exact = float(np.mean(recall_list))
+    agreement_summary = aggregate_agreement_results(agreement_results)
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -200,4 +219,5 @@ def run_throughput_mode(
         shrink                = config.shrink,
         tokens_pruned_pct     = None,   # accounting-only metric
         notes                 = config.notes,
+        **agreement_summary,
     )

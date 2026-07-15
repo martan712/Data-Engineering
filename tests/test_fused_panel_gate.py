@@ -20,6 +20,7 @@ import pytest
 
 from bondmaxsim.data.packing import pack_corpus_panels
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, exact_maxsim_topk
+from bondmaxsim.oracle.agreement import validate_boundary_tie_equivalence
 
 pytest.importorskip("bondmaxsim.kernels.fused_panel")
 from bondmaxsim.kernels.fused_panel import (  # noqa: E402
@@ -201,6 +202,7 @@ def test_bond_exact_agreement_shrink1(order, policy, level, bound):
         Qcum = build_qcum(Q_eff, ord_)
         tau = resolve_tau_seed(cfg, q, ord_, order, packing)
         ref_scores = exact_maxsim_scores(q, flat, doc_starts)
+        ref_ids, ref_top_scores = exact_maxsim_topk(q, flat, doc_starts, 10)
         kth = np.sort(ref_scores)[-10]
         for n_threads in (1, 4):
             ids, scores, stats = run_fused_panel_bond(
@@ -214,6 +216,11 @@ def test_bond_exact_agreement_shrink1(order, policy, level, bound):
                 f"level={level} bound={bound} order={order} policy={policy} "
                 f"nt={n_threads}: top-k set mismatch (recall < 1 at shrink=1)"
             )
+            agreement = validate_boundary_tie_equivalence(
+                ids, ref_ids, ref_top_scores, k=10,
+                num_documents=len(doc_starts), exact_scores_by_id=ref_scores,
+            )
+            assert agreement.exact_gate_passed, agreement.failure_codes
 
 
 def test_bond_prunes_documents():

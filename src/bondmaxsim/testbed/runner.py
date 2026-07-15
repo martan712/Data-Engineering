@@ -86,6 +86,7 @@ class Runner:
         # once and shared across all dimension-order calls on the same query
         # set (order doesn't affect the exact result).
         self._exact_oracle_cache: dict[int, list[tuple[np.ndarray, np.ndarray]]] = {}
+        self._exact_full_scores_cache: Optional[list[np.ndarray]] = None
 
         # Side channel populated by accounting_mode() for the wide-block path
         # (Stage 2 e02 hooks); see class docstring.
@@ -113,14 +114,24 @@ class Runner:
 
     def _get_exact_oracle(self, k: int) -> list[tuple[np.ndarray, np.ndarray]]:
         """Return (ids, scores) pairs for every query's exact top-k, cached by k."""
-        from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+        from bondmaxsim.oracle.exact_maxsim import topk_from_scores
         if k not in self._exact_oracle_cache:
             self._exact_oracle_cache[k] = [
-                exact_maxsim_topk(q, self._packing.flat_tokens,
-                                  self._packing.doc_starts, k=k)
-                for q in self._queries
+                topk_from_scores(scores, k) for scores in self._get_exact_full_scores()
             ]
         return self._exact_oracle_cache[k]
+
+    def _get_exact_full_scores(self) -> list[np.ndarray]:
+        """Return independently exact scores for every document and query."""
+        from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores
+        if self._exact_full_scores_cache is None:
+            self._exact_full_scores_cache = [
+                exact_maxsim_scores(
+                    query, self._packing.flat_tokens, self._packing.doc_starts
+                )
+                for query in self._queries
+            ]
+        return self._exact_full_scores_cache
 
     def _get_exact_ids(self, k: int) -> list[np.ndarray]:
         return [ids for ids, _ in self._get_exact_oracle(k)]
@@ -230,6 +241,9 @@ class Runner:
             thread_count          = n_threads if n_threads > 0 else config.thread_count,
             shrink                = 1.0,
             tokens_pruned_pct     = None,
+            strict_top_k_set_equal= True,
+            boundary_tie_equivalent=True,
+            agreement_failure_codes=[],
             notes                 = (
                 "NumPy row-major brute force"
                 + (f", BLAS threads={n_threads}" if n_threads > 0 else ", BLAS default threads")
@@ -256,6 +270,7 @@ class Runner:
                 self._get_wide_lib(), self._packing, self._queries, config,
                 exact_ids_list=self._get_exact_ids(config.k),
                 exact_scores_list=self._get_exact_scores(config.k),
+                exact_full_scores_list=self._get_exact_full_scores(),
             )
             self.last_block_doc_live = bdl
             self.last_block_token_live = btl
@@ -302,6 +317,7 @@ class Runner:
                 n_threads=n_threads, n_repeats=n_repeats,
                 exact_ids_list=self._get_exact_ids(config.k),
                 exact_scores_list=self._get_exact_scores(config.k),
+                exact_full_scores_list=self._get_exact_full_scores(),
                 level=level, bound=bound,
             )
 

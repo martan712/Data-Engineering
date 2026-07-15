@@ -142,6 +142,9 @@ def run_dataset(dataset: str) -> None:
                     "qps": rec.qps,
                     "pruned_docs_pct": rec.pruned_docs_pct,
                     "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+                    "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+                    "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+                    "agreement_failure_codes": rec.agreement_failure_codes,
                 }
                 arms.append(arm)
                 print(f"  C={_cps_label(cps):<16} order={order:<7} bound={bound:<5}  "
@@ -149,11 +152,11 @@ def run_dataset(dataset: str) -> None:
                       f"prune_docs={rec.pruned_docs_pct:.2f}%  "
                       f"recall={rec.recall_vs_exact_at_10:.3f}")
 
-                if rec.recall_vs_exact_at_10 < 1.0:
+                if not rec.boundary_tie_equivalent:
                     raise RuntimeError(
-                        f"Exact-agreement failed at shrink=1: bound={bound!r} "
+                        f"Verified exact gate failed at shrink=1: bound={bound!r} "
                         f"order={order!r} checkpoints={cps} "
-                        f"recall={rec.recall_vs_exact_at_10}"
+                        f"failures={rec.agreement_failure_codes}"
                     )
 
     # Dense baseline (no checkpoints, no bound) at the same thread count.
@@ -174,6 +177,9 @@ def run_dataset(dataset: str) -> None:
         "qps": rec_dense.qps,
         "pruned_docs_pct": 0.0,
         "recall_vs_exact_at_10": rec_dense.recall_vs_exact_at_10,
+        "strict_top_k_set_equal": rec_dense.strict_top_k_set_equal,
+        "boundary_tie_equivalent": rec_dense.boundary_tie_equivalent,
+        "agreement_failure_codes": rec_dense.agreement_failure_codes,
     }
     print(f"  dense_fused             ms/q={rec_dense.ms_per_query:.4f}  (baseline)")
 

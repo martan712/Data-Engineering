@@ -85,6 +85,8 @@ def test_accounting_exact_agreement(runner, order):
     assert rec.recall_vs_exact_at_10 == 1.0, (
         f"accounting/{order}: recall={rec.recall_vs_exact_at_10} != 1.0"
     )
+    assert rec.boundary_tie_equivalent
+    assert rec.agreement_failure_codes == []
 
 
 @pytest.mark.parametrize("order", ORDERS)
@@ -102,6 +104,8 @@ def test_throughput_exact_agreement(runner, order):
     assert rec.recall_vs_exact_at_10 == 1.0, (
         f"throughput/{order}: recall={rec.recall_vs_exact_at_10} != 1.0"
     )
+    assert rec.boundary_tie_equivalent
+    assert rec.agreement_failure_codes == []
 
 
 def test_accounting_reports_cost_but_not_time(runner):

@@ -76,6 +76,12 @@ def exact_maxsim_topk(
     scores : float32 [k]
     """
     scores = exact_maxsim_scores(query, flat_tokens, doc_starts)
+    return topk_from_scores(scores, k)
+
+
+def topk_from_scores(scores: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    """Select descending top-k IDs and scores from independently exact scores."""
+    scores = np.asarray(scores, dtype=np.float32)
     num_docs = len(scores)
     actual_k = min(k, num_docs)
 

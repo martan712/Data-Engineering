@@ -3,7 +3,8 @@
 Single responsibility: run the per-document-oracle kernel (unchanged) and the
 wide-block kernel (self_bound threshold policy) in accounting mode via
 bondmaxsim.testbed.runner.Runner with shrink=1.0, for every dimension order
-(natural, bond, pca), assert recall_vs_exact@10 == 1.0 for each (Stage 1 §2.5
+(natural, bond, pca), require strict set equality or independently verified
+boundary-tie equivalence for each (Stage 1 §2.5
 / §8 items 2 and 5: order affects efficiency, never correctness), and write
 one ResultRecord per order/kernel to results/json/.
 
@@ -51,11 +52,13 @@ def run_oracle(runner: Runner, dataset: str) -> bool:
         )
         record = runner.accounting_mode(cfg)
 
-        passed = record.recall_vs_exact_at_10 == 1.0
+        passed = bool(record.boundary_tie_equivalent)
         all_passed = all_passed and passed
         status = "PASS" if passed else "FAIL"
         print(f"  [oracle] order={order}: {status}  "
               f"recall_vs_exact@10={record.recall_vs_exact_at_10}  "
+              f"strict={record.strict_top_k_set_equal}  "
+              f"tie_valid={record.boundary_tie_equivalent}  "
               f"cells_scanned_pct={record.cells_scanned_pct:.2f}%  "
               f"pruned_docs_pct={record.pruned_docs_pct:.2f}%  "
               f"tokens_pruned_pct={record.tokens_pruned_pct:.2f}%")
@@ -80,11 +83,13 @@ def run_wide(runner: Runner, dataset: str) -> bool:
         )
         record = runner.accounting_mode(cfg)
 
-        passed = record.recall_vs_exact_at_10 == 1.0
+        passed = bool(record.boundary_tie_equivalent)
         all_passed = all_passed and passed
         status = "PASS" if passed else "FAIL"
         print(f"  [wide]   order={order}: {status}  "
               f"recall_vs_exact@10={record.recall_vs_exact_at_10}  "
+              f"strict={record.strict_top_k_set_equal}  "
+              f"tie_valid={record.boundary_tie_equivalent}  "
               f"cells_scanned_pct={record.cells_scanned_pct:.2f}%  "
               f"pruned_docs_pct={record.pruned_docs_pct:.2f}%  "
               f"tokens_pruned_pct={record.tokens_pruned_pct:.2f}%")
@@ -96,7 +101,7 @@ def run_wide(runner: Runner, dataset: str) -> bool:
 
 
 def run_dataset(dataset: str) -> bool:
-    print(f"=== s02 exact agreement: {dataset} ===")
+    print(f"=== s02 verified exact gate: {dataset} ===")
     flat_tokens, doc_starts, queries = load_dataset(dataset)
     print(f"  corpus: {len(doc_starts)} docs, {flat_tokens.shape[0]} tokens, "
           f"{len(queries)} queries")

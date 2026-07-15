@@ -24,8 +24,11 @@ from bondmaxsim.kernels.fused_panel import (
     run_fused_panel_bond_validated,
     run_fused_panel_brute_validated,
 )
-from bondmaxsim.oracle.agreement import exact_agreement
-from bondmaxsim.oracle.exact_maxsim import exact_maxsim_topk
+from bondmaxsim.oracle.agreement import (
+    aggregate_agreement_results,
+    validate_boundary_tie_equivalence,
+)
+from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
 from bondmaxsim.schema import ResultRecord
 from bondmaxsim.testbed.config import RunConfig
 from bondmaxsim.testbed.packing_cache import PackingCache
@@ -87,18 +90,25 @@ def run_fused_brute_mode(
     qps          = nq / best_s if best_s > 0.0 else float("inf")
 
     # Recall check on one pass (dense scan = exact; recall must be 1.0 up to
-    # rank-K boundary ties, which exact_agreement accepts given the scores).
+    # rank-K boundary ties, independently rescored by the exact oracle).
     recall_list: list[float] = []
+    agreement_results = []
     for Q in Qs:
-        exact_ids, exact_scores = exact_maxsim_topk(
-            Q, packing.flat_tokens, packing.doc_starts, k=K
+        exact_full_scores = exact_maxsim_scores(
+            Q, packing.flat_tokens, packing.doc_starts
         )
+        exact_ids, exact_scores = topk_from_scores(exact_full_scores, K)
         ids, _ = run_fused_panel_brute_validated(
             lib, corpus, Q, K, n_threads=n_threads,
         )
-        recall_list.append(
-            exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
         )
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
+
+    agreement_summary = aggregate_agreement_results(agreement_results)
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -124,6 +134,7 @@ def run_fused_brute_mode(
         shrink                = 1.0,
         tokens_pruned_pct     = None,
         notes                 = f"fused panel brute force, n_threads={n_threads}",
+        **agreement_summary,
     )
 
 
@@ -136,6 +147,7 @@ def run_fused_bond_mode(
     n_repeats: int = 5,
     exact_ids_list: list[np.ndarray] | None = None,
     exact_scores_list: list[np.ndarray] | None = None,
+    exact_full_scores_list: list[np.ndarray] | None = None,
     level: str = "doc",
     bound: str = "tight",
 ) -> ResultRecord:
@@ -197,37 +209,43 @@ def run_fused_bond_mode(
     qps          = nq / best_s if best_s > 0.0 else float("inf")
 
     # Recall + pruning stats on one pass.  Rank-K boundary ties are accepted
-    # via exact_scores (see exact_agreement) — the kernel's tie-break choice
-    # is equally valid at shrink=1.
-    if exact_ids_list is None:
-        exact_pairs = [
-            exact_maxsim_topk(q, packing.flat_tokens, packing.doc_starts, k=K)
+    # only after independently exact-scoring every replacement document.
+    if exact_full_scores_list is None:
+        exact_full_scores_list = [
+            exact_maxsim_scores(q, packing.flat_tokens, packing.doc_starts)
             for q in queries
         ]
+    if exact_ids_list is None or exact_scores_list is None:
+        exact_pairs = [topk_from_scores(scores, K) for scores in exact_full_scores_list]
         exact_ids_list = [ids for ids, _ in exact_pairs]
         exact_scores_list = [scores for _, scores in exact_pairs]
-    if exact_scores_list is None:
-        exact_scores_list = [None] * len(queries)
     recall_list: list[float] = []
+    agreement_results = []
     docs_pruned_total = 0
     tokens_pruned_total = 0
     total_tokens_padded = int(prepared[0][0].doc_offsets[-1]) if prepared else 0
-    for prep, exact_ids, exact_scores in zip(prepared, exact_ids_list, exact_scores_list):
+    for prep, exact_ids, exact_scores, exact_full_scores in zip(
+        prepared, exact_ids_list, exact_scores_list, exact_full_scores_list
+    ):
         corpus, Q_eff, order, Qcum, tau = prep
         ids, _, stats = run_fused_panel_bond_validated(
             lib, corpus, Q_eff, order, Qcum,
             shrink=config.shrink, tau_seed=tau, K=K, n_threads=n_threads,
             level=level, checkpoints=cps, bound=bound,
         )
-        recall_list.append(
-            exact_agreement(ids.astype(np.int64), exact_ids, exact_scores)
+        agreement = validate_boundary_tie_equivalence(
+            ids.astype(np.int64), exact_ids, exact_scores,
+            k=K, num_documents=n_docs, exact_scores_by_id=exact_full_scores,
         )
+        agreement_results.append(agreement)
+        recall_list.append(agreement.recall_vs_oracle_set)
         docs_pruned_total += int(stats[1])
         tokens_pruned_total += int(stats[2])
 
     pruned_docs_pct = 100.0 * docs_pruned_total / (n_docs * nq) if n_docs * nq else 0.0
     tokens_pruned_pct = (100.0 * tokens_pruned_total / (total_tokens_padded * nq)
                          if level == "token" and total_tokens_padded * nq else None)
+    agreement_summary = aggregate_agreement_results(agreement_results)
 
     return ResultRecord(
         dataset               = config.dataset,
@@ -256,4 +274,5 @@ def run_fused_bond_mode(
         notes                 = (f"fused panel BOND level={level} bound={bound} "
                                  f"(checkpoints {list(config.checkpoints) if config.checkpoints else [32, 64]}), "
                                  f"n_threads={n_threads}"),
+        **agreement_summary,
     )

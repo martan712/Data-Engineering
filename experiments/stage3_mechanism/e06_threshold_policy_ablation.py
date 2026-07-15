@@ -113,6 +113,9 @@ def run_dataset(dataset: str) -> None:
             "threshold_policy": policy,
             "dimension_order": ORDER,
             "recall_vs_exact_at_10": rec.recall_vs_exact_at_10,
+            "strict_top_k_set_equal": rec.strict_top_k_set_equal,
+            "boundary_tie_equivalent": rec.boundary_tie_equivalent,
+            "agreement_failure_codes": rec.agreement_failure_codes,
             "cells_scanned_pct": rec.cells_scanned_pct,
             "pruned_docs_pct": rec.pruned_docs_pct,
             "tokens_pruned_pct": rec.tokens_pruned_pct,
@@ -125,10 +128,10 @@ def run_dataset(dataset: str) -> None:
               f"tok_prune={arm['tokens_pruned_pct']:.2f}%  "
               f"{elapsed:.1f}s")
 
-        if rec.recall_vs_exact_at_10 < 1.0:
+        if not rec.boundary_tie_equivalent:
             raise RuntimeError(
-                f"Exact-agreement failed at shrink=1: "
-                f"policy={policy!r} recall={rec.recall_vs_exact_at_10}"
+                f"Verified exact gate failed at shrink=1: "
+                f"policy={policy!r} failures={rec.agreement_failure_codes}"
             )
 
     # Fused wall-clock confirmation arm for the winning policy only (R6).
@@ -153,6 +156,16 @@ def run_dataset(dataset: str) -> None:
         "dimension_order": ORDER,
         "recall_vs_exact_at_10": min(rec_1t.recall_vs_exact_at_10,
                                      rec_mt.recall_vs_exact_at_10),
+        "strict_top_k_set_equal": bool(
+            rec_1t.strict_top_k_set_equal and rec_mt.strict_top_k_set_equal
+        ),
+        "boundary_tie_equivalent": bool(
+            rec_1t.boundary_tie_equivalent and rec_mt.boundary_tie_equivalent
+        ),
+        "agreement_failure_codes": sorted(set(
+            (rec_1t.agreement_failure_codes or []) +
+            (rec_mt.agreement_failure_codes or [])
+        )),
         "ms_per_query_1t": rec_1t.ms_per_query,
         "ms_per_query_mt": rec_mt.ms_per_query,
         "pruned_docs_pct_fused": rec_mt.pruned_docs_pct,
@@ -163,10 +176,10 @@ def run_dataset(dataset: str) -> None:
           f"MT={fused_arm['ms_per_query_mt']:.2f}  "
           f"prune={fused_arm['pruned_docs_pct_fused']:.2f}%  "
           f"(dense MT={fused_arm['dense_fused_ms_per_query_mt']:.2f})")
-    if fused_arm["recall_vs_exact_at_10"] < 1.0:
+    if not fused_arm["boundary_tie_equivalent"]:
         raise RuntimeError(
-            f"Exact-agreement failed at shrink=1 on the fused kernel: "
-            f"policy={winner!r} recall={fused_arm['recall_vs_exact_at_10']}"
+            f"Verified exact gate failed on the fused kernel: "
+            f"policy={winner!r} failures={fused_arm['agreement_failure_codes']}"
         )
 
     # Write JSON.
