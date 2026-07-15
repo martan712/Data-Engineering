@@ -6,7 +6,7 @@ DATASET ?=
 	data-full reproduce-full audit-results audit-evidence audit-paper \
 	test-unit test-native test-integration test-artifact test-reproduction \
 	test-sanitize test-sanitizer test-full native-portable clean-clone-smoke \
-	research-audit
+	native-paper native-clean research-audit
 
 setup-paper:
 	./setup.sh --full --frozen
@@ -49,6 +49,16 @@ native-portable:
 	$(MAKE) -C cpp/per_document_oracle BUILD=portable
 	$(MAKE) -C cpp/wide_block_maxsim_bond BUILD=portable
 	$(MAKE) -C cpp/fused_panel_maxsim BUILD=portable
+
+native-paper:
+	$(MAKE) -C cpp/per_document_oracle BUILD=paper-native
+	$(MAKE) -C cpp/wide_block_maxsim_bond BUILD=paper-native
+	$(MAKE) -C cpp/fused_panel_maxsim BUILD=paper-native
+
+native-clean:
+	$(MAKE) -C cpp/per_document_oracle clean
+	$(MAKE) -C cpp/wide_block_maxsim_bond clean
+	$(MAKE) -C cpp/fused_panel_maxsim clean
 
 # Deterministic data-fixture foundation; the clean-clone target below adds
 # representative Stage 3--5 experiment drivers.
