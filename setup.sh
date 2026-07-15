@@ -93,9 +93,9 @@ echo "Synchronizing Python environment with uv ($(uv --version))..."
 uv "${sync_args[@]}"
 
 echo "Building native kernels with BUILD=$build..."
-make -C cpp/per_document_oracle BUILD="$build"
-make -C cpp/wide_block_maxsim_bond BUILD="$build"
-make -C cpp/fused_panel_maxsim BUILD="$build"
+make -C cpp/per_document_oracle BUILD="$build" CXX="$cxx"
+make -C cpp/wide_block_maxsim_bond BUILD="$build" CXX="$cxx"
+make -C cpp/fused_panel_maxsim BUILD="$build" CXX="$cxx"
 
 mkdir -p artifacts/environment
 .venv/bin/python -m bondmaxsim.experiments.environment \

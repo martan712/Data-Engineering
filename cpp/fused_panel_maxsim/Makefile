@@ -1,40 +1,56 @@
-# Makefile — build fused_panel_maxsim.so (Stage 3b fused panel MaxSim kernels).
-#
-# Detects clang++ first; falls back to g++.  Produces the .so in this directory
-# so that src/bondmaxsim/kernels/fused_panel.py can locate it at:
-#   cpp/fused_panel_maxsim/fused_panel_maxsim.so
-#
-# Sources (one exported kernel family per TU; shared code in headers):
-#   brute.cpp      — fused_panel_maxsim_brute
-#   bond_doc.cpp   — fused_panel_maxsim_bond / _bond_cheap
-#   bond_token.cpp — fused_panel_maxsim_bond_token
-#
-# -fopenmp: threading over vectorgroups (kernels also build/run without it).
-# -march=native: enables the AVX-512 fast path on this machine; a portable
-#   autovectorized fallback compiles otherwise.
+ifeq ($(origin CXX),default)
+CXX := $(shell command -v clang++ 2>/dev/null || command -v g++ 2>/dev/null)
+endif
+BUILD ?= portable
 
-CXX := $(shell which clang++ 2>/dev/null || which g++ 2>/dev/null)
+TARGET := fused_panel_maxsim.so
+SOURCES := brute.cpp bond_doc.cpp bond_token.cpp
+HEADERS := common.hpp microkernel.hpp microkernel_avx512.hpp microkernel_portable.hpp
+PROFILE_DIR := build/$(BUILD)
+PROFILE_TARGET := $(PROFILE_DIR)/$(TARGET)
+OBJECTS := $(addprefix $(PROFILE_DIR)/,$(SOURCES:.cpp=.o))
+MANIFEST := $(PROFILE_DIR)/manifest.json
+COMMON_FLAGS := -std=c++20 -fPIC -fopenmp
+
 ifeq ($(CXX),)
-$(error "No C++ compiler found (tried clang++ and g++). Install clang++ or g++.")
+$(error No C++ compiler found; set CXX or install clang++/g++)
+endif
+ifeq ($(BUILD),portable)
+PROFILE_FLAGS := -O3 -march=x86-64-v2 -DNDEBUG
+else ifeq ($(BUILD),paper-native)
+PROFILE_FLAGS := -O3 -march=native -DNDEBUG
+else ifeq ($(BUILD),sanitize)
+PROFILE_FLAGS := -O1 -g -march=x86-64-v2 -fsanitize=address,undefined -fno-omit-frame-pointer
+else
+$(error BUILD must be portable, paper-native, or sanitize)
+endif
+CXXFLAGS := $(COMMON_FLAGS) $(PROFILE_FLAGS)
+LDFLAGS := -shared -fopenmp
+ifeq ($(BUILD),sanitize)
+LDFLAGS += -fsanitize=address,undefined
 endif
 
-TARGET   := fused_panel_maxsim.so
-SOURCES  := brute.cpp bond_doc.cpp bond_token.cpp
-HEADERS  := common.hpp microkernel.hpp microkernel_avx512.hpp microkernel_portable.hpp
-OBJECTS  := $(SOURCES:.cpp=.o)
-CXXFLAGS := -O3 -march=native -DNDEBUG -std=c++20 -fPIC -fopenmp
-
-.PHONY: all clean
+.PHONY: all clean FORCE manifest
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	@echo "[fused_panel_maxsim] Compiler: $(CXX)"
-	$(CXX) -shared -fopenmp -o $@ $(OBJECTS)
-	@echo "[fused_panel_maxsim] Built: $(TARGET)"
+$(TARGET): $(PROFILE_TARGET) FORCE
+	cp $(PROFILE_TARGET) $(TARGET)
 
-%.o: %.cpp $(HEADERS)
+$(PROFILE_TARGET): $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
+	python3 ../../scripts/native_build_manifest.py --binary $@ --compiler $(CXX) \
+		--flags "$(CXXFLAGS) $(LDFLAGS)" --profile $(BUILD) --output $(MANIFEST)
+
+$(PROFILE_DIR)/%.o: %.cpp $(HEADERS)
+	mkdir -p $(PROFILE_DIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+manifest: $(MANIFEST)
+
+$(MANIFEST): $(PROFILE_TARGET)
+
+FORCE:
+
 clean:
-	rm -f $(TARGET) $(OBJECTS)
+	rm -rf build $(TARGET) *.o
