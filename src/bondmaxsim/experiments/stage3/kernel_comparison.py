@@ -34,7 +34,8 @@ from bondmaxsim.experiments.workloads import (
     ordered_query_id_sha256,
 )
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores, topk_from_scores
-from bondmaxsim.results.io import atomic_write_envelope, deterministic_result_name
+from bondmaxsim.experiments.persistence import write_or_append_timing_sessions
+from bondmaxsim.results.io import deterministic_result_name
 from bondmaxsim.results.models import ExperimentResultEnvelope
 from bondmaxsim.testbed.config import RunConfig
 
@@ -269,8 +270,8 @@ def _write_timing(
         build_profile="release-native",
     )
     path = output_dir / deterministic_result_name(spec.experiment_id, spec.dataset_id, spec.workload_id)
-    atomic_write_envelope(path, envelope)
-    return TimingExperimentRun(envelope, path)
+    merged = write_or_append_timing_sessions(path, envelope)
+    return TimingExperimentRun(merged, path)
 
 
 def _canonical_sha256(value: Any) -> str:

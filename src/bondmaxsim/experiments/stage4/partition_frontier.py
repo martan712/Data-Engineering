@@ -25,7 +25,8 @@ from bondmaxsim.experiments.stage4.common import (
 from bondmaxsim.experiments.timing import TimingProtocol, new_session_id
 from bondmaxsim.kernels.fused_panel import load_fused_panel_kernel
 from bondmaxsim.partitioned_scan import PartitionedFusedScan
-from bondmaxsim.results.io import atomic_write_envelope, deterministic_result_name
+from bondmaxsim.experiments.persistence import write_or_append_timing_sessions
+from bondmaxsim.results.io import deterministic_result_name
 from bondmaxsim.results.models import ExperimentResultEnvelope
 from bondmaxsim.testbed.config import RunConfig
 
@@ -254,5 +255,5 @@ def run_partition_frontier(
         environment=environment,
     )
     path = output_dir / deterministic_result_name(spec.experiment_id, spec.dataset_id, spec.workload_id)
-    atomic_write_envelope(path, envelope)
-    return PartitionFrontierRun(envelope, path)
+    merged = write_or_append_timing_sessions(path, envelope)
+    return PartitionFrontierRun(merged, path)
