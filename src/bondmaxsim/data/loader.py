@@ -121,6 +121,11 @@ def load_dataset(
     name: str,
     data_dir: Path | None = None,
     verify_norm: bool = True,
+    *,
+    frozen: bool = False,
+    freeze_manifest: Path | None = None,
+    generated_root: Path | None = None,
+    freeze_fixture: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
     """Load a ported dataset by name and return token-major arrays.
 
@@ -131,6 +136,15 @@ def load_dataset(
                  <repo_root>/data/embeddings (REPO_ROOT from bondmaxsim.config).
     verify_norm: if True, assert unit-norm on a sample of doc tokens and on all
                  query tokens (raises AssertionError if violated).
+    frozen     : require the authoritative final freeze and route only to its
+                 generated-v1 embedding file.  False preserves historical and
+                 development readability from data/embeddings.
+    freeze_manifest: optional authoritative freeze path (primarily for fixture
+                 validation); defaults to artifacts/data/freeze-v1.json.
+    generated_root: generated data root bound to the freeze; defaults to
+                 data/generated/v1.
+    freeze_fixture: allow a fixture-generated freeze in tests; final callers
+                 leave this false.
 
     Returns
     -------
@@ -144,7 +158,28 @@ def load_dataset(
         `python -m bondmaxsim.data.port_embeddings`
     to generate it.
     """
-    if data_dir is None:
+    if frozen:
+        from bondmaxsim.data.freeze import (
+            DEFAULT_FREEZE_MANIFEST,
+            DEFAULT_GENERATED_ROOT,
+            DataFreezeError,
+            resolve_frozen_dataset,
+        )
+
+        root = Path(generated_root or DEFAULT_GENERATED_ROOT)
+        expected_dir = root / "embeddings"
+        if data_dir is not None and Path(data_dir).resolve() != expected_dir.resolve():
+            raise DataFreezeError(
+                "frozen loads cannot use legacy or alternate embedding caches"
+            )
+        selection = resolve_frozen_dataset(
+            name,
+            freeze_path=Path(freeze_manifest or DEFAULT_FREEZE_MANIFEST),
+            generated_root=root,
+            fixture=freeze_fixture,
+        )
+        data_dir = selection.embedding_path.parent
+    elif data_dir is None:
         data_dir = _DEFAULT_DATA_DIR
 
     npz_path = Path(data_dir) / f"{name}.npz"
@@ -189,6 +224,11 @@ def load_eval_queries(
     name: str,
     data_dir: Path | None = None,
     verify_norm: bool = True,
+    *,
+    frozen: bool = False,
+    freeze_manifest: Path | None = None,
+    generated_root: Path | None = None,
+    freeze_fixture: bool = False,
 ) -> tuple[list[np.ndarray], list[str]]:
     """Load the qrels-evaluable queries and their BEIR IDs for Stage 5.
 
@@ -211,7 +251,28 @@ def load_eval_queries(
     from bondmaxsim.data.beir_ids import load_ids
     from bondmaxsim.oracle.normalization import assert_unit_norm
 
-    if data_dir is None:
+    if frozen:
+        from bondmaxsim.data.freeze import (
+            DEFAULT_FREEZE_MANIFEST,
+            DEFAULT_GENERATED_ROOT,
+            DataFreezeError,
+            resolve_frozen_dataset,
+        )
+
+        root = Path(generated_root or DEFAULT_GENERATED_ROOT)
+        expected_dir = root / "embeddings"
+        if data_dir is not None and Path(data_dir).resolve() != expected_dir.resolve():
+            raise DataFreezeError(
+                "frozen loads cannot use legacy or alternate embedding caches"
+            )
+        selection = resolve_frozen_dataset(
+            name,
+            freeze_path=Path(freeze_manifest or DEFAULT_FREEZE_MANIFEST),
+            generated_root=root,
+            fixture=freeze_fixture,
+        )
+        data_dir = selection.quality_queries_path.parent
+    elif data_dir is None:
         data_dir = _DEFAULT_DATA_DIR
     data_dir = Path(data_dir)
 

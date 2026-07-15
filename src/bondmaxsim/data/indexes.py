@@ -220,6 +220,7 @@ def build_derived_indexes(
     frozen: FrozenDataConfiguration | None = None,
     builders: Mapping[str, BackendBuilder] = DEFAULT_BUILDERS,
     resume: bool = True,
+    fixture: bool = False,
 ) -> DerivedIndexes:
     """Build FAISS then PLAID for one validated generated dataset."""
     if dataset not in DATASETS:
@@ -227,13 +228,17 @@ def build_derived_indexes(
     frozen = frozen or load_data_configuration()
     manifest_path = output_root / "index_manifests" / f"{dataset}.json"
     if resume and manifest_path.is_file():
-        manifest = validate_derived_indexes(output_root, dataset, frozen=frozen)
+        manifest = validate_derived_indexes(
+            output_root, dataset, frozen=frozen, fixture=fixture
+        )
         return DerivedIndexes(dataset, output_root, manifest_path, manifest, True)
     missing = {"faiss", "plaid"} - set(builders)
     if missing:
         raise DerivedIndexError(f"missing index builders: {', '.join(sorted(missing))}")
 
-    data_manifest = validate_generated_dataset(output_root, dataset, frozen=frozen)
+    data_manifest = validate_generated_dataset(
+        output_root, dataset, frozen=frozen, fixture=fixture
+    )
     embedding_path = output_root / "embeddings" / f"{dataset}.npz"
     with np.load(embedding_path) as arrays:
         doc_values = np.ascontiguousarray(arrays["doc_values"], dtype=np.float32)
@@ -261,7 +266,9 @@ def build_derived_indexes(
         "indexes": index_records,
     }
     _atomic_json(manifest_path, manifest)
-    validated = validate_derived_indexes(output_root, dataset, frozen=frozen)
+    validated = validate_derived_indexes(
+        output_root, dataset, frozen=frozen, fixture=fixture
+    )
     return DerivedIndexes(dataset, output_root, manifest_path, validated, False)
 
 
@@ -270,9 +277,12 @@ def validate_derived_indexes(
     dataset: str,
     *,
     frozen: FrozenDataConfiguration | None = None,
+    fixture: bool = False,
 ) -> Mapping[str, Any]:
     frozen = frozen or load_data_configuration()
-    data_manifest = validate_generated_dataset(output_root, dataset, frozen=frozen)
+    data_manifest = validate_generated_dataset(
+        output_root, dataset, frozen=frozen, fixture=fixture
+    )
     manifest_path = output_root / "index_manifests" / f"{dataset}.json"
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

@@ -47,6 +47,7 @@ def _fixture_data(root: Path):
         frozen=frozen,
         source_loader=_source,
         encoder=_FixtureEncoder(),
+        fixture=True,
     )
     return frozen
 
@@ -105,9 +106,12 @@ def test_fixture_indexes_record_source_settings_artifacts_and_resume(tmp_path: P
         output_root=tmp_path,
         frozen=frozen,
         builders=_FAKE_BUILDERS,
+        fixture=True,
     )
     assert result.resumed is False
-    manifest = validate_derived_indexes(tmp_path, "scifact", frozen=frozen)
+    manifest = validate_derived_indexes(
+        tmp_path, "scifact", frozen=frozen, fixture=True
+    )
     assert manifest["configuration_sha256"] == frozen.sha256
     assert set(manifest["source_data"]["outputs"]) == {
         "beir_ids/scifact_ids.json",
@@ -126,6 +130,7 @@ def test_fixture_indexes_record_source_settings_artifacts_and_resume(tmp_path: P
             "faiss": lambda *_: pytest.fail("resume rebuilt FAISS"),
             "plaid": lambda *_: pytest.fail("resume rebuilt PLAID"),
         },
+        fixture=True,
     )
     assert resumed.resumed is True
     assert not list(tmp_path.rglob("*.tmp"))
@@ -138,11 +143,12 @@ def test_validation_rejects_modified_index_artifact(tmp_path: Path):
         output_root=tmp_path,
         frozen=frozen,
         builders=_FAKE_BUILDERS,
+        fixture=True,
     )
     artifact = result.manifest["indexes"]["faiss"]["artifacts"][0]
     (tmp_path / artifact["path"]).write_bytes(b"modified")
     with pytest.raises(DerivedIndexError, match="checksum mismatch"):
-        validate_derived_indexes(tmp_path, "scifact", frozen=frozen)
+        validate_derived_indexes(tmp_path, "scifact", frozen=frozen, fixture=True)
 
 
 def test_validation_rejects_changed_source_manifest_identity(tmp_path: Path):
@@ -152,11 +158,12 @@ def test_validation_rejects_changed_source_manifest_identity(tmp_path: Path):
         output_root=tmp_path,
         frozen=frozen,
         builders=_FAKE_BUILDERS,
+        fixture=True,
     )
     data_manifest = tmp_path / "manifests/scifact.json"
     data_manifest.write_text(data_manifest.read_text(encoding="utf-8") + "\n", encoding="utf-8")
     with pytest.raises(DerivedIndexError, match="source data hash mismatch"):
-        validate_derived_indexes(tmp_path, "scifact", frozen=frozen)
+        validate_derived_indexes(tmp_path, "scifact", frozen=frozen, fixture=True)
 
 
 def test_validation_rejects_changed_frozen_index_settings(tmp_path: Path):
@@ -166,12 +173,13 @@ def test_validation_rejects_changed_frozen_index_settings(tmp_path: Path):
         output_root=tmp_path,
         frozen=frozen,
         builders=_FAKE_BUILDERS,
+        fixture=True,
     )
     manifest = dict(result.manifest)
     manifest["indexes"]["faiss"]["settings"]["seed"] = 7
     result.manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(DerivedIndexError, match="faiss settings mismatch"):
-        validate_derived_indexes(tmp_path, "scifact", frozen=frozen)
+        validate_derived_indexes(tmp_path, "scifact", frozen=frozen, fixture=True)
 
 
 def test_validation_rejects_index_shape_detached_from_source(tmp_path: Path):
@@ -181,9 +189,10 @@ def test_validation_rejects_index_shape_detached_from_source(tmp_path: Path):
         output_root=tmp_path,
         frozen=frozen,
         builders=_FAKE_BUILDERS,
+        fixture=True,
     )
     manifest = dict(result.manifest)
     manifest["document_shape"] = [4096, 128]
     result.manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(DerivedIndexError, match="document shape/source mismatch"):
-        validate_derived_indexes(tmp_path, "scifact", frozen=frozen)
+        validate_derived_indexes(tmp_path, "scifact", frozen=frozen, fixture=True)
