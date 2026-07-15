@@ -24,6 +24,8 @@ jobs:
           enable-cache: true
       - run: uv sync --frozen --all-extras
       - if: matrix.tier == 'integration'
+        run: sudo apt-get update && sudo apt-get install -y libomp-dev
+      - if: matrix.tier == 'integration'
         run: make native-portable
       - run: make test-${{ matrix.tier }}
 
@@ -35,6 +37,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --frozen --all-extras
+      - run: sudo apt-get update && sudo apt-get install -y libomp-dev
       - run: make native-portable
       - run: make test-native
 
@@ -42,6 +45,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libomp-dev
       - run: make test-sanitize
 
   clean-clone-fixture:
@@ -54,6 +58,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --frozen --all-extras
+      - run: sudo apt-get update && sudo apt-get install -y libomp-dev
       - run: make native-portable
       - run: make clean-clone-smoke
 
@@ -68,5 +73,6 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --frozen --all-extras
+      - run: sudo apt-get update && sudo apt-get install -y libomp-dev
       - run: make native-portable
       - run: make research-audit
