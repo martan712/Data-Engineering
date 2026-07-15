@@ -1,4 +1,3347 @@
 {
-  "catalog_version": "1.0.0",
-  "artifacts": []
+  "artifacts": [
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_arguana_wide_bond",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_arguana_wide_bond",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_arguana_wide_bond.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_bond.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "1b38831606a8abe886c98692276c4cbd94260e1be3f3b9181734bfe14d1e343f",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_arguana_wide_natural",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_arguana_wide_natural",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_arguana_wide_natural.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_natural.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "21da0bf37f4e80f51c7801a6088e24945912db445fcea866f56dd05b4ceca855",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_arguana_wide_pca",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_arguana_wide_pca",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_arguana_wide_pca.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_arguana_wide_pca.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "a60cb3e7955781bdad6bf6419f2f07d93cba72e5c35976cd84c4c0b78536f950",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_nfcorpus_wide_bond",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_nfcorpus_wide_bond",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_bond.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_bond.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "96d6c01014bb866d9b1c7d5e5efdfc259625b6decf81f9b507cd5628de433eee",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_nfcorpus_wide_natural",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_nfcorpus_wide_natural",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_natural.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_natural.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "b60660fefcb617487cd4121cea9553184fdaa93548e1c768f96e965377c6cf59",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_nfcorpus_wide_pca",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_nfcorpus_wide_pca",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_pca.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_nfcorpus_wide_pca.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "99e1317a18c5f1f29fe3079a66bf60d04e3fbd4a34de802420b9c2b0db690854",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scidocs_wide_bond",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scidocs_wide_bond",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scidocs_wide_bond.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_bond.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "f88d4ae999a9a0500c3584b99d729819a126e3bc5eb13b67872c5ee0aa515cd1",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scidocs_wide_natural",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scidocs_wide_natural",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scidocs_wide_natural.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_natural.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "7aa87ae238647d13dd6307408457e42e5d4804710a5445c75625893865d8679c",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scidocs_wide_pca",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scidocs_wide_pca",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scidocs_wide_pca.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scidocs_wide_pca.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "e63f65fd490ad833ad4e90e9acf0280d004a3a2563ac7872c7c5a3e4d5a18db1",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "98bfad1e6b05f0698dba2ba9bf850a7ba01d003e89d9e8f62bec2edf828acbeb",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_bond",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_bond",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_bond.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_bond.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "7c4ec0ea18d5efc7896ccb672832514881ac0fa7a1319c62233bbea59ff402d6",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_natural",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_natural",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_natural.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_natural.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "bab35d39b7728ca7bc00d756030a60d3fa10c4ece4ed36c1b3e45386cf915edb",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_pca",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_pca",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_pca.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_pca.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "de4e3c1e5d4c5e3022eeccb75016d3070ab09d451f9f1933fa2ebb2c43587e03",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_wide_bond",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_wide_bond",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_wide_bond.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_bond.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "e3eb2eb4cf3809fa13656284c1d9ddce4453921d753b77c41d177a79f11bb784",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_wide_natural",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_wide_natural",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_wide_natural.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_natural.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "0d83c60ed2da597d28a7079ec0d0cabb3b49657c3c6fdde58ecdb46d76bc03df",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_exact_agreement_scifact_wide_pca",
+      "command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_exact_agreement_scifact_wide_pca",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_exact_agreement_scifact_wide_pca.json"
+      ],
+      "path": "results/json/stage2_testbed_exact_agreement_scifact_wide_pca.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "7f0c16ae77172a4dc3dcc56ead9e416183c70f8ece9f0ce5c9243077b787f4e4",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_two_mode_smoke_scifact_accounting",
+      "command": "uv run python -m experiments.stage2_testbed.s03_two_mode_smoke",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_two_mode_smoke_scifact_accounting",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_two_mode_smoke_scifact_accounting.json"
+      ],
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_accounting.json",
+      "regeneration_cost": "fixture",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "f360402322d5e51a989dad2a8ccab4e38ebba02a989ab5da1e2999661b1d5f37",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_two_mode_smoke_scifact_throughput",
+      "command": "uv run python -m experiments.stage2_testbed.s03_two_mode_smoke",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_two_mode_smoke_scifact_throughput",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "bond_pdx_maxsim_exact_safe"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_two_mode_smoke_scifact_throughput.json"
+      ],
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_throughput.json",
+      "regeneration_cost": "fixture",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "ba5295d117dd03615549e75e17411c13cedc2104aabd520a68b04b82c8d92bfd",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_two_mode_smoke_scifact_wide_accounting",
+      "command": "uv run python -m experiments.stage2_testbed.s03_two_mode_smoke",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_two_mode_smoke_scifact_wide_accounting",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_two_mode_smoke_scifact_wide_accounting.json"
+      ],
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_wide_accounting.json",
+      "regeneration_cost": "fixture",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "cb78b5dba06a4f651f293294628f0afec4d6b9c3cf7d362b97bb17c81a051307",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage2_testbed_two_mode_smoke_scifact_wide_throughput",
+      "command": "uv run python -m experiments.stage2_testbed.s03_two_mode_smoke",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "stage2_testbed_two_mode_smoke_scifact_wide_throughput",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage2_testbed_two_mode_smoke_scifact_wide_throughput.json"
+      ],
+      "path": "results/json/stage2_testbed_two_mode_smoke_scifact_wide_throughput.json",
+      "regeneration_cost": "fixture",
+      "schema": {
+        "name": "historical.result-record.v1",
+        "version": "1"
+      },
+      "sha256": "680d95879153c3b9029e02d92a2727dda0add0cf8a35ea4106421d139c0c4007",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e01_bound_slack_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e01_bound_slack"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e01_bound_slack",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_e01_bound_slack_arguana.json",
+        "results/figures/stage3_mechanism/e01_bound_slack_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e01_bound_slack_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.bound-slack.v1",
+        "version": "1"
+      },
+      "sha256": "b38cfc8895e8ee67df9a42020ec277aadbc60b51305a834341b9e94d4183fb2a",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e01_bound_slack_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e01_bound_slack"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e01_bound_slack",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_e01_bound_slack_nfcorpus.json",
+        "results/figures/stage3_mechanism/e01_bound_slack_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e01_bound_slack_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.bound-slack.v1",
+        "version": "1"
+      },
+      "sha256": "02d8b7b2fb56f4e550810db7026092fe7e8a69299e7e824f67d8724f56c425e4",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e01_bound_slack_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e01_bound_slack"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e01_bound_slack",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_e01_bound_slack_scidocs.json",
+        "results/figures/stage3_mechanism/e01_bound_slack_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e01_bound_slack_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.bound-slack.v1",
+        "version": "1"
+      },
+      "sha256": "2225f06691c7324b78e82dbe408c623c11a1eb1fe836346cb404c2c7dafb7b5e",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e01_bound_slack_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e01_bound_slack"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e01_bound_slack",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_e01_bound_slack_scifact.json",
+        "results/figures/stage3_mechanism/e01_bound_slack_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e01_bound_slack_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.bound-slack.v1",
+        "version": "1"
+      },
+      "sha256": "d0853308968cbb2e12895ab614bfee21dcfc4c038f2b12273a9cb8e9a8fc0a2e",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e02_pruning_rate_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e02_pruning_rate"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e02_pruning_rate",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e02_pruning_rate_arguana.json",
+        "results/figures/stage3_mechanism/e02_pruning_rate_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e02_pruning_rate.v1",
+        "version": "1"
+      },
+      "sha256": "16ab5cf3eaf8e7333cb07eeecefba4ca734d75e5545f8fa6fe0db8824762ffdd",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e02_pruning_rate_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e02_pruning_rate"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e02_pruning_rate",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e02_pruning_rate_nfcorpus.json",
+        "results/figures/stage3_mechanism/e02_pruning_rate_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e02_pruning_rate.v1",
+        "version": "1"
+      },
+      "sha256": "73aa338798ed503e4b4c2d3849a95eb6386b20d84dee7c62e31f12aa5f3b9fc2",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e02_pruning_rate_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e02_pruning_rate"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e02_pruning_rate",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e02_pruning_rate_scidocs.json",
+        "results/figures/stage3_mechanism/e02_pruning_rate_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e02_pruning_rate.v1",
+        "version": "1"
+      },
+      "sha256": "c05c2e90b63371c237e011b2ce00fb26daa860b66762c52fe647cb597d1af286",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e02_pruning_rate_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e02_pruning_rate"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e02_pruning_rate",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e02_pruning_rate_scifact.json",
+        "results/figures/stage3_mechanism/e02_pruning_rate_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e02_pruning_rate_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e02_pruning_rate.v1",
+        "version": "1"
+      },
+      "sha256": "22c316e2b7fa53f3bcccb5ff03c569af51386985d276a06a0fdbd331922b8314",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e03_order_ablation_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e03_order_ablation"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e03_order_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e03_order_ablation_arguana.json",
+        "results/figures/stage3_mechanism/e03_order_ablation_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e03_order_ablation_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e03_order_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "44b604bcfcce24e07a5327181b18836a76c71a539008fabb96b8ce3281b2ffba",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e03_order_ablation_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e03_order_ablation"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e03_order_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e03_order_ablation_nfcorpus.json",
+        "results/figures/stage3_mechanism/e03_order_ablation_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e03_order_ablation_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e03_order_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "00885ccaba95f55e4fa8e58abc629d6c6ae92147068a997703e9eab8d54bb90e",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e03_order_ablation_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e03_order_ablation"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e03_order_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e03_order_ablation_scidocs.json",
+        "results/figures/stage3_mechanism/e03_order_ablation_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e03_order_ablation_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e03_order_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "87f9bd4e3ced11cb7567211d6a83bb3d51df1463519c10603e5d791e155a55af",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e03_order_ablation_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e03_order_ablation"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e03_order_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e03_order_ablation_scifact.json",
+        "results/figures/stage3_mechanism/e03_order_ablation_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e03_order_ablation_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e03_order_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "74ce5addc5bdcd3f7c8cadc620cb59441af0efc824fc1a5883b27c1611d1da4f",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e04_exact_safe_pruning_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e04_exact_safe_pruning --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e04_exact_safe_pruning"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e04_exact_safe_pruning",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e04_exact_safe_pruning_arguana.json",
+        "results/figures/stage3_mechanism/e04_exact_safe_pruning_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e04_exact_safe_pruning.v1",
+        "version": "1"
+      },
+      "sha256": "9a11b76ae685cd90da58185259a0eec92ecef1b2ef13358c16fe5a93fc20607e",
+      "status": "diagnostic",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e04_exact_safe_pruning_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e04_exact_safe_pruning --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e04_exact_safe_pruning"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e04_exact_safe_pruning",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e04_exact_safe_pruning_nfcorpus.json",
+        "results/figures/stage3_mechanism/e04_exact_safe_pruning_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e04_exact_safe_pruning.v1",
+        "version": "1"
+      },
+      "sha256": "4f1f730061be7d00b0872586a723dbcf97e1fa2c99eb5116032f68ff2ed26346",
+      "status": "diagnostic",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e04_exact_safe_pruning_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e04_exact_safe_pruning --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e04_exact_safe_pruning"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e04_exact_safe_pruning",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e04_exact_safe_pruning_scidocs.json",
+        "results/figures/stage3_mechanism/e04_exact_safe_pruning_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e04_exact_safe_pruning.v1",
+        "version": "1"
+      },
+      "sha256": "3793ec98aa03cee927f6f7366605321c0518e76eed889c7e7c8db5ab52478b51",
+      "status": "diagnostic",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e04_exact_safe_pruning_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e04_exact_safe_pruning --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e04_exact_safe_pruning"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e04_exact_safe_pruning",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e04_exact_safe_pruning_scifact.json",
+        "results/figures/stage3_mechanism/e04_exact_safe_pruning_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e04_exact_safe_pruning_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e04_exact_safe_pruning.v1",
+        "version": "1"
+      },
+      "sha256": "4536a2be69c9a101f8e7ae621f0c533eccd8b9b1eb814a0401ee0b1a4a10fc90",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e05_approximate_recall_sweep_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e05_approximate_recall_sweep --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e05_approximate_recall_sweep"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e05_approximate_recall_sweep",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e05_approximate_recall_sweep_nfcorpus.json",
+        "results/figures/stage3_mechanism/e05_approximate_recall_sweep_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e05_approximate_recall_sweep_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e05_approximate_recall_sweep.v1",
+        "version": "1"
+      },
+      "sha256": "5bf68e541f1b46def36f7297152a40e912837dee027aa122c1d4ef5079abf531",
+      "status": "diagnostic",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e05_approximate_recall_sweep_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e05_approximate_recall_sweep --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e05_approximate_recall_sweep"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e05_approximate_recall_sweep",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method_accounting": "wide_block_maxsim_bond",
+        "method_wallclock": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e05_approximate_recall_sweep_scifact.json",
+        "results/figures/stage3_mechanism/e05_approximate_recall_sweep_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e05_approximate_recall_sweep_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e05_approximate_recall_sweep.v1",
+        "version": "1"
+      },
+      "sha256": "0a76dcf5227042b9910b73b01b3eedb957a680a1369e83da97f8b2edefbee343",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e06_threshold_policy_ablation_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e06_threshold_policy_ablation --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e06_threshold_policy_ablation"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e06_threshold_policy_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e06_threshold_policy_ablation_arguana.json",
+        "results/figures/stage3_mechanism/e06_threshold_policy_ablation_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e06_threshold_policy_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "b3050282eaed0661f99df47383e9ca5354d85a573a1aa91fe9dc9802c642cf86",
+      "status": "diagnostic",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e06_threshold_policy_ablation_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e06_threshold_policy_ablation --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e06_threshold_policy_ablation"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e06_threshold_policy_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e06_threshold_policy_ablation_nfcorpus.json",
+        "results/figures/stage3_mechanism/e06_threshold_policy_ablation_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e06_threshold_policy_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "7806900baf616adbff83055ec2045a1741bdc0e905ab483271f6763df057f3e9",
+      "status": "diagnostic",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e06_threshold_policy_ablation_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e06_threshold_policy_ablation --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e06_threshold_policy_ablation"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e06_threshold_policy_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e06_threshold_policy_ablation_scidocs.json",
+        "results/figures/stage3_mechanism/e06_threshold_policy_ablation_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e06_threshold_policy_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "89fea76c04c63e1fe680056aa0dd2f53bdb0ce39477a2c613dbebed96a953f3d",
+      "status": "diagnostic",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e06_threshold_policy_ablation_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e06_threshold_policy_ablation --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e06_threshold_policy_ablation"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e06_threshold_policy_ablation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "wide_block_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e06_threshold_policy_ablation_scifact.json",
+        "results/figures/stage3_mechanism/e06_threshold_policy_ablation_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e06_threshold_policy_ablation_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e06_threshold_policy_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "5ac46ae9deb828d8ea317552998ad2b03fbcc2559402d8bb25c3aa5bcb3a5967",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e07_cache_layout_sensitivity_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e07_cache_layout_sensitivity --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e07_cache_layout_sensitivity"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e07_cache_layout_sensitivity",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e07_cache_layout_sensitivity_arguana.json",
+        "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e07_cache_layout_sensitivity.v1",
+        "version": "1"
+      },
+      "sha256": "48f893cd93cfd9154a3c97bb2d51802c7aaf4a4edcd083883e7f4d74016304cd",
+      "status": "diagnostic",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e07_cache_layout_sensitivity_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e07_cache_layout_sensitivity --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e07_cache_layout_sensitivity"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e07_cache_layout_sensitivity",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e07_cache_layout_sensitivity_nfcorpus.json",
+        "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e07_cache_layout_sensitivity.v1",
+        "version": "1"
+      },
+      "sha256": "57e588eb420cd4f123df002cd5c0320ec78235f5b5071e757405e1dd5bea8cc1",
+      "status": "diagnostic",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e07_cache_layout_sensitivity_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e07_cache_layout_sensitivity --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e07_cache_layout_sensitivity"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e07_cache_layout_sensitivity",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e07_cache_layout_sensitivity_scifact.json",
+        "results/figures/stage3_mechanism/e07_cache_layout_sensitivity_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e07_cache_layout_sensitivity_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e07_cache_layout_sensitivity.v1",
+        "version": "1"
+      },
+      "sha256": "ebcef5bd474defb3682a2053a5a8fb4eb6cfec68d94ecc8104746a34b8aabf49",
+      "status": "diagnostic",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e08_checkpoint_ablation_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e08_checkpoint_ablation"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e08_checkpoint_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t",
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e08_checkpoint_ablation_arguana.json",
+        "results/figures/stage3_mechanism/e08_checkpoint_ablation_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e08_checkpoint_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "546d45ad6218ee946ed9ebb10e022883c1f7930aef5b067e92fdc26f11b9cd66",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_1t"
+        },
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e08_checkpoint_ablation_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e08_checkpoint_ablation"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e08_checkpoint_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t",
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e08_checkpoint_ablation_nfcorpus.json",
+        "results/figures/stage3_mechanism/e08_checkpoint_ablation_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e08_checkpoint_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "47c3d21ff53273b9ee14f5677cf8e0f4b11111f47ae22feeafff6d8ce4e6265c",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_1t"
+        },
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e08_checkpoint_ablation_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e08_checkpoint_ablation"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e08_checkpoint_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t",
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e08_checkpoint_ablation_scidocs.json",
+        "results/figures/stage3_mechanism/e08_checkpoint_ablation_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e08_checkpoint_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "446d161e090f0fe09d2c95d98dbbc92b4ea4f0d7049ade9def71b9eb26df4c2b",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_1t"
+        },
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e08_checkpoint_ablation_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e08_checkpoint_ablation"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e08_checkpoint_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t",
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "method": "fused_panel_maxsim_bond"
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e08_checkpoint_ablation_scifact.json",
+        "results/figures/stage3_mechanism/e08_checkpoint_ablation_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e08_checkpoint_ablation_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e08_checkpoint_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "4c281c3d928f1cba605eeaa38704306c4cc1bbc05eaaa26a0f273916268ce31f",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_1t",
+            "/arms/1/ms_per_query_1t",
+            "/arms/2/ms_per_query_1t",
+            "/arms/3/ms_per_query_1t",
+            "/arms/4/ms_per_query_1t",
+            "/arms/5/ms_per_query_1t",
+            "/arms/6/ms_per_query_1t",
+            "/arms/7/ms_per_query_1t",
+            "/arms/8/ms_per_query_1t",
+            "/arms/9/ms_per_query_1t",
+            "/arms/10/ms_per_query_1t",
+            "/arms/11/ms_per_query_1t",
+            "/arms/12/ms_per_query_1t",
+            "/arms/13/ms_per_query_1t",
+            "/arms/14/ms_per_query_1t",
+            "/arms/15/ms_per_query_1t",
+            "/dense_fused_baseline/ms_per_query_1t"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_1t"
+        },
+        {
+          "date": "2026-07-15",
+          "reason": "standalone latency was replaced by counterbalanced R12c timing; accounting fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query_mt",
+            "/arms/1/ms_per_query_mt",
+            "/arms/2/ms_per_query_mt",
+            "/arms/3/ms_per_query_mt",
+            "/arms/4/ms_per_query_mt",
+            "/arms/5/ms_per_query_mt",
+            "/arms/6/ms_per_query_mt",
+            "/arms/7/ms_per_query_mt",
+            "/arms/8/ms_per_query_mt",
+            "/arms/9/ms_per_query_mt",
+            "/arms/10/ms_per_query_mt",
+            "/arms/11/ms_per_query_mt",
+            "/arms/12/ms_per_query_mt",
+            "/arms/13/ms_per_query_mt",
+            "/arms/14/ms_per_query_mt",
+            "/arms/15/ms_per_query_mt",
+            "/dense_fused_baseline/ms_per_query_mt"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_arguana",
+      "command": "uv run python -m experiments.stage3_mechanism.e09_bound_tightness_ablation --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e09_bound_tightness_ablation"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e09_bound_tightness_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "methods": {
+          "cheap": "fused_panel_maxsim_bond_cheap",
+          "tight": "fused_panel_maxsim_bond"
+        }
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e09_bound_tightness_ablation_arguana.json",
+        "results/figures/stage3_mechanism/e09_bound_tightness_ablation_arguana.png"
+      ],
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e09_bound_tightness_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "3207810e339d0c2b21ce206177154135930d93aa2326afb9c74f120a39b9ce85",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone all-core latency was replaced by counterbalanced R12c timing; bound/pruning fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_nfcorpus",
+      "command": "uv run python -m experiments.stage3_mechanism.e09_bound_tightness_ablation --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e09_bound_tightness_ablation"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e09_bound_tightness_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "methods": {
+          "cheap": "fused_panel_maxsim_bond_cheap",
+          "tight": "fused_panel_maxsim_bond"
+        }
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json",
+        "results/figures/stage3_mechanism/e09_bound_tightness_ablation_nfcorpus.png"
+      ],
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e09_bound_tightness_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "daf7d595e3d1a28e4fc38304397ad77bbedd7b960ab4895ba8a25894df931b48",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone all-core latency was replaced by counterbalanced R12c timing; bound/pruning fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_scidocs",
+      "command": "uv run python -m experiments.stage3_mechanism.e09_bound_tightness_ablation --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e09_bound_tightness_ablation"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e09_bound_tightness_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "methods": {
+          "cheap": "fused_panel_maxsim_bond_cheap",
+          "tight": "fused_panel_maxsim_bond"
+        }
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e09_bound_tightness_ablation_scidocs.json",
+        "results/figures/stage3_mechanism/e09_bound_tightness_ablation_scidocs.png"
+      ],
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e09_bound_tightness_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "5342bc0881e4cf1583faedfaddb44e74776a7f54e5301a24483f1aeadf756782",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone all-core latency was replaced by counterbalanced R12c timing; bound/pruning fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_e09_bound_tightness_ablation_scifact",
+      "command": "uv run python -m experiments.stage3_mechanism.e09_bound_tightness_ablation --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage3_mechanism.e09_bound_tightness_ablation"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e09_bound_tightness_ablation",
+      "field_status": [
+        {
+          "reason": "see supersession relationships",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "status": "superseded"
+        },
+        {
+          "reason": "non-latency mechanism and accounting observations are retained for diagnosis",
+          "scope": [
+            "/arms"
+          ],
+          "status": "diagnostic"
+        }
+      ],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "methods": {
+          "cheap": "fused_panel_maxsim_bond_cheap",
+          "tight": "fused_panel_maxsim_bond"
+        }
+      },
+      "outputs": [
+        "results/json/stage3_mechanism_e09_bound_tightness_ablation_scifact.json",
+        "results/figures/stage3_mechanism/e09_bound_tightness_ablation_scifact.png"
+      ],
+      "path": "results/json/stage3_mechanism_e09_bound_tightness_ablation_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.e09_bound_tightness_ablation.v1",
+        "version": "1"
+      },
+      "sha256": "e3d7af096dd18862bba3d0b61f7b2f4642b5e6974514ca4ff1085b9ca3addc71",
+      "status": "historical",
+      "supersessions": [
+        {
+          "date": "2026-07-15",
+          "reason": "standalone all-core latency was replaced by counterbalanced R12c timing; bound/pruning fields remain diagnostic",
+          "scope": [
+            "/arms/0/ms_per_query",
+            "/arms/0/qps",
+            "/arms/1/ms_per_query",
+            "/arms/1/qps",
+            "/arms/2/ms_per_query",
+            "/arms/2/qps",
+            "/arms/3/ms_per_query",
+            "/arms/3/qps",
+            "/arms/4/ms_per_query",
+            "/arms/4/qps",
+            "/arms/5/ms_per_query",
+            "/arms/5/qps",
+            "/arms/6/ms_per_query",
+            "/arms/6/qps",
+            "/arms/7/ms_per_query",
+            "/arms/7/qps",
+            "/arms/8/ms_per_query",
+            "/arms/8/qps",
+            "/arms/9/ms_per_query",
+            "/arms/9/qps",
+            "/arms/10/ms_per_query",
+            "/arms/10/qps",
+            "/arms/11/ms_per_query",
+            "/arms/11/qps",
+            "/arms/12/ms_per_query",
+            "/arms/12/qps",
+            "/arms/13/ms_per_query",
+            "/arms/13/qps",
+            "/arms/14/ms_per_query",
+            "/arms/14/qps",
+            "/arms/15/ms_per_query",
+            "/arms/15/qps",
+            "/arms/16/ms_per_query",
+            "/arms/16/qps",
+            "/arms/17/ms_per_query",
+            "/arms/17/qps",
+            "/arms/18/ms_per_query",
+            "/arms/18/qps",
+            "/arms/19/ms_per_query",
+            "/arms/19/qps",
+            "/arms/20/ms_per_query",
+            "/arms/20/qps",
+            "/arms/21/ms_per_query",
+            "/arms/21/qps",
+            "/arms/22/ms_per_query",
+            "/arms/22/qps",
+            "/arms/23/ms_per_query",
+            "/arms/23/qps",
+            "/dense_arm/ms_per_query",
+            "/dense_arm/qps"
+          ],
+          "successor": "stage3_mechanism_r12c_interleaved_exact_safe_mt"
+        }
+      ],
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_1t",
+      "command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --threads 1",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "multi-dataset",
+      "dependencies": [],
+      "experiment_id": "r12c_interleaved_exact_safe",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-multi-dataset"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_r12c_interleaved_exact_safe_1t.json"
+      ],
+      "path": "results/json/stage3_mechanism_r12c_interleaved_exact_safe_1t.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.r12c_interleaved_exact_safe.v1",
+        "version": "1"
+      },
+      "sha256": "512ca1f9c4598c7abb37d9473fa5385989e0c48720d00f322e12c72302651911",
+      "status": "current",
+      "supersedes": [
+        "stage3_mechanism_e08_checkpoint_ablation_arguana",
+        "stage3_mechanism_e08_checkpoint_ablation_nfcorpus",
+        "stage3_mechanism_e08_checkpoint_ablation_scidocs",
+        "stage3_mechanism_e08_checkpoint_ablation_scifact"
+      ],
+      "workload_id": "multi-dataset-historical-v1"
+    },
+    {
+      "artifact_id": "stage3_mechanism_r12c_interleaved_exact_safe_mt",
+      "command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --threads 0",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "multi-dataset",
+      "dependencies": [],
+      "experiment_id": "r12c_interleaved_exact_safe",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-multi-dataset"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage3_mechanism_r12c_interleaved_exact_safe_mt.json"
+      ],
+      "path": "results/json/stage3_mechanism_r12c_interleaved_exact_safe_mt.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage3.r12c_interleaved_exact_safe.v1",
+        "version": "1"
+      },
+      "sha256": "dd52f4cf4fbf12b68130112bfe98924663ff37bc460419a18a1dff00eba680b1",
+      "status": "current",
+      "supersedes": [
+        "stage3_mechanism_e08_checkpoint_ablation_arguana",
+        "stage3_mechanism_e08_checkpoint_ablation_nfcorpus",
+        "stage3_mechanism_e08_checkpoint_ablation_scidocs",
+        "stage3_mechanism_e08_checkpoint_ablation_scifact",
+        "stage3_mechanism_e09_bound_tightness_ablation_arguana",
+        "stage3_mechanism_e09_bound_tightness_ablation_nfcorpus",
+        "stage3_mechanism_e09_bound_tightness_ablation_scidocs",
+        "stage3_mechanism_e09_bound_tightness_ablation_scifact"
+      ],
+      "workload_id": "multi-dataset-historical-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e01_fixed_candidate_arms_arguana",
+      "command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e01_fixed_candidate_arms"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e01_fixed_candidate_arms",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json",
+        "results/figures/stage4_integration/e01_fixed_candidate_arms_arguana.png"
+      ],
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.fixed-candidate-arms.v1",
+        "version": "1"
+      },
+      "sha256": "16ca14432a6a6b667ca1c9807405916dd0918dba0679d8874f8eaeff66b183b4",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e01_fixed_candidate_arms_nfcorpus",
+      "command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e01_fixed_candidate_arms"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e01_fixed_candidate_arms",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json",
+        "results/figures/stage4_integration/e01_fixed_candidate_arms_nfcorpus.png"
+      ],
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.fixed-candidate-arms.v1",
+        "version": "1"
+      },
+      "sha256": "766a9f64d12f1c9fd27a9129806198e7a130b9f24dfcd9d6a4fb3da06cc2e67a",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e01_fixed_candidate_arms_scidocs",
+      "command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e01_fixed_candidate_arms"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e01_fixed_candidate_arms",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e01_fixed_candidate_arms_scidocs.json",
+        "results/figures/stage4_integration/e01_fixed_candidate_arms_scidocs.png"
+      ],
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.fixed-candidate-arms.v1",
+        "version": "1"
+      },
+      "sha256": "d7f1b6270bef9db4608fcf3f5aa2db9059ca61c801e72c9b0a694789754fc526",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e01_fixed_candidate_arms_scifact",
+      "command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e01_fixed_candidate_arms"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e01_fixed_candidate_arms",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json",
+        "results/figures/stage4_integration/e01_fixed_candidate_arms_scifact.png"
+      ],
+      "path": "results/json/stage4_integration_e01_fixed_candidate_arms_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.fixed-candidate-arms.v1",
+        "version": "1"
+      },
+      "sha256": "02da6ce31223849daaf17219a68241e70e7d2d885dfef8ae93d8386220da442d",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e02_seeded_tau_recovery_arguana",
+      "command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e02_seeded_tau_recovery",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json"
+      ],
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.seeded-tau-recovery.v1",
+        "version": "1"
+      },
+      "sha256": "4f701ba81d2a828ec38123eb3ae253a66c035fcce9d672840716d1671a2734e3",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e02_seeded_tau_recovery_nfcorpus",
+      "command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e02_seeded_tau_recovery",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json"
+      ],
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.seeded-tau-recovery.v1",
+        "version": "1"
+      },
+      "sha256": "3274a7cca6095528c3efba429e24f9645ee9304a679b135ae0266d1448c9dbd3",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e02_seeded_tau_recovery_scidocs",
+      "command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e02_seeded_tau_recovery",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json"
+      ],
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.seeded-tau-recovery.v1",
+        "version": "1"
+      },
+      "sha256": "c64f93b98cdad9b358645c9bbb0cc6311df17aaff8b3e145e7ee784b1220eff4",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e02_seeded_tau_recovery_scifact",
+      "command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e02_seeded_tau_recovery",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json"
+      ],
+      "path": "results/json/stage4_integration_e02_seeded_tau_recovery_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.seeded-tau-recovery.v1",
+        "version": "1"
+      },
+      "sha256": "ddf45053b28ee6f1515552401b19c3d845af7963d33b9b16576bceac19997745",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e03_partitioned_fused_scan_arguana",
+      "command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e03_partitioned_fused_scan"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e03_partitioned_fused_scan",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e03_partitioned_fused_scan_arguana.json",
+        "results/figures/stage4_integration/e03_partitioned_fused_scan_arguana.png"
+      ],
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.partitioned-frontier.v1",
+        "version": "1"
+      },
+      "sha256": "5f2cd5e1eabaffe049d437410de7ae1a31b93218d6d900d5c25b8cc99bcb387a",
+      "status": "historical",
+      "workload_id": "beir-arguana-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e03_partitioned_fused_scan_nfcorpus",
+      "command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e03_partitioned_fused_scan"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e03_partitioned_fused_scan",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json",
+        "results/figures/stage4_integration/e03_partitioned_fused_scan_nfcorpus.png"
+      ],
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.partitioned-frontier.v1",
+        "version": "1"
+      },
+      "sha256": "8ade805838af3fd1dea6b53ab7fb2e6f916779772ce1e5a26fafdfe8bf9718b3",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e03_partitioned_fused_scan_scidocs",
+      "command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e03_partitioned_fused_scan"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e03_partitioned_fused_scan",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e03_partitioned_fused_scan_scidocs.json",
+        "results/figures/stage4_integration/e03_partitioned_fused_scan_scidocs.png"
+      ],
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.partitioned-frontier.v1",
+        "version": "1"
+      },
+      "sha256": "5fc4506df966d805282e64065771b554cf8e743cbcb6a234f5d8e8a879f8c18c",
+      "status": "historical",
+      "workload_id": "beir-scidocs-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage4_integration_e03_partitioned_fused_scan_scifact",
+      "command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage4_integration.e03_partitioned_fused_scan"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e03_partitioned_fused_scan",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0
+        }
+      },
+      "outputs": [
+        "results/json/stage4_integration_e03_partitioned_fused_scan_scifact.json",
+        "results/figures/stage4_integration/e03_partitioned_fused_scan_scifact.png"
+      ],
+      "path": "results/json/stage4_integration_e03_partitioned_fused_scan_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage4.partitioned-frontier.v1",
+        "version": "1"
+      },
+      "sha256": "04da8af70b5c5b94e0d9580ae57c05ba70705397129b985e2a2f5942521562fa",
+      "status": "historical",
+      "workload_id": "beir-scifact-mechanism-seed42-n50-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e01_ir_evaluation_arguana",
+      "command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset arguana",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage5_corect.e01_ir_evaluation"
+      ],
+      "dataset_id": "arguana",
+      "dependencies": [],
+      "experiment_id": "e01_ir_evaluation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-arguana"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0,
+          "threshold_policy": "self_bound"
+        }
+      },
+      "outputs": [
+        "results/json/stage5_corect_e01_ir_evaluation_arguana.json",
+        "results/figures/stage5_corect/e01_ir_evaluation_arguana.png"
+      ],
+      "path": "results/json/stage5_corect_e01_ir_evaluation_arguana.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.ir-evaluation.v1",
+        "version": "1"
+      },
+      "sha256": "2288a4d1cb8940b1e1f4e727f490425ac1835252b67f003d2c1480bba5882617",
+      "status": "historical",
+      "workload_id": "beir-arguana-qrels-test-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e01_ir_evaluation_nfcorpus",
+      "command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset nfcorpus",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage5_corect.e01_ir_evaluation"
+      ],
+      "dataset_id": "nfcorpus",
+      "dependencies": [],
+      "experiment_id": "e01_ir_evaluation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-nfcorpus"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0,
+          "threshold_policy": "self_bound"
+        }
+      },
+      "outputs": [
+        "results/json/stage5_corect_e01_ir_evaluation_nfcorpus.json",
+        "results/figures/stage5_corect/e01_ir_evaluation_nfcorpus.png"
+      ],
+      "path": "results/json/stage5_corect_e01_ir_evaluation_nfcorpus.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.ir-evaluation.v1",
+        "version": "1"
+      },
+      "sha256": "3765c0d57a9401611bf1c5a2ae53adf307f8d1578a35db1f64cd6a1e94c2aa9a",
+      "status": "historical",
+      "workload_id": "beir-nfcorpus-qrels-test-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e01_ir_evaluation_scidocs",
+      "command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset scidocs",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage5_corect.e01_ir_evaluation"
+      ],
+      "dataset_id": "scidocs",
+      "dependencies": [],
+      "experiment_id": "e01_ir_evaluation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scidocs"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0,
+          "threshold_policy": "self_bound"
+        }
+      },
+      "outputs": [
+        "results/json/stage5_corect_e01_ir_evaluation_scidocs.json",
+        "results/figures/stage5_corect/e01_ir_evaluation_scidocs.png"
+      ],
+      "path": "results/json/stage5_corect_e01_ir_evaluation_scidocs.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.ir-evaluation.v1",
+        "version": "1"
+      },
+      "sha256": "563686dfb778b97720237401e9a5b465ed4c4a58bb46612aacb77f2221ca31b5",
+      "status": "historical",
+      "workload_id": "beir-scidocs-qrels-test-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e01_ir_evaluation_scifact",
+      "command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset scifact",
+      "consumers": [
+        "artifacts/paper_evidence.yaml",
+        "renderer:stage5_corect.e01_ir_evaluation"
+      ],
+      "dataset_id": "scifact",
+      "dependencies": [],
+      "experiment_id": "e01_ir_evaluation",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-scifact"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "order": "natural",
+          "shrink": 1.0,
+          "threshold_policy": "self_bound"
+        }
+      },
+      "outputs": [
+        "results/json/stage5_corect_e01_ir_evaluation_scifact.json",
+        "results/figures/stage5_corect/e01_ir_evaluation_scifact.png"
+      ],
+      "path": "results/json/stage5_corect_e01_ir_evaluation_scifact.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.ir-evaluation.v1",
+        "version": "1"
+      },
+      "sha256": "12ca36ac64095eacbb300b0c56e0cff1124f811ad210b693b4f7f9be5bce05b3",
+      "status": "historical",
+      "workload_id": "beir-scifact-qrels-test-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e02_paired_significance",
+      "command": "uv run python -m experiments.stage5_corect.e02_paired_significance --input <stage5-e01-artifact>",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "multi-dataset",
+      "dependencies": [
+        "stage5_corect_e01_ir_evaluation_arguana",
+        "stage5_corect_e01_ir_evaluation_nfcorpus",
+        "stage5_corect_e01_ir_evaluation_scidocs",
+        "stage5_corect_e01_ir_evaluation_scifact"
+      ],
+      "experiment_id": "e02_paired_significance",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-multi-dataset"
+      ],
+      "method_configuration": {
+        "kernel": {
+          "bound": "tight",
+          "checkpoints": [
+            112
+          ],
+          "nprobes": [
+            16,
+            32
+          ]
+        }
+      },
+      "outputs": [
+        "results/json/stage5_corect_e02_paired_significance.json"
+      ],
+      "path": "results/json/stage5_corect_e02_paired_significance.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.paired-significance.v1",
+        "version": "1"
+      },
+      "sha256": "d5bfdb63c1eb997fe6c595af950f92cc408597745889dbc2930c75d133bbb547",
+      "status": "historical",
+      "workload_id": "multi-dataset-historical-v1"
+    },
+    {
+      "artifact_id": "stage5_corect_e03_bm25_baseline",
+      "command": "uv run python -m experiments.stage5_corect.e03_bm25_baseline",
+      "consumers": [
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "multi-dataset",
+      "dependencies": [],
+      "experiment_id": "e03_bm25_baseline",
+      "field_status": [],
+      "inputs": [
+        "configs/data/v1.json",
+        "dataset:beir-multi-dataset"
+      ],
+      "method_configuration": {},
+      "outputs": [
+        "results/json/stage5_corect_e03_bm25_baseline.json"
+      ],
+      "path": "results/json/stage5_corect_e03_bm25_baseline.json",
+      "regeneration_cost": "full-dataset",
+      "schema": {
+        "name": "historical.stage5.bm25.v1",
+        "version": "1"
+      },
+      "sha256": "eb878d149891efe8972de5e66482345d127bf537a531de95d2d4a40e15cebad1",
+      "status": "historical",
+      "workload_id": "multi-dataset-historical-v1"
+    },
+    {
+      "artifact_id": "validation.native-agreement-baseline",
+      "command": "uv run --no-sync pytest tests/test_agreement.py",
+      "consumers": [
+        "tests/test_agreement.py",
+        "artifacts/paper_evidence.yaml"
+      ],
+      "dataset_id": "synthetic",
+      "dependencies": [],
+      "experiment_id": "native-agreement-baseline",
+      "field_status": [],
+      "inputs": [],
+      "method_configuration": {
+        "validator": "historical-exact-agreement"
+      },
+      "outputs": [
+        "artifacts/baseline/agreement-cases.json"
+      ],
+      "path": "artifacts/baseline/agreement-cases.json",
+      "regeneration_cost": "fixture",
+      "schema": {
+        "name": "bondmaxsim.validation.agreement-cases",
+        "version": "1"
+      },
+      "sha256": "576c7d62a7cd197de2073d8f154c47077fb703c11647e8cc1cc2242cbb5abcf2",
+      "status": "current",
+      "workload_id": "agreement-regression-cases-v1"
+    }
+  ],
+  "catalog_version": "1.0.0"
 }
