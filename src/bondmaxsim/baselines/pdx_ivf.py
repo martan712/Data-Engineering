@@ -25,6 +25,10 @@ from __future__ import annotations
 import numpy as np
 
 from bondmaxsim.baselines.faiss_ivf import gather_candidate_tokens
+from bondmaxsim.experiments.candidate_work import (
+    CandidateWorkObservation,
+    CountObservation,
+)
 from bondmaxsim.oracle.exact_maxsim import exact_maxsim_scores
 
 
@@ -99,16 +103,32 @@ class PDXIVFBaseline:
         k_token defaults to max(256, candidate_budget // 4) — same fill
         heuristic as FaissIVFBaseline.
         """
+        cand, _ = self.candidates_with_work(query, candidate_budget, k_token=k_token)
+        return cand
+
+    def candidates_with_work(
+        self,
+        query: np.ndarray,
+        candidate_budget: int,
+        k_token: int | None = None,
+    ) -> tuple[np.ndarray, CandidateWorkObservation]:
+        """Return candidates plus exact generation/admission instrumentation."""
         if self.index is None:
             raise RuntimeError("PDXIVFBaseline.build() must be called before search.")
+        if candidate_budget <= 0:
+            raise ValueError("candidate_budget must be positive")
         if k_token is None:
             k_token = max(256, candidate_budget // 4)
+        if k_token <= 0:
+            raise ValueError("k_token must be positive")
 
         approx = np.zeros(self.num_docs, dtype=np.float32)
         seen = np.zeros(self.num_docs, dtype=bool)
+        token_hits_inspected = 0
         Q = np.ascontiguousarray(query, dtype=np.float32)
         for token in Q:
             hits = self.index.search(token, k_token, nprobe=self.nprobe)
+            token_hits_inspected += len(hits)
             tok_ids = np.fromiter((h.index for h in hits), dtype=np.int64,
                                   count=len(hits))
             # L2 on unit vectors -> inner-product similarity (Mikel: 1 - d/2).
@@ -121,16 +141,43 @@ class PDXIVFBaseline:
             approx[u_docs] += sims[u_first]
             seen[u_docs] = True
 
-        cand = np.flatnonzero(seen)
+        generated = np.flatnonzero(seen)
+        cand = generated
         if len(cand) > candidate_budget:
             top = np.argpartition(approx[cand], -candidate_budget)[-candidate_budget:]
             cand = cand[top]
-        return np.sort(cand)
+        cand = np.sort(cand)
+        missing = CountObservation.unavailable("pdx_ivf does not probe document partitions")
+        work = CandidateWorkObservation(
+            configured_candidate_cap=CountObservation.exact(
+                candidate_budget, "PDXIVFBaseline.candidates_with_work argument"
+            ),
+            configured_full_score_cap=CountObservation.exact(
+                candidate_budget, "PDX exact-rerank cap equals candidate cap"
+            ),
+            unique_candidates_generated=CountObservation.exact(
+                len(generated), "unique token-hit document IDs before candidate cap"
+            ),
+            documents_admitted_to_scoring=CountObservation.exact(
+                len(cand), "candidate IDs after candidate cap"
+            ),
+            documents_fully_scored=CountObservation.unavailable(
+                "candidate generation does not execute the exact reranker"
+            ),
+            documents_probed=missing,
+            partitions_probed=missing,
+            token_hits_inspected=CountObservation.exact(
+                token_hits_inspected, "PDX token search result objects inspected"
+            ),
+        )
+        return cand, work
 
     def rerank(
         self, query: np.ndarray, cand: np.ndarray, k: int
     ) -> tuple[np.ndarray, np.ndarray]:
         """Exact MaxSim over the candidate docs; returns (doc_ids, scores) desc."""
+        if len(cand) == 0:
+            return np.empty(0, dtype=np.int64), np.empty(0, dtype=np.float32)
         cand_tokens, cand_starts = gather_candidate_tokens(
             self.flat_tokens, self.doc_starts, cand
         )
@@ -152,6 +199,29 @@ class PDXIVFBaseline:
 
         Returns (doc_ids desc, exact scores, n_candidates_actual).
         """
-        cand = self.candidates(query, candidate_budget, k_token=k_token)
+        ids, scores, work = self.topk_with_work(
+            query, k=k, candidate_budget=candidate_budget, k_token=k_token
+        )
+        return ids, scores, work.documents_fully_scored.value
+
+    def topk_with_work(
+        self,
+        query: np.ndarray,
+        k: int = 10,
+        candidate_budget: int = 1000,
+        k_token: int | None = None,
+    ) -> tuple[np.ndarray, np.ndarray, CandidateWorkObservation]:
+        """Full pipeline with exact per-query candidate and scoring counts."""
+        cand, generated_work = self.candidates_with_work(
+            query, candidate_budget, k_token=k_token
+        )
         ids, scores = self.rerank(query, cand, k)
-        return ids, scores, len(cand)
+        work = CandidateWorkObservation(
+            **{
+                **generated_work.__dict__,
+                "documents_fully_scored": CountObservation.exact(
+                    len(cand), "candidate IDs passed once to exact MaxSim reranker"
+                ),
+            }
+        )
+        return ids, scores, work

@@ -186,6 +186,13 @@ def test_partitioned_scan_full_probe_is_exact():
         full_scores = exact_maxsim_scores(q, tokens, starts)
         e_ids, e_scores = exact_maxsim_topk(q, tokens, starts, k)
         assert stats["docs_probed_pct"] == pytest.approx(100.0)
+        assert stats["documents_probed"] == len(starts)
+        assert stats["partitions_probed"] == len(idx.partitions)
+        assert stats["candidate_work"]["documents_probed"] == {
+            "value": len(starts),
+            "quality": "exact",
+            "source": "sum of document counts in probed partition offsets",
+        }
         agreement = validate_boundary_tie_equivalence(
             ids, e_ids, e_scores, k=k, num_documents=len(starts),
             exact_scores_by_id=full_scores,
@@ -203,6 +210,8 @@ def test_partitioned_scan_partial_probe_is_sane():
         ids, scores, stats = idx.search(lib, q, k=10, nprobe=2,
                                         checkpoints=(16,), n_threads=1)
         assert stats["docs_probed_pct"] < 100.0
+        assert stats["documents_probed"] < len(starts)
+        assert stats["partitions_probed"] == 2
         assert len(ids) == len(np.unique(ids))
         # Scores must be exact MaxSim scores of the returned docs.
         full = exact_maxsim_scores(q, tokens, starts)

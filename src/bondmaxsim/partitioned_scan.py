@@ -33,6 +33,10 @@ from __future__ import annotations
 import numpy as np
 
 from bondmaxsim.data.packing import build_qcum, pack_corpus_panels
+from bondmaxsim.experiments.candidate_work import (
+    CandidateWorkObservation,
+    CountObservation,
+)
 from bondmaxsim.kernels._ctypes_util import PackedCorpusPanels
 from bondmaxsim.kernels.fused_panel import (
     run_fused_panel_bond_validated,
@@ -203,6 +207,10 @@ class PartitionedFusedScan:
         """
         if scanner not in ("bond", "brute"):
             raise ValueError(f"Unknown scanner: {scanner!r}")
+        if k <= 0:
+            raise ValueError("k must be positive")
+        if nprobe <= 0:
+            raise ValueError("nprobe must be positive")
         Q = np.ascontiguousarray(query, dtype=np.float32)
         order = np.arange(self.D, dtype=np.uint32)     # natural (e08 winner)
         Qcum = build_qcum(Q, order) if scanner == "bond" else None
@@ -241,9 +249,40 @@ class PartitionedFusedScan:
         top = np.argpartition(scores, -actual_k)[-actual_k:]
         srt = np.argsort(scores[top])[::-1]
         top = top[srt]
+        unavailable_cap = CountObservation.unavailable(
+            "partitioned scan is controlled by nprobe, not a candidate cap"
+        )
+        unavailable_hits = CountObservation.unavailable(
+            "partitioned fused scan does not generate token-level hits"
+        )
+        work = CandidateWorkObservation(
+            configured_candidate_cap=unavailable_cap,
+            configured_full_score_cap=unavailable_cap,
+            unique_candidates_generated=CountObservation.unavailable(
+                "partition probing does not generate a candidate ID list"
+            ),
+            documents_admitted_to_scoring=CountObservation.exact(
+                docs_probed, "sum of document counts in probed partition offsets"
+            ),
+            documents_fully_scored=CountObservation.exact(
+                docs_probed - docs_pruned,
+                "probed documents minus fused-kernel early terminations",
+            ),
+            documents_probed=CountObservation.exact(
+                docs_probed, "sum of document counts in probed partition offsets"
+            ),
+            partitions_probed=CountObservation.exact(
+                len(probe), "length of selected partition probe list"
+            ),
+            token_hits_inspected=unavailable_hits,
+        )
         return ids[top], scores[top], {
+            "documents_probed": int(docs_probed),
             "docs_probed_pct": 100.0 * docs_probed / self.num_docs,
             "docs_pruned_pct_of_probed": (100.0 * docs_pruned / docs_probed
                                           if docs_probed else 0.0),
             "n_probed_partitions": int(len(probe)),
+            "partitions_probed": int(len(probe)),
+            "num_documents": int(self.num_docs),
+            "candidate_work": work.to_dict(),
         }
