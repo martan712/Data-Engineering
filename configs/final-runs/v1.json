@@ -1,0 +1,2239 @@
+{
+  "manifest_version": "1.0.0",
+  "manifest_id": "final-runs-v1",
+  "required_datasets": [
+    "scifact",
+    "nfcorpus",
+    "arguana",
+    "scidocs"
+  ],
+  "execution_policy": {
+    "strictly_serial": true,
+    "stage7_freeze_required": true,
+    "output_root": "results/final/v1"
+  },
+  "runs": [
+    {
+      "run_order": 1,
+      "run_id": "8a-exact-agreement-scifact",
+      "phase": "8A",
+      "experiment_id": "stage2-s02-exact-agreement-audit",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage2-s02-exact-agreement-audit-scifact",
+          "path": "results/final/v1/stage2-s02-exact-agreement-audit__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset {dataset} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --fixture --output-dir results/dry-run/final-v1",
+      "coverage_group": "8a-exact-agreement",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 2,
+      "run_id": "8a-exact-agreement-nfcorpus",
+      "phase": "8A",
+      "experiment_id": "stage2-s02-exact-agreement-audit",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage2-s02-exact-agreement-audit-nfcorpus",
+          "path": "results/final/v1/stage2-s02-exact-agreement-audit__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset {dataset} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --fixture --output-dir results/dry-run/final-v1",
+      "coverage_group": "8a-exact-agreement",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 3,
+      "run_id": "8a-exact-agreement-arguana",
+      "phase": "8A",
+      "experiment_id": "stage2-s02-exact-agreement-audit",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage2-s02-exact-agreement-audit-arguana",
+          "path": "results/final/v1/stage2-s02-exact-agreement-audit__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset {dataset} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --fixture --output-dir results/dry-run/final-v1",
+      "coverage_group": "8a-exact-agreement",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 4,
+      "run_id": "8a-exact-agreement-scidocs",
+      "phase": "8A",
+      "experiment_id": "stage2-s02-exact-agreement-audit",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage2-s02-exact-agreement-audit-scidocs",
+          "path": "results/final/v1/stage2-s02-exact-agreement-audit__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --dataset {dataset} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage2_testbed.s02_exact_agreement --fixture --output-dir results/dry-run/final-v1",
+      "coverage_group": "8a-exact-agreement",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 5,
+      "run_id": "8b-bound-slack-scifact",
+      "phase": "8B",
+      "experiment_id": "stage3-e01-bound-slack",
+      "dataset": "scifact",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e01-bound-slack-scifact",
+          "path": "results/final/v1/stage3-e01-bound-slack__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.bound-slack-range",
+        "paper.table.experiment-map",
+        "paper.figure.bound-slack"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --fixture --session-id final-v1-dry-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-bound-slack",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 6,
+      "run_id": "8b-bound-slack-nfcorpus",
+      "phase": "8B",
+      "experiment_id": "stage3-e01-bound-slack",
+      "dataset": "nfcorpus",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e01-bound-slack-nfcorpus",
+          "path": "results/final/v1/stage3-e01-bound-slack__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.bound-slack-range"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --fixture --session-id final-v1-dry-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-bound-slack",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 7,
+      "run_id": "8b-bound-slack-arguana",
+      "phase": "8B",
+      "experiment_id": "stage3-e01-bound-slack",
+      "dataset": "arguana",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e01-bound-slack-arguana",
+          "path": "results/final/v1/stage3-e01-bound-slack__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.bound-slack-range"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --fixture --session-id final-v1-dry-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-bound-slack",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 8,
+      "run_id": "8b-bound-slack-scidocs",
+      "phase": "8B",
+      "experiment_id": "stage3-e01-bound-slack",
+      "dataset": "scidocs",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e01-bound-slack-scidocs",
+          "path": "results/final/v1/stage3-e01-bound-slack__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.bound-slack-range"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e01_bound_slack --fixture --session-id final-v1-dry-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-bound-slack",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 9,
+      "run_id": "8b-survival-scifact",
+      "phase": "8B",
+      "experiment_id": "stage3-e02-survival",
+      "dataset": "scifact",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e02-survival-scifact",
+          "path": "results/final/v1/stage3-e02-survival__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.dataset-scale",
+        "paper.claim.survival-work-ceiling",
+        "paper.table.experiment-map",
+        "paper.figure.survival"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --fixture --session-id final-v1-dry-e02 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-survival",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 10,
+      "run_id": "8b-survival-nfcorpus",
+      "phase": "8B",
+      "experiment_id": "stage3-e02-survival",
+      "dataset": "nfcorpus",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e02-survival-nfcorpus",
+          "path": "results/final/v1/stage3-e02-survival__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.dataset-scale",
+        "paper.claim.survival-work-ceiling"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --fixture --session-id final-v1-dry-e02 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-survival",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 11,
+      "run_id": "8b-survival-arguana",
+      "phase": "8B",
+      "experiment_id": "stage3-e02-survival",
+      "dataset": "arguana",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e02-survival-arguana",
+          "path": "results/final/v1/stage3-e02-survival__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.dataset-scale",
+        "paper.claim.survival-work-ceiling"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --fixture --session-id final-v1-dry-e02 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-survival",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 12,
+      "run_id": "8b-survival-scidocs",
+      "phase": "8B",
+      "experiment_id": "stage3-e02-survival",
+      "dataset": "scidocs",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e02-survival-scidocs",
+          "path": "results/final/v1/stage3-e02-survival__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.dataset-scale",
+        "paper.claim.survival-work-ceiling"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e02_pruning_rate --fixture --session-id final-v1-dry-e02 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-survival",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 13,
+      "run_id": "8b-checkpoint-ablation-scifact-1t",
+      "phase": "8B",
+      "experiment_id": "stage3-e08-checkpoint-ablation-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e08-checkpoint-ablation-1t-scifact",
+          "path": "results/final/v1/stage3-e08-checkpoint-ablation-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.figure.checkpoint-ablation"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e08_checkpoint_ablation --fixture --threads 1 --session-id final-v1-dry-e08 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-checkpoint-diagnostic",
+      "requires_all_datasets": false
+    },
+    {
+      "run_order": 14,
+      "run_id": "8b-bound-tightness-scifact",
+      "phase": "8B",
+      "experiment_id": "stage3-e09-bound-tightness-ablation",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 10,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e09-bound-tightness-ablation-scifact",
+          "path": "results/final/v1/stage3_mechanism_e09_bound_tightness_ablation_scifact.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.cheap-bound-zero"
+      ],
+      "command_template": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; e.RESULTS_JSON=Path('{output_dir}'); e.RESULTS_FIG=Path('results/final/v1/figures'); e.run_dataset('{dataset}')\"",
+      "dry_run_kind": "one-query",
+      "dry_run_command": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; original=e.load_dataset; e.load_dataset=lambda dataset:(lambda value:(value[0],value[1],value[2][:1]))(original(dataset)); e.N_REPEATS=1; e.RESULTS_JSON=Path('results/dry-run/final-v1'); e.RESULTS_FIG=Path('results/dry-run/final-v1/figures'); assert 'one-query'; e.run_dataset('scifact')\"",
+      "coverage_group": "8b-bound-tightness",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 15,
+      "run_id": "8b-bound-tightness-nfcorpus",
+      "phase": "8B",
+      "experiment_id": "stage3-e09-bound-tightness-ablation",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 10,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e09-bound-tightness-ablation-nfcorpus",
+          "path": "results/final/v1/stage3_mechanism_e09_bound_tightness_ablation_nfcorpus.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.cheap-bound-zero"
+      ],
+      "command_template": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; e.RESULTS_JSON=Path('{output_dir}'); e.RESULTS_FIG=Path('results/final/v1/figures'); e.run_dataset('{dataset}')\"",
+      "dry_run_kind": "one-query",
+      "dry_run_command": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; original=e.load_dataset; e.load_dataset=lambda dataset:(lambda value:(value[0],value[1],value[2][:1]))(original(dataset)); e.N_REPEATS=1; e.RESULTS_JSON=Path('results/dry-run/final-v1'); e.RESULTS_FIG=Path('results/dry-run/final-v1/figures'); assert 'one-query'; e.run_dataset('scifact')\"",
+      "coverage_group": "8b-bound-tightness",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 16,
+      "run_id": "8b-bound-tightness-arguana",
+      "phase": "8B",
+      "experiment_id": "stage3-e09-bound-tightness-ablation",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 10,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e09-bound-tightness-ablation-arguana",
+          "path": "results/final/v1/stage3_mechanism_e09_bound_tightness_ablation_arguana.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.cheap-bound-zero"
+      ],
+      "command_template": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; e.RESULTS_JSON=Path('{output_dir}'); e.RESULTS_FIG=Path('results/final/v1/figures'); e.run_dataset('{dataset}')\"",
+      "dry_run_kind": "one-query",
+      "dry_run_command": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; original=e.load_dataset; e.load_dataset=lambda dataset:(lambda value:(value[0],value[1],value[2][:1]))(original(dataset)); e.N_REPEATS=1; e.RESULTS_JSON=Path('results/dry-run/final-v1'); e.RESULTS_FIG=Path('results/dry-run/final-v1/figures'); assert 'one-query'; e.run_dataset('scifact')\"",
+      "coverage_group": "8b-bound-tightness",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 17,
+      "run_id": "8b-bound-tightness-scidocs",
+      "phase": "8B",
+      "experiment_id": "stage3-e09-bound-tightness-ablation",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 10,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e09-bound-tightness-ablation-scidocs",
+          "path": "results/final/v1/stage3_mechanism_e09_bound_tightness_ablation_scidocs.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.cheap-bound-zero"
+      ],
+      "command_template": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; e.RESULTS_JSON=Path('{output_dir}'); e.RESULTS_FIG=Path('results/final/v1/figures'); e.run_dataset('{dataset}')\"",
+      "dry_run_kind": "one-query",
+      "dry_run_command": "uv run python -c \"from pathlib import Path; import experiments.stage3_mechanism.e09_bound_tightness_ablation as e; original=e.load_dataset; e.load_dataset=lambda dataset:(lambda value:(value[0],value[1],value[2][:1]))(original(dataset)); e.N_REPEATS=1; e.RESULTS_JSON=Path('results/dry-run/final-v1'); e.RESULTS_FIG=Path('results/dry-run/final-v1/figures'); assert 'one-query'; e.run_dataset('scifact')\"",
+      "coverage_group": "8b-bound-tightness",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 18,
+      "run_id": "8b-kernel-comparison-scifact-1t",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-1t-scifact",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 1 --session-id final-v1-dry-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 19,
+      "run_id": "8b-kernel-comparison-nfcorpus-1t",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-1t",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-1t-nfcorpus",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 1 --session-id final-v1-dry-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 20,
+      "run_id": "8b-kernel-comparison-arguana-1t",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-1t",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-1t-arguana",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 1 --session-id final-v1-dry-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 21,
+      "run_id": "8b-kernel-comparison-scidocs-1t",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-1t",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-1t-scidocs",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 1 --session-id final-v1-dry-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 22,
+      "run_id": "8b-kernel-comparison-scifact-mt",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-mt-scifact",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 0 --session-id final-v1-dry-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 23,
+      "run_id": "8b-kernel-comparison-nfcorpus-mt",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-mt-nfcorpus",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 0 --session-id final-v1-dry-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 24,
+      "run_id": "8b-kernel-comparison-arguana-mt",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-mt-arguana",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 0 --session-id final-v1-dry-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 25,
+      "run_id": "8b-kernel-comparison-scidocs-mt",
+      "phase": "8B",
+      "experiment_id": "stage3-e03-kernel-comparison-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 1,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-e03-kernel-comparison-mt-scidocs",
+          "path": "results/final/v1/stage3-e03-kernel-comparison-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.dense-kernel",
+        "paper.claim.survival-work-ceiling",
+        "paper.claim.dense-speedup"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.e03_order_ablation --fixture --threads 0 --session-id final-v1-dry-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8b-kernel-comparison-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 26,
+      "run_id": "8c-r12c-scifact-1t",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-1t-scifact",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe",
+        "paper.figure.checkpoint-ablation"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 1 --session-id final-v1-dry-r12c-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 27,
+      "run_id": "8c-r12c-nfcorpus-1t",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-1t",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-1t-nfcorpus",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 1 --session-id final-v1-dry-r12c-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 28,
+      "run_id": "8c-r12c-arguana-1t",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-1t",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-1t-arguana",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 1 --session-id final-v1-dry-r12c-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 29,
+      "run_id": "8c-r12c-scidocs-1t",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-1t",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-1t-scidocs",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 1 --session-id final-v1-dry-r12c-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 30,
+      "run_id": "8c-r12c-scifact-mt",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-mt-scifact",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe",
+        "paper.figure.checkpoint-ablation"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 0 --session-id final-v1-dry-r12c-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 31,
+      "run_id": "8c-r12c-nfcorpus-mt",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-mt-nfcorpus",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 0 --session-id final-v1-dry-r12c-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 32,
+      "run_id": "8c-r12c-arguana-mt",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-mt-arguana",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 0 --session-id final-v1-dry-r12c-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 33,
+      "run_id": "8c-r12c-scidocs-mt",
+      "phase": "8C",
+      "experiment_id": "stage3-r12c-exact-safe-interleaved-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 3,
+      "warmups_per_session": 2,
+      "repetitions_per_session": 9,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage3-r12c-exact-safe-interleaved-mt-scidocs",
+          "path": "results/final/v1/stage3-r12c-exact-safe-interleaved-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.exact-safe",
+        "paper.claim.late-exact-safe"
+      ],
+      "command_template": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage3_mechanism.r12c_interleaved_exact_safe --fixture --threads 0 --session-id final-v1-dry-r12c-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8c-r12c-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 34,
+      "run_id": "8d-fixed-candidates-scifact-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-1t-scifact",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-1t-scifact",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 1 --session-id final-v1-dry-stage4-e01-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 35,
+      "run_id": "8d-fixed-candidates-nfcorpus-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-1t",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-1t-nfcorpus",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-1t-nfcorpus",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 1 --session-id final-v1-dry-stage4-e01-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 36,
+      "run_id": "8d-fixed-candidates-arguana-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-1t",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-1t-arguana",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-1t-arguana",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 1 --session-id final-v1-dry-stage4-e01-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 37,
+      "run_id": "8d-fixed-candidates-scidocs-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-1t",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-1t-scidocs",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-1t-scidocs",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.figure.fixed-candidates",
+        "paper.claim.scidocs-crossover"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 1 --session-id final-v1-dry-stage4-e01-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 38,
+      "run_id": "8d-fixed-candidates-scifact-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-mt-scifact",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-mt-scifact",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 0 --session-id final-v1-dry-stage4-e01-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 39,
+      "run_id": "8d-fixed-candidates-nfcorpus-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-mt-nfcorpus",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-mt-nfcorpus",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 0 --session-id final-v1-dry-stage4-e01-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 40,
+      "run_id": "8d-fixed-candidates-arguana-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-mt-arguana",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-mt-arguana",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 0 --session-id final-v1-dry-stage4-e01-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 41,
+      "run_id": "8d-fixed-candidates-scidocs-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e01-fixed-candidates-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf-plaid",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-equal-work-mt-scidocs",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-equal-work-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        },
+        {
+          "artifact_id": "stage4-e01-fixed-candidates-system-cap-mt-scidocs",
+          "path": "results/final/v1/stage4-e01-fixed-candidates-system-cap-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.figure.fixed-candidates",
+        "paper.claim.scidocs-crossover"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e01_fixed_candidate_arms --fixture --threads 0 --session-id final-v1-dry-stage4-e01-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-fixed-candidates-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 42,
+      "run_id": "8d-seeded-tau-scifact-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-1t-scifact",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 1 --session-id final-v1-dry-stage4-e02-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 43,
+      "run_id": "8d-seeded-tau-nfcorpus-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-1t",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-1t-nfcorpus",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 1 --session-id final-v1-dry-stage4-e02-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 44,
+      "run_id": "8d-seeded-tau-arguana-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-1t",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-1t-arguana",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 1 --session-id final-v1-dry-stage4-e02-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 45,
+      "run_id": "8d-seeded-tau-scidocs-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-1t",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-1t-scidocs",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 1 --session-id final-v1-dry-stage4-e02-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 46,
+      "run_id": "8d-seeded-tau-scifact-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-mt-scifact",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 0 --session-id final-v1-dry-stage4-e02-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 47,
+      "run_id": "8d-seeded-tau-nfcorpus-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-mt-nfcorpus",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 0 --session-id final-v1-dry-stage4-e02-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 48,
+      "run_id": "8d-seeded-tau-arguana-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-mt-arguana",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 0 --session-id final-v1-dry-stage4-e02-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 49,
+      "run_id": "8d-seeded-tau-scidocs-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e02-seeded-tau-recovery-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "faiss-ivf",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e02-seeded-tau-recovery-mt-scidocs",
+          "path": "results/final/v1/stage4-e02-seeded-tau-recovery-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.seed-recovery-cost"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e02_seeded_tau_recovery --fixture --threads 0 --session-id final-v1-dry-stage4-e02-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-seeded-tau-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 50,
+      "run_id": "8d-partition-frontier-scifact-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-1t",
+      "dataset": "scifact",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-1t-scifact",
+          "path": "results/final/v1/stage4-e03-partition-frontier-1t__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 1 --session-id final-v1-dry-stage4-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 51,
+      "run_id": "8d-partition-frontier-nfcorpus-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-1t",
+      "dataset": "nfcorpus",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-1t-nfcorpus",
+          "path": "results/final/v1/stage4-e03-partition-frontier-1t__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 1 --session-id final-v1-dry-stage4-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 52,
+      "run_id": "8d-partition-frontier-arguana-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-1t",
+      "dataset": "arguana",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-1t-arguana",
+          "path": "results/final/v1/stage4-e03-partition-frontier-1t__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 1 --session-id final-v1-dry-stage4-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 53,
+      "run_id": "8d-partition-frontier-scidocs-1t",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-1t",
+      "dataset": "scidocs",
+      "thread_mode": "one-thread",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-1t-scidocs",
+          "path": "results/final/v1/stage4-e03-partition-frontier-1t__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 1 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 1 --session-id final-v1-dry-stage4-e03-1t --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-1t",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 54,
+      "run_id": "8d-partition-frontier-scifact-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-mt-scifact",
+          "path": "results/final/v1/stage4-e03-partition-frontier-mt__scifact__beir-scifact-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 0 --session-id final-v1-dry-stage4-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 55,
+      "run_id": "8d-partition-frontier-nfcorpus-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-mt-nfcorpus",
+          "path": "results/final/v1/stage4-e03-partition-frontier-mt__nfcorpus__beir-nfcorpus-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 0 --session-id final-v1-dry-stage4-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 56,
+      "run_id": "8d-partition-frontier-arguana-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-mt-arguana",
+          "path": "results/final/v1/stage4-e03-partition-frontier-mt__arguana__beir-arguana-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 0 --session-id final-v1-dry-stage4-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 57,
+      "run_id": "8d-partition-frontier-scidocs-mt",
+      "phase": "8D",
+      "experiment_id": "stage4-e03-partition-frontier-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-mechanism-seed42-n50-v1",
+        "regime": "mechanism",
+        "query_count": 50
+      },
+      "index_backend": "partitioned-fused-scan",
+      "outputs": [
+        {
+          "artifact_id": "stage4-e03-partition-frontier-mt-scidocs",
+          "path": "results/final/v1/stage4-e03-partition-frontier-mt__scidocs__beir-scidocs-mechanism-seed42-n50-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.partition-frontier"
+      ],
+      "command_template": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage4_integration.e03_partitioned_fused_scan --fixture --threads 0 --session-id final-v1-dry-stage4-e03-mt --output-dir results/dry-run/final-v1",
+      "coverage_group": "8d-partition-frontier-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 58,
+      "run_id": "8e-ir-evaluation-scifact-mt",
+      "phase": "8E",
+      "experiment_id": "stage5-e01-ir-evaluation-mt",
+      "dataset": "scifact",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "faiss-ivf-plaid-partitioned",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e01-ir-evaluation-mt-scifact",
+          "path": "results/final/v1/stage5-e01-ir-evaluation-mt__scifact__beir-scifact-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions",
+        "paper.table.experiment-map"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --threads 1 --session-id final-v1-dry-stage5-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-ir-evaluation-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 59,
+      "run_id": "8e-ir-evaluation-nfcorpus-mt",
+      "phase": "8E",
+      "experiment_id": "stage5-e01-ir-evaluation-mt",
+      "dataset": "nfcorpus",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "faiss-ivf-plaid-partitioned",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e01-ir-evaluation-mt-nfcorpus",
+          "path": "results/final/v1/stage5-e01-ir-evaluation-mt__nfcorpus__beir-nfcorpus-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --threads 1 --session-id final-v1-dry-stage5-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-ir-evaluation-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 60,
+      "run_id": "8e-ir-evaluation-arguana-mt",
+      "phase": "8E",
+      "experiment_id": "stage5-e01-ir-evaluation-mt",
+      "dataset": "arguana",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "faiss-ivf-plaid-partitioned",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e01-ir-evaluation-mt-arguana",
+          "path": "results/final/v1/stage5-e01-ir-evaluation-mt__arguana__beir-arguana-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --threads 1 --session-id final-v1-dry-stage5-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-ir-evaluation-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 61,
+      "run_id": "8e-ir-evaluation-scidocs-mt",
+      "phase": "8E",
+      "experiment_id": "stage5-e01-ir-evaluation-mt",
+      "dataset": "scidocs",
+      "thread_mode": "all-core",
+      "session_count": 2,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "faiss-ivf-plaid-partitioned",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e01-ir-evaluation-mt-scidocs",
+          "path": "results/final/v1/stage5-e01-ir-evaluation-mt__scidocs__beir-scidocs-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset {dataset} --threads 0 --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --threads 1 --session-id final-v1-dry-stage5-e01 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-ir-evaluation-mt",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 62,
+      "run_id": "8e-bm25-scifact",
+      "phase": "8E",
+      "experiment_id": "stage5-e03-bm25-standalone",
+      "dataset": "scifact",
+      "thread_mode": "standalone",
+      "session_count": 1,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scifact-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "bm25s-lucene",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e03-bm25-standalone-scifact",
+          "path": "results/final/v1/stage5-e03-bm25-standalone__scifact__beir-scifact-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --fixture --session-id final-v1-dry-stage5-e03 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-bm25",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 63,
+      "run_id": "8e-bm25-nfcorpus",
+      "phase": "8E",
+      "experiment_id": "stage5-e03-bm25-standalone",
+      "dataset": "nfcorpus",
+      "thread_mode": "standalone",
+      "session_count": 1,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-nfcorpus-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "bm25s-lucene",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e03-bm25-standalone-nfcorpus",
+          "path": "results/final/v1/stage5-e03-bm25-standalone__nfcorpus__beir-nfcorpus-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --fixture --session-id final-v1-dry-stage5-e03 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-bm25",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 64,
+      "run_id": "8e-bm25-arguana",
+      "phase": "8E",
+      "experiment_id": "stage5-e03-bm25-standalone",
+      "dataset": "arguana",
+      "thread_mode": "standalone",
+      "session_count": 1,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-arguana-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "bm25s-lucene",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e03-bm25-standalone-arguana",
+          "path": "results/final/v1/stage5-e03-bm25-standalone__arguana__beir-arguana-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --fixture --session-id final-v1-dry-stage5-e03 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-bm25",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 65,
+      "run_id": "8e-bm25-scidocs",
+      "phase": "8E",
+      "experiment_id": "stage5-e03-bm25-standalone",
+      "dataset": "scidocs",
+      "thread_mode": "standalone",
+      "session_count": 1,
+      "warmups_per_session": 1,
+      "repetitions_per_session": 5,
+      "workload": {
+        "workload_id": "beir-scidocs-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": "bm25s-lucene",
+      "outputs": [
+        {
+          "artifact_id": "stage5-e03-bm25-standalone-scidocs",
+          "path": "results/final/v1/stage5-e03-bm25-standalone__scidocs__beir-scidocs-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.table.ir-quality",
+        "paper.claim.ir-quality-conclusions"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --dataset {dataset} --session-id {session_id} --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e03_bm25_baseline --fixture --session-id final-v1-dry-stage5-e03 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-bm25",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 66,
+      "run_id": "8e-paired-significance-scifact",
+      "phase": "8E",
+      "experiment_id": "stage5-e02-paired-significance",
+      "dataset": "scifact",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "analysis_parameters": {
+        "n_permutations": 20000,
+        "seed": 0
+      },
+      "workload": {
+        "workload_id": "beir-scifact-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage5-e02-paired-significance-scifact",
+          "path": "results/final/v1/stage5-e02-paired-significance__scifact__beir-scifact-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.paired-significance"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e02_paired_significance --input results/final/v1/stage5-e01-ir-evaluation-mt__{dataset}__beir-{dataset}-qrels-test-v1.json --n-permutations 20000 --seed 0 --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --output-dir results/dry-run/final-v1 && uv run python -m experiments.stage5_corect.e02_paired_significance --input results/dry-run/final-v1/stage5-e01-ir-evaluation-1t__synthetic-small-v1__synthetic-small-qrels-test-v1.json --n-permutations 100 --seed 0 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-paired-significance",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 67,
+      "run_id": "8e-paired-significance-nfcorpus",
+      "phase": "8E",
+      "experiment_id": "stage5-e02-paired-significance",
+      "dataset": "nfcorpus",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "analysis_parameters": {
+        "n_permutations": 20000,
+        "seed": 0
+      },
+      "workload": {
+        "workload_id": "beir-nfcorpus-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage5-e02-paired-significance-nfcorpus",
+          "path": "results/final/v1/stage5-e02-paired-significance__nfcorpus__beir-nfcorpus-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.paired-significance"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e02_paired_significance --input results/final/v1/stage5-e01-ir-evaluation-mt__{dataset}__beir-{dataset}-qrels-test-v1.json --n-permutations 20000 --seed 0 --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --output-dir results/dry-run/final-v1 && uv run python -m experiments.stage5_corect.e02_paired_significance --input results/dry-run/final-v1/stage5-e01-ir-evaluation-1t__synthetic-small-v1__synthetic-small-qrels-test-v1.json --n-permutations 100 --seed 0 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-paired-significance",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 68,
+      "run_id": "8e-paired-significance-arguana",
+      "phase": "8E",
+      "experiment_id": "stage5-e02-paired-significance",
+      "dataset": "arguana",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "analysis_parameters": {
+        "n_permutations": 20000,
+        "seed": 0
+      },
+      "workload": {
+        "workload_id": "beir-arguana-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage5-e02-paired-significance-arguana",
+          "path": "results/final/v1/stage5-e02-paired-significance__arguana__beir-arguana-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.paired-significance"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e02_paired_significance --input results/final/v1/stage5-e01-ir-evaluation-mt__{dataset}__beir-{dataset}-qrels-test-v1.json --n-permutations 20000 --seed 0 --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --output-dir results/dry-run/final-v1 && uv run python -m experiments.stage5_corect.e02_paired_significance --input results/dry-run/final-v1/stage5-e01-ir-evaluation-1t__synthetic-small-v1__synthetic-small-qrels-test-v1.json --n-permutations 100 --seed 0 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-paired-significance",
+      "requires_all_datasets": true
+    },
+    {
+      "run_order": 69,
+      "run_id": "8e-paired-significance-scidocs",
+      "phase": "8E",
+      "experiment_id": "stage5-e02-paired-significance",
+      "dataset": "scidocs",
+      "thread_mode": "not-applicable",
+      "session_count": 1,
+      "warmups_per_session": 0,
+      "repetitions_per_session": 1,
+      "analysis_parameters": {
+        "n_permutations": 20000,
+        "seed": 0
+      },
+      "workload": {
+        "workload_id": "beir-scidocs-qrels-test-v1",
+        "regime": "qrels_test",
+        "query_count": "all-qrels-test"
+      },
+      "index_backend": null,
+      "outputs": [
+        {
+          "artifact_id": "stage5-e02-paired-significance-scidocs",
+          "path": "results/final/v1/stage5-e02-paired-significance__scidocs__beir-scidocs-qrels-test-v1.json"
+        }
+      ],
+      "paper_consumers": [
+        "paper.claim.paired-significance"
+      ],
+      "command_template": "uv run python -m experiments.stage5_corect.e02_paired_significance --input results/final/v1/stage5-e01-ir-evaluation-mt__{dataset}__beir-{dataset}-qrels-test-v1.json --n-permutations 20000 --seed 0 --output-dir {output_dir}",
+      "dry_run_kind": "fixture",
+      "dry_run_command": "uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture --output-dir results/dry-run/final-v1 && uv run python -m experiments.stage5_corect.e02_paired_significance --input results/dry-run/final-v1/stage5-e01-ir-evaluation-1t__synthetic-small-v1__synthetic-small-qrels-test-v1.json --n-permutations 100 --seed 0 --output-dir results/dry-run/final-v1",
+      "coverage_group": "8e-paired-significance",
+      "requires_all_datasets": true
+    }
+  ]
+}
