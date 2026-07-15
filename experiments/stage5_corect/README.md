@@ -1,130 +1,59 @@
-# Stage 5: CoRECT IR Evaluation (R9)
+# Stage 5 IR evaluation
 
-Rescoped 2026-07-09 (plan doc R9): one driver, not the earlier e01–e05 list.
-Stage 5 is the paper's FINAL SECTION — take the best method per family from
-the Stage 3–4 verdicts and evaluate them as retrieval systems in the proper IR
-framework: qrels metrics (nDCG@10, recall@100, MRR@10), CoRECT-backed metric
-cross-validation,
-recall-vs-exact, and interleaved wall-clock latency, with index build cost and
-memory reported separately.
+Stage 5 evaluates the selected retrieval-system arms on the stable
+`beir-<dataset>-qrels-test-v1` workloads. It reports ordinary qrels metrics
+(nDCG@10, recall@100, and MRR@10), recall against the exact MaxSim ranking,
+actual candidate-work observations where available, and counterbalanced raw
+timing observations.
 
-Fairness controls (all satisfied by the driver): one machine, one OS, fixed
-thread count per run, interleaved round-robin timing (dense never timed
-standalone — the R12b lesson), repeated runs with dispersion recorded, full
-quality-latency frontier, tuned external baselines.
+CoRECT is used only to cross-validate those ordinary metrics through the
+pinned `corect.utils.evaluate_results` function. The dense arm must agree with
+the independent local evaluator before the artifact is accepted. No separate
+CoRECT evaluation target is computed or claimed.
 
-## `e01_ir_evaluation.py`
+## Drivers
 
-Method arms (one-stack controls as Stage 4 e01, retrieval depth k=100):
+`e01_ir_evaluation.py` is declarative orchestration. Data/index preparation,
+single-pass arm execution, correctness checks, metrics, timing, provenance,
+and atomic serialization live under `bondmaxsim.experiments.stage5`. Full
+vector arms are:
 
-| arm | what it is | why it is here |
-|---|---|---|
-| `dense_fused` | fused dense MaxSim over the full corpus | the exact production baseline (RQ2 kernel) |
-| `openblas` | NumPy/scipy-openblas GEMM MaxSim (the oracle routine, timed) | the general-purpose BLAS reference of E3, placed on the system-level table |
-| `bond_exact_safe` | fused BOND, TIGHT bound, natural order, C={112}, self_bound tau | the free exact-safe policy (R8b): recall 1.0 by construction — exactness costs nothing in IR quality |
-| `partitioned@{16,32}` | partitioned fused scan (bond scanner) at two e03 frontier points | the genuine approximate frontier: nprobe 16/32 land at recall_vs_exact@10 ≈0.9/0.95 on every dataset |
-| `faiss_ivf@B`, `plaid@B` | tuned external references at matched budgets B ∈ {100, 1000, 5000} | candidate-generation pipelines the qrels metrics must judge |
+- `dense-fused`, `openblas-exact`, and `bond-exact-safe` as exact-safe scans;
+- `partitioned-nprobe-*` as the probe frontier;
+- `faiss-cap-*` as exact-rerank arms with observed full-score counts;
+- `plaid-cap-*` as system-cap references because actual full-score work is
+  unavailable from the pinned public API.
 
-Quality is computed over ALL evaluable test queries (scifact 300, nfcorpus
-323, arguana 200, scidocs 200 — see `data/embeddings/README.md` for the
-test-query sidecars); doc indices map to BEIR IDs via `data/beir_ids/`.
-
-Usage:
+Run a diagnostic fixture or a full workload with:
 
 ```bash
-uv run python -m experiments.stage5_corect.e01_ir_evaluation 0   # all cores
-uv run python -m experiments.stage5_corect.e01_ir_evaluation 1   # 1 thread
+uv run python -m experiments.stage5_corect.e01_ir_evaluation --fixture
+uv run python -m experiments.stage5_corect.e01_ir_evaluation --dataset scifact --threads 1
 ```
 
-## `e02_paired_significance.py`
-
-Companion analysis to e01: several approximate arms land marginally ABOVE the
-exact dense scan on nDCG@10 (partitioned on arguana; partitioned@32 and
-faiss@100 on scidocs). That is possible because exactness is defined w.r.t.
-the MaxSim score, not relevance: a document swapped in near rank 10 carries a
-marginally lower MaxSim score, which at that depth barely correlates with the
-qrels, so swaps help about as often as they hurt.
-
-The driver reproduces the e01 quality pass (untimed, same arms/parameters:
-dense_fused, partitioned@{16,32}, faiss@100) and runs a two-sided paired
-sign-flip permutation test on per-query nDCG@10 vs dense
-(`bondmaxsim.eval.significance`, 20k permutations, seed 0). Result (2026-07-10):
-no inversion is significant (p >= 0.13; scidocs partitioned@32 changes only
-10/200 queries), while the genuine nfcorpus losses reject at p < 0.001, so the
-test has power. The qrels metrics saturate before recall_vs_exact does; the
-paper cites these p-values in the E9 results subsection.
+`e02_paired_significance.py` consumes the saved, validated e01 artifact. It
+uses retained per-query nDCG@10 values and does not rebuild the corpus or rerun
+retrieval:
 
 ```bash
-uv run python -m experiments.stage5_corect.e02_paired_significance
+uv run python -m experiments.stage5_corect.e02_paired_significance --input results/json/<e01-artifact>.json
 ```
 
-Output: `results/json/stage5_corect_e02_paired_significance.json`
-
-## `e03_bm25_baseline.py`
-
-BM25 lexical reference on the identical e01 protocol (same evaluable test
-queries, qrels, k=100, rank-based run dicts). `bondmaxsim.baselines.bm25`
-wraps bm25s (Lucene scoring, k1=1.5, b=0.75, English stopwords, Snowball
-stemming); corpus/query text comes from the cached HF `BeIR/*` datasets and
-is indexed TEXT-ONLY to match how the embeddings were encoded (published BEIR
-BM25 numbers index title+text and are not directly comparable). Purpose:
-stack-independent anchor for the absolute qrels numbers — result (2026-07-10):
-nDCG@10 scifact 0.672 / nfcorpus 0.317 / arguana 0.306 / scidocs 0.130, close
-to published BEIR BM25, so the low arguana/scidocs absolutes are corpus
-properties. Timed under the e01 rep protocol (per-query loop, tokenization in
-the timer, build excluded) but standalone, not interleaved: at 0.1–0.5 ms/q it
-is 60–150x below the vector arms, outside any thermal-drift concern.
+`e03_bm25_baseline.py` is a lexical quality reference. Its index build is
+excluded and query tokenization remains inside its timer. Its artifact marks
+timing as standalone and explicitly forbids latency margins against e01 vector
+arms:
 
 ```bash
-HF_DATASETS_OFFLINE=1 uv run python -m experiments.stage5_corect.e03_bm25_baseline
+uv run python -m experiments.stage5_corect.e03_bm25_baseline --fixture
+HF_DATASETS_OFFLINE=1 uv run python -m experiments.stage5_corect.e03_bm25_baseline --dataset scifact
 ```
 
-Output: `results/json/stage5_corect_e03_bm25_baseline.json`
+Rendering always reopens a saved artifact:
 
-## How extern/CoRECT is used (and what is deliberately not used)
+```bash
+uv run python -m experiments.stage5_corect.render_ir_table results/json/<artifact>.json
+uv run python -m experiments.stage5_corect.render_ir_table results/json/<artifact>.json --figure results/figures/stage5.png
+```
 
-We execute the actual pinned checkout (`extern/CoRECT` @ `fedf8bb2`), never a
-copy: `bondmaxsim.compat.corect` temporarily puts `extern/CoRECT/src` on
-`sys.path` and
-calls CoRECT's own `corect.utils.evaluate_results` (pytrec_eval-based
-NDCG/MAP/Recall/P/MRR at cutoffs). Every `corect_standard_metrics` value in
-Stage 5 results is produced by CoRECT code. This is ordinary qrels evaluation,
-not CoRECT's separate Relevance Composition evaluation. Their package has a circular
-import (`corect.utils` ↔ `corect.model_wrappers`); the adapter imports
-`model_wrappers` first to break it inside the compatibility boundary.
-
-We deliberately do NOT route retrieval through CoRECT's evaluation pipeline
-(`corect.cli.evaluate` → `eval_utils`), for three structural reasons:
-
-1. **Single-vector by construction.** Their `AbstractModelWrapper` contract is
-   one embedding per query/document scored with `cos_sim` inside their batched
-   loop.  ColBERT MaxSim is multi-vector; our fused panel kernels, partitioned
-   scan, faiss-rerank and PLAID arms cannot execute inside that loop — wiring
-   a "ColBERT wrapper" into it would only benchmark their brute-force cos_sim
-   path, not our methods.
-2. **CUDA assumption.** `eval_utils._get_top_k` calls `scores.cuda()`; this
-   project is scoped single-node CPU.
-3. **Different purpose.** The pipeline exists to compare embedding
-   *compression* methods (PQ/PCA/LSH registry) — orthogonal to our question.
-
-The plan doc anticipated this split: Stage 5 lists CoRECT as reusable "after
-adding or specifying a ColBERT/MaxSim wrapper".  The adapter IS that wrapper,
-placed at the interface where the systems genuinely meet: our arms produce the
-run (`query_id → doc_id → score`), CoRECT's evaluator judges it — which is
-also how their own pipeline ends.
-
-Gate: `bondmaxsim.eval.corect.corect_metric_crosscheck` verifies CoRECT's metrics
-agree with our independent ranx metrics (to CoRECT's own `round(…, 5)`) on a
-synthetic fixture (unit test) AND on the real `dense_fused` run inside the
-driver, before any CoRECT-backed standard metric is reported.
-
-Not used and deferred with R7 (future work): CoRECT's CoRE corpus pools — the
-controlled 100k–1M+ scale axis.  At BEIR scale their dataset utilities wrap
-the same `BeIR/*` HuggingFace datasets we already load with verified IDs.
-
-## Output
-
-- `results/json/stage5_corect_e01_ir_evaluation_<dataset>.json` (runs merged
-  across `mt`/`1t` tags)
-- `results/figures/stage5_corect/e01_ir_evaluation_<dataset>.png`
-  (quality-latency frontier)
+Fixture artifacts are diagnostic only and are never performance evidence.
