@@ -32,8 +32,8 @@ budgets and datasets, so no consistent PDX-specific advantage is observed.
 
 The independently implemented exact-safe BOND-MaxSim kernel also reproduces the
 exact top-10 on all 40 held-out queries. It prunes 22.4% of query-document pairs,
-but all pruning occurs after 96 of 128 dimensions and it evaluates 95.47% of
-exhaustive component products. Its median latency is 42.19 seconds versus 3.92
+but every prune occurs at the 96-dimensional checkpoint and it evaluates 95.47%
+of exhaustive component products. Its median latency is 42.19 seconds versus 3.92
 seconds for precision-matched compiled exhaustive MaxSim in the same interleaved runner. The
 result supports a negative answer for raw ColBERT dimensions: the bounds become
 useful too late to offset their runtime overhead.

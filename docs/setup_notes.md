@@ -1,6 +1,6 @@
 # Setup Notes
 
-Last verified: 2026-07-13.
+Last verified: 2026-07-16.
 
 ## Host and WSL
 
@@ -149,14 +149,18 @@ WSL complete tests:
 
 ```bash
 OMP_NUM_THREADS=2 \
-  /home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python \
+  "$HOME/data-engineering-plaid/.venv/bin/python" \
   -m unittest discover -s tests -v
 ```
 
-Final verification after the PLAID addition: all 39 tests pass in the unified
-WSL Python 3.11 environment. On Windows, the same suite reports 39 tests with
-12 expected native-extension skips and no failures. The skipped exact/BOND
-tests require Linux extensions and run in the WSL gate.
+Final verification on 2026-07-16: all 47 tests pass in the unified WSL Python
+3.11 environment, including the compiled exact and BOND kernels. On Windows,
+the same suite reports 47 tests with 12 expected native-extension skips and no
+failures. The skipped tests require Linux extensions and run in the WSL gate.
+`uv pip check` reports all 79 packages compatible in the unified WSL
+environment. The host's global Windows Python contains unrelated packages with
+dependency conflicts, so it is used only for portable reference tests and not
+for benchmark claims.
 
 Final controlled runs use `taskset -c 0,2,4,6`, four OpenMP/BLAS threads,
 `OMP_PROC_BIND=TRUE`, and `OMP_PLACES=cores`. This selects one hardware thread

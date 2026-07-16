@@ -33,10 +33,11 @@ to an audited artifact:
     \cref{sec:protocol}; the repository \texttt{README.md} documents the
     exact \texttt{taskset} and environment-variable invocations used for the
     release runs.
-  \item \textbf{Figures from artifacts.} Figures
+  \item \textbf{Figures and tables.} Figures
     \ref{fig:quality-latency}--\ref{fig:bond} are generated directly from the
     release JSON files by \texttt{experiments/pipeline/09}, \texttt{11},
-    \texttt{12}, and \texttt{14}, without hard-coded headline values.
+    \texttt{12}, and \texttt{14}; \texttt{tests/test\_report\_consistency.py}
+    checks the readable LaTeX tables against the same JSON values.
 \end{itemize}
 
 Large embedding inputs remain outside Git; their SHA-256 hashes inside each

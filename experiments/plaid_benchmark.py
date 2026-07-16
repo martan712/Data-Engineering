@@ -237,7 +237,12 @@ def select_validation_configs(
             ),
         )
         selected.append(choice)
-        decisions.append({"criterion": f"fastest_recall_at_least_{target}", "selected": choice["name"]})
+        decisions.append(
+            {
+                "criterion": f"fastest_recall_at_least_{target}",
+                "selected": choice["name"],
+            }
+        )
 
     best_quality = min(
         records,
@@ -249,7 +254,12 @@ def select_validation_configs(
         ),
     )
     selected.append(best_quality)
-    decisions.append({"criterion": "highest_recall_then_fastest", "selected": best_quality["name"]})
+    decisions.append(
+        {
+            "criterion": "highest_recall_then_fastest",
+            "selected": best_quality["name"],
+        }
+    )
 
     deduplicated = list({item["name"]: item for item in selected}.values())
     return {

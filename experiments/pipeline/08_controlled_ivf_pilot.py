@@ -59,7 +59,9 @@ from utils_colbert import (  # noqa: E402
 )
 
 PDX_COMMIT = "fdc62f2d22b3793060abf633cb5407438c7f739b"
-DEFAULT_PDX_SOURCE = Path("/home/telle/data-engineering-pdx-clean/external/PDX")
+DEFAULT_PDX_SOURCE = Path(
+    os.environ.get("PDX_SOURCE", PROJECT_ROOT / "external" / "PDX")
+)
 DEFAULT_C_VALUES = (20, 50)
 REPORT_K_VALUES = (1, 3, 5, 10)
 RANDOM_SEED = 0
@@ -136,6 +138,8 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("invalid thread, warm-up, or measured-run count")
     if not args.c_values or any(value < 0 for value in args.c_values):
         raise SystemExit("all C values must be non-negative; C=0 means full pool")
+    if any(0 < value < args.k for value in args.c_values):
+        raise SystemExit("each finite C value must be at least k")
     if args.plaid_nbits <= 0 or args.plaid_kmeans_niters <= 0:
         raise SystemExit("PLAID nbits and kmeans iterations must be positive")
     if args.plaid_rebuild_index and not args.plaid_config:
@@ -447,7 +451,11 @@ def approximate_action(
     return run
 
 
-def ranking_ids(rankings: list[list[int]], document_ids: list[str], query_ids: list[str]) -> dict[str, list[str]]:
+def ranking_ids(
+    rankings: list[list[int]],
+    document_ids: list[str],
+    query_ids: list[str],
+) -> dict[str, list[str]]:
     return {
         query_id: [document_ids[index] for index in ranking]
         for query_id, ranking in zip(query_ids, rankings)
@@ -499,6 +507,11 @@ def main() -> None:
     embeddings_dir = resolve(args.embeddings_dir)
     output_path = resolve(args.output)
     pdx_source = args.pdx_source.resolve()
+    if not args.skip_ivf and not pdx_source.is_dir():
+        raise SystemExit(
+            f"PDX source directory does not exist: {pdx_source}. "
+            "Pass --pdx-source or set PDX_SOURCE."
+        )
     pdx_snapshot = git_snapshot(pdx_source) if not args.skip_ivf else None
     if not args.skip_ivf and (
         pdx_snapshot["commit"] != PDX_COMMIT or pdx_snapshot["dirty"]
@@ -641,7 +654,9 @@ def main() -> None:
             )["macro"],
             "work": {
                 "mean_candidate_pool_size": float(np.mean([len(pool) for pool in value["pools"]])),
-                "mean_selected_candidates": float(np.mean([len(items) for items in value["selected"]])),
+                "mean_selected_candidates": float(
+                    np.mean([len(items) for items in value["selected"]])
+                ),
                 "reranked_comparisons": reranked_comparisons,
                 "reranked_comparison_ratio": reranked_comparisons / full_exact_comparisons,
                 "total_retrieved_token_hits": int(sum(value["retrieved_hits"])),

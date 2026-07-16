@@ -141,8 +141,9 @@ Every final JSON result must include:
 - exact-ranking recovery and qrels metrics;
 - errors, skipped configurations, and the reason for each skip.
 
-Figures and report tables must be generated from these artifacts, without
-hard-coded headline values.
+Figures must be generated from these artifacts without hard-coded headline
+values. Report tables remain readable LaTeX, and `tests/test_report_consistency.py`
+must verify their rounded values against the same artifacts.
 
 ## Status of current evidence
 

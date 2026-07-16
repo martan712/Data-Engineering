@@ -8,7 +8,7 @@ measurements.
   coverage, and mechanism analysis. Their wall-clock values are not final
   cross-method comparisons.
 - `controlled/` preserves dirty-worktree integration and decision pilots.
-- `final/` contains the five clean-commit release artifacts accepted by
+- `final/` contains the seven clean-commit release artifacts accepted by
   `docs/benchmark_protocol.md`. Final tables and figures use only this directory.
 
 Large embeddings and indexes remain outside Git. Controlled result JSON files

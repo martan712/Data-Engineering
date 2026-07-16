@@ -1,8 +1,9 @@
 # LaTeX Project Report
 
-Academic report generated from the Markdown documentation and the audited
-release artifacts under `results/final/`. All numbers in the tables and text
-were cross-checked against those JSON artifacts (clean commit `0a11fda`).
+Academic report based on the Markdown documentation and the audited release
+artifacts under `results/final/`. Figures are generated from those JSON files,
+and `tests/test_report_consistency.py` checks the main table values against the
+same artifacts (clean commit `0a11fda`).
 
 ## Layout
 
@@ -62,6 +63,11 @@ pdflatex -interaction=nonstopmode main.tex
 On MiKTeX, allow on-the-fly package installation the first time
 (`--enable-installer` or via the MiKTeX console) so that missing packages are
 fetched automatically.
+
+The manual sequence above was last verified on 2026-07-16 and produced the
+tracked 24-page `main.pdf` without undefined references, citation warnings, or
+layout warnings. `latexmk` was not available in that Windows environment
+because MiKTeX could not find Perl.
 
 Clean auxiliary files with `latexmk -c` (keeps the PDF) or `latexmk -C`.
 

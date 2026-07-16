@@ -30,8 +30,9 @@ by the release artifacts:
     small corpora, not a general rejection of PLAID.
   \item \textbf{Exact-safe BOND pruning on raw ColBERT dimensions is a clear
     negative result.} The kernel preserves every exact top-10 but retains
-    94--95\% of the exhaustive component products---all pruning occurs at
-    dimension 96 of 128---and runs about $10\times$ slower than the
+    94--95\% of the exhaustive component products. Every SciFact prune and
+    almost every NFCorpus prune occurs at dimension 96 of 128, and the kernel
+    runs about $10\times$ slower than the
     precision-matched compiled exhaustive baseline in the same interleaved
     run, on both SciFact and NFCorpus.
   \item \textbf{Dimension ordering helps the bound, not the kernel.} An

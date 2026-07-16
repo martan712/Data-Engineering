@@ -361,6 +361,7 @@ taskset -c 0,2,4,6 env \
   --top-l 100 --nprobe 8 --c-values 50 100 200 400 0 \
   --selection-policy approx_score --threads 4 \
   --warmup-runs 1 --measured-runs 5 \
+  --pdx-source "$WORK/external/PDX" \
   --plaid-config 8:100 --plaid-config 8:400 \
   --plaid-index-folder "$HOME/data-engineering-plaid/indexes" \
   --plaid-index-name scifact_full_nbits4_reproduction \

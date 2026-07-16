@@ -86,6 +86,38 @@ class ColbertUtilityTests(unittest.TestCase):
         np.testing.assert_array_equal(unpacked[0], arrays[0])
         np.testing.assert_array_equal(unpacked[1], arrays[1])
 
+    def test_packed_embeddings_reject_inconsistent_metadata(self) -> None:
+        arrays = [np.array([[1.0, 2.0]], dtype=np.float32)]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "packed.npz"
+            with self.assertRaisesRegex(ValueError, "equal length"):
+                save_packed_embeddings(path, ["d1"], [], arrays)
+
+    def test_load_packed_embeddings_rejects_invalid_offsets(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid.npz"
+            np.savez(
+                path,
+                ids=np.array(["d1"]),
+                texts=np.array(["one"]),
+                values=np.array([[1.0, 2.0]], dtype=np.float32),
+                offsets=np.array([0, 2], dtype=np.int64),
+                shapes=np.array([[1, 2]], dtype=np.int64),
+            )
+
+            with self.assertRaisesRegex(ValueError, "final offset"):
+                load_packed_embeddings(path)
+
+    def test_maxsim_rejects_incompatible_token_matrices(self) -> None:
+        query = np.ones((1, 2), dtype=np.float32)
+        wrong_dimension = np.ones((1, 3), dtype=np.float32)
+        empty_document = np.empty((0, 2), dtype=np.float32)
+
+        with self.assertRaisesRegex(ValueError, "same dimension"):
+            maxsim_score(query, wrong_dimension)
+        with self.assertRaisesRegex(ValueError, "at least one"):
+            maxsim_score(query, empty_document)
+
     def test_qrels_metrics_use_macro_recall_and_reciprocal_rank(self) -> None:
         rankings = {"q1": ["d2", "d1", "d4"]}
         qrels = {"q1": ["d1", "d3"]}

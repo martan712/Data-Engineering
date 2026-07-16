@@ -133,7 +133,10 @@ def panel(axis, dataset: str, primary: dict, sensitivity: dict) -> None:
     )
     axis.set_xscale("log")
     axis.set_ylim(0.25, 1.035)
-    axis.set_xlabel("Online latency for 40 queries (median seconds, log scale)")
+    axis.set_xlabel(
+        f"Online latency for {primary['dataset']['queries']} queries "
+        "(median seconds, log scale)"
+    )
     axis.set_title(dataset)
     axis.grid(axis="both", alpha=0.22)
     if dataset == "SciFact":
@@ -149,6 +152,14 @@ def main() -> None:
         "SciFact": load("scifact_plaid_fullscore_sensitivity_40q_final.json"),
         "NFCorpus": load("nfcorpus_plaid_fullscore_sensitivity_40q_final.json"),
     }
+    query_counts = {result["dataset"]["queries"] for result in primary.values()}
+    thread_counts = {result["config"]["threads"] for result in primary.values()}
+    measured_runs = {
+        result["config"]["measured_runs"] for result in primary.values()
+    }
+    shared_settings = (query_counts, thread_counts, measured_runs)
+    if any(len(values) != 1 for values in shared_settings):
+        raise SystemExit("PLAID artifacts do not share one benchmark configuration")
 
     fig, axes = plt.subplots(1, 2, figsize=(12.8, 5.5), sharey=True)
     for axis, dataset in zip(axes, ("SciFact", "NFCorpus")):
@@ -171,8 +182,10 @@ def main() -> None:
     fig.text(
         0.5,
         0.01,
-        "40 held-out queries; four pinned physical cores; five interleaved runs. "
-        "PLAID full is a configured budget, not an API-observed candidate count; hollow points are post-hoc sensitivity runs.",
+        f"{query_counts.pop()} held-out queries; {thread_counts.pop()} threads; "
+        f"{measured_runs.pop()} interleaved runs. PLAID full is a configured "
+        "budget, not an API-observed candidate count; hollow points are "
+        "post-hoc sensitivity runs.",
         ha="center",
         fontsize=8,
         color="#555555",

@@ -9,6 +9,30 @@ from typing import Any, Iterable
 import numpy as np
 
 
+def _validate_offsets(
+    values: np.ndarray,
+    offsets: np.ndarray,
+    *,
+    source: str,
+) -> None:
+    """Check the packed representation before it reaches a scoring kernel."""
+    if values.ndim != 2:
+        raise ValueError(f"{source}: values must be a 2D matrix")
+    if offsets.ndim != 1 or offsets.size < 2:
+        raise ValueError(f"{source}: offsets must be a 1D terminal-offset array")
+    if int(offsets[0]) != 0:
+        raise ValueError(f"{source}: offsets must start at zero")
+
+    lengths = np.diff(offsets)
+    if np.any(lengths <= 0):
+        raise ValueError(f"{source}: every item must contain at least one token vector")
+    if int(offsets[-1]) != values.shape[0]:
+        raise ValueError(
+            f"{source}: final offset {int(offsets[-1])} does not match "
+            f"the {values.shape[0]} stored vectors"
+        )
+
+
 def load_jsonl(path: str | Path) -> list[dict[str, Any]]:
     """Load newline-delimited JSON records."""
     records = []
@@ -50,20 +74,45 @@ def save_packed_embeddings(
     arrays: list[np.ndarray],
 ) -> None:
     """Save variable-length token-vector matrices in the project NPZ format."""
+    if not arrays:
+        raise ValueError("At least one embedding matrix is required")
+    if len(ids) != len(texts) or len(ids) != len(arrays):
+        raise ValueError("ids, texts, and embedding matrices must have equal length")
+    if len(set(ids)) != len(ids):
+        raise ValueError("Embedding IDs must be unique")
+
+    matrices = [np.asarray(array, dtype=np.float32) for array in arrays]
+    embedding_dimension: int | None = None
+    for index, matrix in enumerate(matrices):
+        if matrix.ndim != 2 or matrix.shape[0] == 0 or matrix.shape[1] == 0:
+            raise ValueError(
+                f"Embedding matrix {index} must be a non-empty 2D token matrix"
+            )
+        if embedding_dimension is None:
+            embedding_dimension = int(matrix.shape[1])
+        elif matrix.shape[1] != embedding_dimension:
+            raise ValueError(
+                f"Embedding matrix {index} has dimension {matrix.shape[1]}; "
+                f"expected {embedding_dimension}"
+            )
+
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    offsets = np.zeros(len(arrays) + 1, dtype=np.int64)
-    for index, array in enumerate(arrays):
-        offsets[index + 1] = offsets[index] + array.shape[0]
+    offsets = np.zeros(len(matrices) + 1, dtype=np.int64)
+    for index, matrix in enumerate(matrices):
+        offsets[index + 1] = offsets[index] + matrix.shape[0]
 
-    values = np.concatenate(arrays, axis=0).astype(np.float32, copy=False)
+    values = np.ascontiguousarray(
+        np.concatenate(matrices, axis=0),
+        dtype=np.float32,
+    )
     np.savez_compressed(
         output_path,
         ids=np.array(ids),
         texts=np.array(texts),
         values=values,
         offsets=offsets,
-        shapes=np.array([array.shape for array in arrays], dtype=np.int64),
+        shapes=np.array([matrix.shape for matrix in matrices], dtype=np.int64),
     )
 
 
@@ -73,18 +122,57 @@ def load_packed_embeddings(path: str | Path) -> dict[str, Any]:
     The export format stores all token vectors in one `values` matrix and uses
     `offsets` to mark the slice for each document or query.
     """
-    with np.load(path, allow_pickle=False) as data:
-        return {
-            "ids": data["ids"].astype(str).tolist(),
-            "texts": data["texts"].astype(str).tolist(),
-            "values": data["values"].astype(np.float32, copy=False),
-            "offsets": data["offsets"].astype(np.int64, copy=False),
-            "shapes": data["shapes"].astype(np.int64, copy=False),
-        }
+    input_path = Path(path)
+    required_fields = {"ids", "texts", "values", "offsets", "shapes"}
+    with np.load(input_path, allow_pickle=False) as data:
+        missing_fields = required_fields.difference(data.files)
+        if missing_fields:
+            missing = ", ".join(sorted(missing_fields))
+            raise ValueError(f"{input_path}: missing packed fields: {missing}")
+
+        ids = data["ids"].astype(str).tolist()
+        texts = data["texts"].astype(str).tolist()
+        values = np.ascontiguousarray(data["values"], dtype=np.float32)
+        offsets = np.ascontiguousarray(data["offsets"], dtype=np.int64)
+        shapes = np.ascontiguousarray(data["shapes"], dtype=np.int64)
+
+    source = str(input_path)
+    _validate_offsets(values, offsets, source=source)
+    item_count = len(ids)
+    if len(texts) != item_count or offsets.size != item_count + 1:
+        raise ValueError(
+            f"{source}: ids, texts, and offsets describe different item counts"
+        )
+    if len(set(ids)) != item_count:
+        raise ValueError(f"{source}: embedding IDs must be unique")
+    if shapes.shape != (item_count, 2):
+        raise ValueError(
+            f"{source}: shapes must have one (tokens, dimension) row per item"
+        )
+
+    expected_shapes = np.column_stack(
+        (
+            np.diff(offsets),
+            np.full(item_count, values.shape[1], dtype=np.int64),
+        )
+    )
+    if not np.array_equal(shapes, expected_shapes):
+        raise ValueError(f"{source}: shapes do not agree with values and offsets")
+
+    return {
+        "ids": ids,
+        "texts": texts,
+        "values": values,
+        "offsets": offsets,
+        "shapes": shapes,
+    }
 
 
 def unpack_embeddings(values: np.ndarray, offsets: np.ndarray) -> list[np.ndarray]:
     """Reconstruct a list of token-vector matrices from packed storage."""
+    values = np.asarray(values)
+    offsets = np.asarray(offsets)
+    _validate_offsets(values, offsets, source="packed embeddings")
     return [
         np.ascontiguousarray(values[offsets[i] : offsets[i + 1]], dtype=np.float32)
         for i in range(len(offsets) - 1)
@@ -93,6 +181,9 @@ def unpack_embeddings(values: np.ndarray, offsets: np.ndarray) -> list[np.ndarra
 
 def l2_normalize(matrix: np.ndarray) -> np.ndarray:
     """Return a row-wise L2-normalized copy of a vector matrix."""
+    matrix = np.asarray(matrix)
+    if matrix.ndim != 2:
+        raise ValueError("Expected a 2D vector matrix")
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
     norms = np.maximum(norms, 1e-12)
     return np.ascontiguousarray(matrix / norms, dtype=np.float32)
@@ -102,11 +193,27 @@ def flatten_document_embeddings(
     documents: list[np.ndarray],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Flatten document token matrices and keep token-to-document metadata."""
+    if not documents:
+        raise ValueError("At least one document embedding is required")
+
     flat_vectors = []
     token_to_doc_index = []
     token_to_token_position = []
+    embedding_dimension: int | None = None
 
     for doc_index, document_matrix in enumerate(documents):
+        document_matrix = np.asarray(document_matrix)
+        if document_matrix.ndim != 2 or document_matrix.shape[0] == 0:
+            raise ValueError(
+                f"Document {doc_index} must contain a non-empty 2D token matrix"
+            )
+        if embedding_dimension is None:
+            embedding_dimension = int(document_matrix.shape[1])
+        elif document_matrix.shape[1] != embedding_dimension:
+            raise ValueError(
+                f"Document {doc_index} has dimension {document_matrix.shape[1]}; "
+                f"expected {embedding_dimension}"
+            )
         flat_vectors.append(document_matrix)
         token_count = len(document_matrix)
         token_to_doc_index.extend([doc_index] * token_count)
@@ -130,6 +237,17 @@ def maxsim_score(
     token-vector matrices. If `normalize=True`, each token vector is first
     L2-normalized, making inner product equivalent to cosine similarity.
     """
+    query_matrix = np.asarray(query_matrix)
+    document_matrix = np.asarray(document_matrix)
+    if query_matrix.ndim != 2 or document_matrix.ndim != 2:
+        raise ValueError("MaxSim expects 2D query and document token matrices")
+    if query_matrix.shape[0] == 0 or document_matrix.shape[0] == 0:
+        raise ValueError("MaxSim requires at least one query and document token")
+    if query_matrix.shape[1] != document_matrix.shape[1]:
+        raise ValueError(
+            "Query and document token vectors must have the same dimension"
+        )
+
     if normalize:
         query_matrix = l2_normalize(query_matrix)
         document_matrix = l2_normalize(document_matrix)

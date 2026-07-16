@@ -73,10 +73,10 @@ dataset. The validation/test shift is large:
 
 | dataset/arm | median (s) | p95 (s) | exact R@10 | qrels R@10 | configured full-score ratio |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| SciFact PLAID C=100 | 14.5497 | 14.7523 | 0.2875 | 0.3250 | 0.0193 |
-| SciFact PLAID C=400 | 16.6456 | 16.8475 | 0.4375 | 0.3750 | 0.0772 |
-| NFCorpus PLAID C=100 | 5.6825 | 6.0592 | 0.3100 | 0.1434 | 0.0275 |
-| NFCorpus PLAID C=400 | 7.2505 | 7.3043 | 0.3950 | 0.1043 | 0.1101 |
+| SciFact PLAID F=100 | 14.5497 | 14.7523 | 0.2875 | 0.3250 | 0.0193 |
+| SciFact PLAID F=400 | 16.6456 | 16.8475 | 0.4375 | 0.3750 | 0.0772 |
+| NFCorpus PLAID F=100 | 5.6825 | 6.0592 | 0.3100 | 0.1434 | 0.0275 |
+| NFCorpus PLAID F=400 | 7.2505 | 7.3043 | 0.3950 | 0.1043 | 0.1101 |
 
 `n_full_scores` is a configured budget, not an observed candidate count. The
 current API does not expose realized candidates, so the final column is only an

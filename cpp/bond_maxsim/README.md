@@ -75,13 +75,11 @@ From the repository root:
 
 ```bash
 bash cpp/bond_maxsim/build_wsl.sh
-/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python \
-    -m unittest tests.test_bond_maxsim_kernel -v
+python3 -m unittest tests.test_bond_maxsim_kernel -v
 ```
 
-The build defaults to
-`/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python`, `clang++`, and
-`-O3 -march=native`. Set `PYTHON`, `CXX`, or `OPT_FLAGS` to override them.
+The build defaults to the active `python3`, `clang++`, and `-O3 -march=native`.
+Set `PYTHON`, `CXX`, or `OPT_FLAGS` to override them.
 `USE_OPENMP=auto` uses OpenMP when compile/link probing succeeds;
 `USE_OPENMP=1` requires it and `USE_OPENMP=0` makes a serial build. The output
 is `experiments/kernels/_bond_maxsim<extension-suffix>.so`.

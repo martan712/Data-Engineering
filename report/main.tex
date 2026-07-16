@@ -73,9 +73,9 @@
     Submission date: & \todometa{submission date}\\
   \end{tabular}
   \vfill
-  {\small All final numerical claims in this report are generated from the
-   audited release artifacts under \texttt{results/final/} at clean Git commit
-   \texttt{0a11fda}.\par}
+  {\small All final numerical claims in this report are traceable to and
+   cross-checked against the audited release artifacts under
+   \texttt{results/final/} at clean Git commit \texttt{0a11fda}.\par}
   \vspace{1cm}
 \end{titlepage}
 
@@ -93,8 +93,9 @@ tokens of the maximum token-level similarity. This report investigates whether
 the vertically decomposed PDX layout and BOND-style branch-and-bound dimension
 pruning can reduce the cost of exact ColBERT MaxSim search. All final claims
 are drawn from a controlled, single-machine, single-process benchmark with
-matched work budgets, interleaved repetitions, and audited release artifacts;
-earlier uncontrolled speedup figures were withdrawn after a measurement audit.
+matched IVF rerank budgets, explicitly declared PLAID budgets, interleaved
+repetitions, and audited release artifacts; earlier uncontrolled speedup
+figures were withdrawn after a measurement audit.
 Four findings emerge. First, indexing all document token vectors in a flat
 inverted-file (IVF) index and reranking retrieved candidates with a compiled
 exact MaxSim kernel yields a controllable quality--latency trade-off: on
