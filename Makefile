@@ -88,8 +88,10 @@ stage7-preflight:
 	$(MAKE) native-all
 	$(MAKE) test-unit
 	$(MAKE) test-native
+	$(MAKE) test-integration
 	$(MAKE) test-sanitize
 	$(MAKE) test-artifact
+	$(MAKE) test-reproduction
 	$(MAKE) reproduce-core
 	$(MAKE) stage7-dry-runs
 	$(MAKE) paper
