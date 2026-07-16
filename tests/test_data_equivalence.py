@@ -287,6 +287,96 @@ def test_quality_alignment_rejects_duplicate_or_different_id_sets():
         )
 
 
+def test_absent_legacy_quality_artifact_forces_complete_mandatory_rerun(
+    tmp_path: Path,
+):
+    generated = tmp_path / "generated"
+    legacy = tmp_path / "legacy"
+    frozen = load_data_configuration()
+    generate_dataset(
+        "scifact",
+        output_root=generated,
+        frozen=frozen,
+        source_loader=_source,
+        encoder=_Encoder(),
+        fixture=True,
+    )
+    _legacy_from_generated(generated, legacy)
+    (legacy / "embeddings/scifact_test_queries.npz").unlink()
+
+    report = compare_dataset(
+        "scifact",
+        legacy_root=legacy,
+        generated_root=generated,
+        frozen=frozen,
+        k=2,
+        fixture=True,
+    )
+
+    assert report["schema_version"] == "1.1.0"
+    assert report["quality_artifacts"] == {
+        "legacy": {
+            "expected_path": "embeddings/scifact_test_queries.npz",
+            "exists": False,
+            "status": "expected_test_query_artifact_absent",
+            "fallback_main_query_count": 2,
+        },
+        "generated": {
+            "path": "embeddings/scifact_test_queries.npz",
+            "exists": True,
+            "authoritative": True,
+            "query_count": 2,
+            "qrels_query_count": 2,
+            "full_qrels_coverage": True,
+        },
+    }
+    expected_status = "not_comparable_no_legacy_quality_artifact"
+    assert report["rankings"]["quality"]["status"] == expected_status
+    assert report["qrels"]["status"] == "complete"
+    assert report["qrels"]["metrics_status"] == expected_status
+    assert report["qrels"]["semantic_equal"] is True
+    assert report["qrels"]["metrics_equal"] is False
+    assert report["audit_complete"] is True
+    assert report["bitwise_equivalent"] is False
+    assert report["cross_checks_equal"] is False
+    assert report["decision"] == (
+        "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    )
+
+
+def test_present_legacy_quality_artifact_still_requires_equal_query_sets(
+    tmp_path: Path,
+):
+    generated = tmp_path / "generated"
+    legacy = tmp_path / "legacy"
+    frozen = load_data_configuration()
+    generate_dataset(
+        "scifact",
+        output_root=generated,
+        frozen=frozen,
+        source_loader=_source,
+        encoder=_Encoder(),
+        fixture=True,
+    )
+    _legacy_from_generated(generated, legacy)
+    path = legacy / "embeddings/scifact_test_queries.npz"
+    with np.load(path) as source:
+        arrays = {name: source[name].copy() for name in source.files}
+    arrays["query_ids"][0] = "different-id"
+    with path.open("wb") as handle:
+        np.savez(handle, **arrays)
+
+    with pytest.raises(EquivalenceError, match="sets differ"):
+        compare_dataset(
+            "scifact",
+            legacy_root=legacy,
+            generated_root=generated,
+            frozen=frozen,
+            k=2,
+            fixture=True,
+        )
+
+
 def _complete_report(dataset: str, *, bitwise: bool = True, complete: bool = True):
     return {
         "dataset": dataset,

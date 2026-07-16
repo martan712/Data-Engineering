@@ -26,6 +26,10 @@ class EquivalenceError(RuntimeError):
     """The equivalence audit cannot make a complete mechanical decision."""
 
 
+SCHEMA_VERSION = "1.1.0"
+_NO_LEGACY_QUALITY = "not_comparable_no_legacy_quality_artifact"
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -137,20 +141,32 @@ def _unpack(values: np.ndarray, starts: np.ndarray) -> list[np.ndarray]:
     return [values[int(start) : int(end)] for start, end in zip(starts, ends, strict=True)]
 
 
-def _legacy_quality(legacy_root: Path, dataset: str) -> tuple[np.ndarray, np.ndarray, list[str]]:
+def _legacy_quality(
+    legacy_root: Path, dataset: str
+) -> tuple[tuple[np.ndarray, np.ndarray, list[str]] | None, dict[str, Any]]:
+    relative = Path("embeddings") / f"{dataset}_test_queries.npz"
     test_path = legacy_root / "embeddings" / f"{dataset}_test_queries.npz"
     if test_path.is_file():
         with np.load(test_path) as values:
-            return (
+            artifact = (
                 values["query_values"].copy(),
                 values["query_starts"].copy(),
                 [str(value) for value in values["query_ids"]],
             )
+        return artifact, {
+            "expected_path": str(relative),
+            "exists": True,
+            "status": "present",
+            "fallback_main_query_count": None,
+        }
     with np.load(legacy_root / "embeddings" / f"{dataset}.npz") as values:
-        query_values = values["query_values"].copy()
-        query_starts = values["query_starts"].copy()
-    sidecar = _ids(legacy_root / "beir_ids" / f"{dataset}_ids.json")
-    return query_values, query_starts, [str(value) for value in sidecar["query_ids"][: len(query_starts)]]
+        fallback_count = len(values["query_starts"])
+    return None, {
+        "expected_path": str(relative),
+        "exists": False,
+        "status": "expected_test_query_artifact_absent",
+        "fallback_main_query_count": fallback_count,
+    }
 
 
 def _align_quality_queries(
@@ -437,15 +453,48 @@ def compare_dataset(
         generated_doc_starts = values["doc_starts"].copy()
         generated_mechanism = values["query_values"].copy()
         generated_mechanism_starts = values["query_starts"].copy()
-    legacy_quality, legacy_quality_starts, legacy_quality_ids = _legacy_quality(
+    legacy_quality_artifact, legacy_quality_record = _legacy_quality(
         legacy_root, dataset
     )
     with np.load(generated_root / "embeddings" / f"{dataset}_test_queries.npz") as values:
         generated_quality = values["query_values"].copy()
         generated_quality_starts = values["query_starts"].copy()
         generated_quality_ids = [str(value) for value in values["query_ids"]]
-    generated_quality_aligned, generated_quality_starts_aligned, quality_alignment = (
-        _align_quality_queries(
+    legacy_qrels_path = legacy_root / "qrels" / f"{dataset}.tsv"
+    generated_qrels_path = generated_root / "qrels" / f"{dataset}.tsv"
+    legacy_qrels = load_qrels_tsv(legacy_qrels_path)
+    generated_qrels = load_qrels_tsv(generated_qrels_path)
+    if len(set(generated_quality_ids)) != len(generated_quality_ids):
+        raise EquivalenceError("generated quality query IDs contain duplicates")
+    generated_quality_full_coverage = (
+        set(generated_quality_ids) == set(generated_qrels)
+        and len(generated_quality_ids) == len(generated_qrels)
+    )
+    if not generated_quality_full_coverage:
+        raise EquivalenceError(
+            "generated quality query IDs do not exactly cover generated qrels queries"
+        )
+    quality_artifacts = {
+        "legacy": legacy_quality_record,
+        "generated": {
+            "path": f"embeddings/{dataset}_test_queries.npz",
+            "exists": True,
+            "authoritative": True,
+            "query_count": len(generated_quality_ids),
+            "qrels_query_count": len(generated_qrels),
+            "full_qrels_coverage": True,
+        },
+    }
+    quality_comparable = legacy_quality_artifact is not None
+    if quality_comparable:
+        legacy_quality, legacy_quality_starts, legacy_quality_ids = (
+            legacy_quality_artifact
+        )
+        (
+            generated_quality_aligned,
+            generated_quality_starts_aligned,
+            quality_alignment,
+        ) = _align_quality_queries(
             legacy_quality,
             legacy_quality_starts,
             legacy_quality_ids,
@@ -453,11 +502,15 @@ def compare_dataset(
             generated_quality_starts,
             generated_quality_ids,
         )
-    )
-    legacy_qrels_path = legacy_root / "qrels" / f"{dataset}.tsv"
-    generated_qrels_path = generated_root / "qrels" / f"{dataset}.tsv"
-    legacy_qrels = load_qrels_tsv(legacy_qrels_path)
-    generated_qrels = load_qrels_tsv(generated_qrels_path)
+    else:
+        legacy_quality = legacy_quality_starts = legacy_quality_ids = None
+        generated_quality_aligned = generated_quality_starts_aligned = None
+        quality_alignment = {
+            "status": _NO_LEGACY_QUALITY,
+            "reason": "legacy test-query embedding artifact is absent",
+            "generated_query_count": len(generated_quality_ids),
+            "generated_full_qrels_coverage": True,
+        }
 
     identity = {
         "corpus_ids_order_equal": list(legacy_ids["corpus_ids"]) == list(generated_ids["corpus_ids"]),
@@ -465,13 +518,18 @@ def compare_dataset(
         == list(generated_ids["query_ids"]),
         "mechanism_query_ids_order_equal": list(legacy_ids["query_ids"][: len(legacy_mechanism_starts)])
         == list(generated_ids["mechanism_query_ids"]),
-        "quality_query_ids_order_equal": legacy_quality_ids == generated_quality_ids,
-        "quality_query_ids_set_equal": set(legacy_quality_ids) == set(generated_quality_ids),
+        "quality_query_ids_order_equal": bool(
+            quality_comparable and legacy_quality_ids == generated_quality_ids
+        ),
+        "quality_query_ids_set_equal": bool(
+            quality_comparable
+            and set(legacy_quality_ids) == set(generated_quality_ids)
+        ),
         "qrels_checksum_equal": _sha256(legacy_qrels_path)
         == _sha256(generated_qrels_path),
         "qrels_semantically_equal": legacy_qrels == generated_qrels,
     }
-    arrays = {
+    arrays: dict[str, dict[str, Any]] = {
         "documents": _array_comparison(legacy_docs, generated_docs),
         "document_starts": _array_comparison(legacy_doc_starts, generated_doc_starts),
         "document_token_lengths": _array_comparison(
@@ -484,21 +542,57 @@ def compare_dataset(
             _lengths(legacy_mechanism, legacy_mechanism_starts),
             _lengths(generated_mechanism, generated_mechanism_starts),
         ),
-        "quality_queries": _array_comparison(legacy_quality, generated_quality),
-        "quality_query_starts": _array_comparison(legacy_quality_starts, generated_quality_starts),
-        "quality_token_lengths": _array_comparison(
-            _lengths(legacy_quality, legacy_quality_starts),
-            _lengths(generated_quality, generated_quality_starts),
-        ),
-        "quality_queries_aligned": _array_comparison(
-            legacy_quality, generated_quality_aligned
-        ),
-        "quality_query_starts_aligned": _array_comparison(
-            legacy_quality_starts, generated_quality_starts_aligned
-        ),
     }
-    ranking = {"mechanism": {"status": "not_comparable", "reason": "identity or shape mismatch"}, "quality": {"status": "not_comparable", "reason": "identity or shape mismatch"}}
-    if identity["corpus_ids_order_equal"] and identity["mechanism_query_ids_order_equal"] and arrays["document_starts"]["same_shape"] and arrays["mechanism_query_starts"]["same_shape"]:
+    if quality_comparable:
+        arrays.update(
+            {
+                "quality_queries": _array_comparison(
+                    legacy_quality, generated_quality
+                ),
+                "quality_query_starts": _array_comparison(
+                    legacy_quality_starts, generated_quality_starts
+                ),
+                "quality_token_lengths": _array_comparison(
+                    _lengths(legacy_quality, legacy_quality_starts),
+                    _lengths(generated_quality, generated_quality_starts),
+                ),
+                "quality_queries_aligned": _array_comparison(
+                    legacy_quality, generated_quality_aligned
+                ),
+                "quality_query_starts_aligned": _array_comparison(
+                    legacy_quality_starts, generated_quality_starts_aligned
+                ),
+            }
+        )
+    else:
+        unavailable = {
+            "status": _NO_LEGACY_QUALITY,
+            "reason": "legacy test-query embedding artifact is absent",
+        }
+        for name in (
+            "quality_queries",
+            "quality_query_starts",
+            "quality_token_lengths",
+            "quality_queries_aligned",
+            "quality_query_starts_aligned",
+        ):
+            arrays[name] = dict(unavailable)
+    ranking = {
+        "mechanism": {
+            "status": "not_comparable",
+            "reason": "identity or shape mismatch",
+        },
+        "quality": {
+            "status": "not_comparable",
+            "reason": "identity or shape mismatch",
+        },
+    }
+    if (
+        identity["corpus_ids_order_equal"]
+        and identity["mechanism_query_ids_order_equal"]
+        and arrays["document_starts"]["same_shape"]
+        and arrays["mechanism_query_starts"]["same_shape"]
+    ):
         ranking["mechanism"] = _topk_comparison(
             legacy_docs,
             legacy_doc_starts,
@@ -511,7 +605,20 @@ def compare_dataset(
             k=k,
             limit=topk_limit,
         )
-    if identity["corpus_ids_order_equal"] and identity["quality_query_ids_set_equal"] and arrays["document_starts"]["same_shape"] and arrays["quality_query_starts_aligned"]["same_shape"]:
+    if not quality_comparable:
+        ranking["quality"] = {
+            "status": _NO_LEGACY_QUALITY,
+            "reason": "legacy test-query embedding artifact is absent",
+            "legacy_artifact_exists": False,
+            "generated_query_count": len(generated_quality_ids),
+            "generated_full_qrels_coverage": True,
+        }
+    elif (
+        identity["corpus_ids_order_equal"]
+        and identity["quality_query_ids_set_equal"]
+        and arrays["document_starts"]["same_shape"]
+        and arrays["quality_query_starts_aligned"]["same_shape"]
+    ):
         ranking["quality"] = _topk_comparison(
             legacy_docs,
             legacy_doc_starts,
@@ -558,40 +665,74 @@ def compare_dataset(
         }
     accounting = _accounting_comparison(legacy_accounting, generated_accounting)
 
-    qrels_metrics = ranking["quality"].get("qrels_metrics", {})
-    metrics_complete = bool(
-        ranking["quality"].get("status") == "complete"
-        and qrels_metrics.get("evaluated_queries") == len(legacy_quality_ids)
-        and qrels_metrics.get("legacy") is not None
-        and qrels_metrics.get("generated") is not None
-    )
-    qrels_comparison = {
-        "status": "complete" if metrics_complete else "not_comparable",
-        "checksum_equal": identity["qrels_checksum_equal"],
-        "semantic_equal": identity["qrels_semantically_equal"],
-        "legacy_metrics": qrels_metrics.get("legacy"),
-        "generated_metrics": qrels_metrics.get("generated"),
-        "metrics_equal": bool(
-            metrics_complete
-            and qrels_metrics.get("legacy") == qrels_metrics.get("generated")
-        ),
-    }
+    if quality_comparable:
+        qrels_metrics = ranking["quality"].get("qrels_metrics", {})
+        metrics_complete = bool(
+            ranking["quality"].get("status") == "complete"
+            and qrels_metrics.get("evaluated_queries") == len(legacy_quality_ids)
+            and qrels_metrics.get("legacy") is not None
+            and qrels_metrics.get("generated") is not None
+        )
+        qrels_comparison = {
+            "status": "complete" if metrics_complete else "not_comparable",
+            "metrics_status": "complete" if metrics_complete else "not_comparable",
+            "checksum_equal": identity["qrels_checksum_equal"],
+            "semantic_equal": identity["qrels_semantically_equal"],
+            "legacy_metrics": qrels_metrics.get("legacy"),
+            "generated_metrics": qrels_metrics.get("generated"),
+            "metrics_equal": bool(
+                metrics_complete
+                and qrels_metrics.get("legacy") == qrels_metrics.get("generated")
+            ),
+        }
+    else:
+        metrics_complete = False
+        qrels_comparison = {
+            "status": "complete",
+            "metrics_status": _NO_LEGACY_QUALITY,
+            "checksum_equal": identity["qrels_checksum_equal"],
+            "semantic_equal": identity["qrels_semantically_equal"],
+            "legacy_metrics": None,
+            "generated_metrics": None,
+            "metrics_equal": False,
+        }
     bitwise_equivalent = bool(
-        all(identity.values())
-        and all(row["bitwise_equal"] for row in arrays.values())
+        quality_comparable
+        and all(value is True for value in identity.values())
+        and all(row.get("bitwise_equal") is True for row in arrays.values())
     )
-    ranking_complete = all(
-        row.get("status") == "complete" and row.get("boundary_tie_complete") is True
-        for row in ranking.values()
+    mechanism_complete = bool(
+        ranking["mechanism"].get("status") == "complete"
+        and ranking["mechanism"].get("boundary_tie_complete") is True
     )
+    if quality_comparable:
+        quality_complete = bool(
+            ranking["quality"].get("status") == "complete"
+            and ranking["quality"].get("boundary_tie_complete") is True
+        )
+        metrics_axis_complete = metrics_complete
+    else:
+        quality_complete = bool(
+            ranking["quality"].get("status") == _NO_LEGACY_QUALITY
+            and legacy_quality_record["exists"] is False
+            and generated_quality_full_coverage
+        )
+        metrics_axis_complete = bool(
+            qrels_comparison["metrics_status"] == _NO_LEGACY_QUALITY
+            and qrels_comparison["semantic_equal"] is True
+        )
     audit_complete = bool(
         topk_limit is None
-        and ranking_complete
+        and mechanism_complete
+        and quality_complete
         and qrels_comparison["status"] == "complete"
+        and metrics_axis_complete
         and accounting["status"] == "complete"
     )
     cross_checks_equal = bool(
-        ranking_complete
+        quality_comparable
+        and mechanism_complete
+        and quality_complete
         and qrels_comparison["semantic_equal"]
         and qrels_comparison["metrics_equal"]
         and accounting["equal"]
@@ -606,13 +747,14 @@ def compare_dataset(
         decision = "audit_inconsistency_stop_no_eligibility_decision"
     return {
         "schema_name": "bondmaxsim.data-equivalence",
-        "schema_version": "1.0.0",
+        "schema_version": SCHEMA_VERSION,
         "dataset": dataset,
         "configuration_sha256": frozen.sha256,
         "identity": identity,
         "arrays": arrays,
         "rankings": ranking,
         "quality_alignment": quality_alignment,
+        "quality_artifacts": quality_artifacts,
         "qrels": qrels_comparison,
         "representative_accounting": accounting,
         "bitwise_equivalent": bitwise_equivalent,
@@ -658,7 +800,7 @@ def aggregate_equivalence_reports(
         decision = "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
     return {
         "schema_name": "bondmaxsim.data-equivalence-suite",
-        "schema_version": "1.0.0",
+        "schema_version": SCHEMA_VERSION,
         "selected_datasets": list(selected),
         "scope_complete": scope_complete,
         "audits_complete": audits_complete,
