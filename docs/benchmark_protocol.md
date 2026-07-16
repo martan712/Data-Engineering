@@ -48,9 +48,10 @@ Parameter selection is isolated from the held-out release queries:
 - retain the fastest validation configuration reaching exact recall@10 of at
   least 0.85, the fastest reaching at least 0.95, and the highest-recall
   configuration (deduplicated, with deterministic ties);
-- if no configuration reaches 0.95, report that fact rather than tuning on the
-  test split. An expanded validation-only sweep may be run, but its rule and
-  values must be added here before execution;
+- if no configuration reaches 0.95, hold `n_ivf_probe` at the fastest value
+  among the maximum-recall arms and run one validation-only expansion with
+  `n_full_scores` in `{800, 1600, 3200, number of documents}`. This expansion
+  is permitted once and must still be frozen before viewing test results;
 - freeze the selected configurations and evaluate them on queries 10--49 of
   both SciFact and NFCorpus.
 
