@@ -12,6 +12,38 @@ Last verified: 2026-07-13.
 - Controlled benchmark venv:
   `/home/telle/data-engineering-pdx-clean/.venv-pdx`.
 
+### Unified PLAID comparison environment
+
+The controlled PLAID addition needs Python 3.11 because the pinned
+`pylate==1.5.0` dependency requires `fast-plaid<=1.3.0.290`, for which no
+Python 3.14 Linux wheel was available. A separate environment keeps PLAID,
+PDX, FAISS, and both native MaxSim kernels on one interpreter:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | \
+  env UV_INSTALL_DIR="$HOME/.local/bin" sh
+"$HOME/.local/bin/uv" python install 3.11.9
+"$HOME/.local/bin/uv" venv --python 3.11.9 \
+  "$HOME/data-engineering-plaid/.venv"
+
+UV="$HOME/.local/bin/uv"
+PY="$HOME/data-engineering-plaid/.venv/bin/python"
+"$UV" pip install --python "$PY" \
+  --index-url https://download.pytorch.org/whl/cpu 'torch==2.9.0'
+"$UV" pip install --python "$PY" \
+  -r requirements.txt -r requirements-pdx.txt
+CXX=clang++ "$UV" pip install --python "$PY" \
+  /home/telle/data-engineering-pdx-clean/external/PDX
+
+PYTHON="$PY" USE_OPENMP=1 bash cpp/exact_maxsim/build_wsl.sh
+PYTHON="$PY" USE_OPENMP=1 bash cpp/bond_maxsim/build_wsl.sh
+```
+
+Verified core versions are Python 3.11.9, PyLate 1.5.0,
+fast-plaid 1.3.0.290, CPU-only PyTorch 2.9.0, NumPy 2.4.6, FAISS 1.14.2,
+and the same pinned PDX commit documented below. PLAID's Rust thread pool is
+bounded with `RAYON_NUM_THREADS` in addition to the OpenMP/BLAS controls.
+
 ## PDX source
 
 Repository: `https://github.com/cwida/PDX`
