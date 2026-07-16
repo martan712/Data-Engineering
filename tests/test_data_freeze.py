@@ -127,6 +127,52 @@ def _equivalence(root: Path, configuration_sha256: str) -> Path:
     return path
 
 
+def _use_absent_legacy_quality_option(
+    suite: dict, dataset: str = "scidocs"
+) -> dict:
+    suite["schema_version"] = "1.1.0"
+    for report in suite["reports"]:
+        report["schema_version"] = "1.1.0"
+        if report["dataset"] != dataset:
+            continue
+        query_count = 2
+        report["rankings"]["quality"] = {
+            "status": "not_comparable_no_legacy_quality_artifact",
+            "query_count": 0,
+            "boundary_tie_complete": False,
+        }
+        report["quality_artifacts"] = {
+            "legacy": {
+                "expected_path": f"embeddings/{dataset}_test_queries.npz",
+                "exists": False,
+                "status": "expected_test_query_artifact_absent",
+                "fallback_main_query_count": 5,
+            },
+            "generated": {
+                "path": f"embeddings/{dataset}_test_queries.npz",
+                "exists": True,
+                "authoritative": True,
+                "query_count": query_count,
+                "qrels_query_count": query_count,
+                "full_qrels_coverage": True,
+            },
+        }
+        report["qrels"].update(
+            status="complete",
+            semantic_equal=True,
+            metrics_status="not_comparable_no_legacy_quality_artifact",
+            metrics_equal=False,
+        )
+        report["bitwise_equivalent"] = False
+        report["audit_complete"] = True
+        report["cross_checks_equal"] = False
+        report["final_eligibility"] = False
+        report["decision"] = (
+            "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+        )
+    return suite
+
+
 def _frozen_fixture(tmp_path: Path):
     root = tmp_path / "data/generated/v1"
     frozen = load_data_configuration()
@@ -325,6 +371,95 @@ def test_diagnostic_only_hardened_equivalence_suite_cannot_be_frozen(tmp_path: P
             generated_root=root,
             equivalence_path=equivalence_path,
             output_path=tmp_path / "diagnostic-freeze.json",
+            frozen=frozen,
+            fixture=True,
+        )
+
+
+def test_schema_1_1_freezes_missing_legacy_quality_only_as_mandatory_rerun(
+    tmp_path: Path,
+):
+    root, _, frozen, _ = _frozen_fixture(tmp_path)
+    equivalence_path = root / "equivalence.json"
+    suite = _use_absent_legacy_quality_option(
+        json.loads(equivalence_path.read_text(encoding="utf-8"))
+    )
+    equivalence_path.write_text(json.dumps(suite), encoding="utf-8")
+    bundle = create_freeze_bundle(
+        generated_root=root,
+        equivalence_path=equivalence_path,
+        output_path=tmp_path / "option-1-freeze.json",
+        frozen=frozen,
+        fixture=True,
+    )
+    assert bundle["equivalence"]["decision"] == (
+        "not_bitwise_equivalent_rerun_all_data_dependent_evidence"
+    )
+    assert bundle["equivalence"]["reports"]["scidocs"][
+        "quality_comparison_status"
+    ] == "not_comparable_no_legacy_quality_artifact"
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "value", "match"),
+    [
+        ("legacy", "exists", True, "absence is unproven"),
+        ("legacy", "status", "missing", "absence is unproven"),
+        ("legacy", "fallback_main_query_count", 0, "absence is unproven"),
+        ("generated", "authoritative", False, "coverage is incomplete"),
+        ("generated", "full_qrels_coverage", False, "coverage is incomplete"),
+        ("generated", "qrels_query_count", 1, "coverage is incomplete"),
+    ],
+)
+def test_schema_1_1_rejects_tampered_quality_absence_or_coverage(
+    tmp_path: Path, section: str, field: str, value, match: str
+):
+    root, _, frozen, _ = _frozen_fixture(tmp_path)
+    equivalence_path = root / "equivalence.json"
+    suite = _use_absent_legacy_quality_option(
+        json.loads(equivalence_path.read_text(encoding="utf-8"))
+    )
+    report = next(row for row in suite["reports"] if row["dataset"] == "scidocs")
+    report["quality_artifacts"][section][field] = value
+    equivalence_path.write_text(json.dumps(suite), encoding="utf-8")
+    with pytest.raises(DataFreezeError, match=match):
+        create_freeze_bundle(
+            generated_root=root,
+            equivalence_path=equivalence_path,
+            output_path=tmp_path / "tampered-option-1-freeze.json",
+            frozen=frozen,
+            fixture=True,
+        )
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "match"),
+    [
+        (("rankings", "quality", "status"), "not_comparable", "ranking status"),
+        (("qrels", "metrics_status"), "not_comparable", "qrels contract"),
+        (("qrels", "semantic_equal"), False, "qrels contract"),
+        (("representative_accounting", "status"), "not_comparable", "accounting"),
+    ],
+)
+def test_schema_1_1_rejects_generic_noncomparable_or_incomplete_cross_checks(
+    tmp_path: Path, path: tuple[str, ...], value, match: str
+):
+    root, _, frozen, _ = _frozen_fixture(tmp_path)
+    equivalence_path = root / "equivalence.json"
+    suite = _use_absent_legacy_quality_option(
+        json.loads(equivalence_path.read_text(encoding="utf-8"))
+    )
+    report = next(row for row in suite["reports"] if row["dataset"] == "scidocs")
+    target = report
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    equivalence_path.write_text(json.dumps(suite), encoding="utf-8")
+    with pytest.raises(DataFreezeError, match=match):
+        create_freeze_bundle(
+            generated_root=root,
+            equivalence_path=equivalence_path,
+            output_path=tmp_path / "invalid-option-1-freeze.json",
             frozen=frozen,
             fixture=True,
         )

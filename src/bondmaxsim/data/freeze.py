@@ -25,6 +25,7 @@ _DECISION_DATASET_EQUIVALENT = (
     "bitwise_equivalent_dataset_audit_complete_aggregate_required"
 )
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_QUALITY_ABSENT_STATUS = "not_comparable_no_legacy_quality_artifact"
 
 
 class DataFreezeError(RuntimeError):
@@ -91,15 +92,89 @@ def _relative(path: Path, root: Path, label: str) -> str:
         raise DataFreezeError(f"{label} must be inside generated root: {path}") from error
 
 
+def _positive_integer(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def _validate_absent_legacy_quality(
+    report: Mapping[str, Any], dataset: str
+) -> None:
+    """Validate the schema-1.1 mandatory-rerun quality-artifact exception."""
+    if report.get("schema_version") != "1.1.0":
+        raise DataFreezeError(
+            f"{dataset}: absent legacy quality artifact requires schema 1.1.0"
+        )
+    if (
+        report.get("audit_complete") is not True
+        or report.get("bitwise_equivalent") is not False
+        or report.get("cross_checks_equal") is not False
+        or report.get("final_eligibility") is not False
+        or report.get("decision") != _DECISION_RERUN
+    ):
+        raise DataFreezeError(
+            f"{dataset}: absent legacy quality artifact must force a complete mandatory rerun"
+        )
+
+    rankings = report.get("rankings")
+    mechanism = rankings.get("mechanism") if isinstance(rankings, Mapping) else None
+    quality = rankings.get("quality") if isinstance(rankings, Mapping) else None
+    if (
+        not isinstance(mechanism, Mapping)
+        or mechanism.get("status") != "complete"
+        or mechanism.get("boundary_tie_complete") is not True
+    ):
+        raise DataFreezeError(f"{dataset}: mechanism equivalence audit is incomplete")
+    if not isinstance(quality, Mapping) or quality.get("status") != _QUALITY_ABSENT_STATUS:
+        raise DataFreezeError(f"{dataset}: invalid absent-quality ranking status")
+
+    artifacts = report.get("quality_artifacts")
+    legacy = artifacts.get("legacy") if isinstance(artifacts, Mapping) else None
+    generated = artifacts.get("generated") if isinstance(artifacts, Mapping) else None
+    expected_path = f"embeddings/{dataset}_test_queries.npz"
+    if (
+        not isinstance(legacy, Mapping)
+        or legacy.get("expected_path") != expected_path
+        or legacy.get("exists") is not False
+        or legacy.get("status") != "expected_test_query_artifact_absent"
+        or not _positive_integer(legacy.get("fallback_main_query_count"))
+    ):
+        raise DataFreezeError(f"{dataset}: legacy quality-artifact absence is unproven")
+    generated_count = generated.get("query_count") if isinstance(generated, Mapping) else None
+    if (
+        not isinstance(generated, Mapping)
+        or generated.get("path") != expected_path
+        or generated.get("exists") is not True
+        or generated.get("authoritative") is not True
+        or not _positive_integer(generated_count)
+        or generated.get("qrels_query_count") != generated_count
+        or generated.get("full_qrels_coverage") is not True
+    ):
+        raise DataFreezeError(f"{dataset}: generated quality/qrels coverage is incomplete")
+
+    qrels = report.get("qrels")
+    if (
+        not isinstance(qrels, Mapping)
+        or qrels.get("status") != "complete"
+        or qrels.get("semantic_equal") is not True
+        or qrels.get("metrics_status") != _QUALITY_ABSENT_STATUS
+        or qrels.get("metrics_equal") is not False
+    ):
+        raise DataFreezeError(f"{dataset}: absent-quality qrels contract is incomplete")
+    accounting = report.get("representative_accounting")
+    if not isinstance(accounting, Mapping) or accounting.get("status") != "complete":
+        raise DataFreezeError(f"{dataset}: accounting equivalence audit is incomplete")
+
+
 def _equivalence_record(
     generated_root: Path,
     equivalence_path: Path,
     frozen: FrozenDataConfiguration,
 ) -> tuple[dict[str, Any], Mapping[str, Mapping[str, Any]]]:
     suite = _read_json(equivalence_path, "equivalence suite")
+    suite_version = suite.get("schema_version")
     if (
         suite.get("schema_name") != "bondmaxsim.data-equivalence-suite"
-        or suite.get("schema_version") != "1.0.0"
+        or suite_version not in {"1.0.0", "1.1.0"}
     ):
         raise DataFreezeError("unsupported equivalence suite")
     reports = suite.get("reports")
@@ -127,7 +202,7 @@ def _equivalence_record(
             raise DataFreezeError("equivalence reports must cover each frozen dataset once")
         if (
             report.get("schema_name") != "bondmaxsim.data-equivalence"
-            or report.get("schema_version") != "1.0.0"
+            or report.get("schema_version") != suite_version
             or report.get("configuration_sha256") != frozen.sha256
         ):
             raise DataFreezeError(f"{dataset}: invalid equivalence report identity")
@@ -150,32 +225,43 @@ def _equivalence_record(
         rankings = report.get("rankings")
         if not isinstance(rankings, Mapping) or set(rankings) != {"mechanism", "quality"}:
             raise DataFreezeError(f"{dataset}: incomplete equivalence rankings")
-        for row in rankings.values():
-            if not isinstance(row, Mapping) or row.get("status") != "complete":
-                if isinstance(row, Mapping) and row.get("status") == "sampled":
-                    raise DataFreezeError(
-                        f"{dataset}: sampled equivalence audit cannot be frozen"
-                    )
-                raise DataFreezeError(f"{dataset}: invalid equivalence ranking status")
-            if row.get("boundary_tie_complete") is not True:
-                raise DataFreezeError(f"{dataset}: boundary-tie audit is incomplete")
         qrels = report.get("qrels")
         accounting = report.get("representative_accounting")
-        if not isinstance(qrels, Mapping) or qrels.get("status") != "complete":
-            raise DataFreezeError(f"{dataset}: qrels equivalence audit is incomplete")
-        if not isinstance(accounting, Mapping) or accounting.get("status") != "complete":
-            raise DataFreezeError(f"{dataset}: accounting equivalence audit is incomplete")
-        expected_cross_checks = bool(
-            qrels.get("semantic_equal") is True
-            and qrels.get("metrics_equal") is True
-            and accounting.get("equal") is True
+        quality_status = (
+            rankings["quality"].get("status")
+            if isinstance(rankings["quality"], Mapping)
+            else None
         )
+        absent_legacy_quality = quality_status == _QUALITY_ABSENT_STATUS
+        if absent_legacy_quality:
+            _validate_absent_legacy_quality(report, str(dataset))
+            expected_cross_checks = False
+        else:
+            for row in rankings.values():
+                if not isinstance(row, Mapping) or row.get("status") != "complete":
+                    if isinstance(row, Mapping) and row.get("status") == "sampled":
+                        raise DataFreezeError(
+                            f"{dataset}: sampled equivalence audit cannot be frozen"
+                        )
+                    raise DataFreezeError(f"{dataset}: invalid equivalence ranking status")
+                if row.get("boundary_tie_complete") is not True:
+                    raise DataFreezeError(f"{dataset}: boundary-tie audit is incomplete")
+            if not isinstance(qrels, Mapping) or qrels.get("status") != "complete":
+                raise DataFreezeError(f"{dataset}: qrels equivalence audit is incomplete")
+            if not isinstance(accounting, Mapping) or accounting.get("status") != "complete":
+                raise DataFreezeError(f"{dataset}: accounting equivalence audit is incomplete")
+            expected_cross_checks = bool(
+                qrels.get("semantic_equal") is True
+                and qrels.get("metrics_equal") is True
+                and accounting.get("equal") is True
+            )
         if report.get("cross_checks_equal") is not expected_cross_checks:
             raise DataFreezeError(f"{dataset}: cross-check flags are inconsistent")
         by_dataset[str(dataset)] = report
         report_records[str(dataset)] = {
             "bitwise_equivalent": bool(report["bitwise_equivalent"]),
             "decision": expected_decision,
+            "quality_comparison_status": quality_status,
             "report_sha256": _canonical_sha256(report),
         }
     if set(by_dataset) != set(DATASETS):
