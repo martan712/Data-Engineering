@@ -27,15 +27,16 @@ CPU settings automatically.
 The release-candidate record requires explicit confirmation of all of the
 following:
 
-- `ac_power_confirmed`
+- `unrelated_applications_closed`
+- `background_jobs_stopped`
 - `machine_quiescent`
 - `power_and_governor_recorded`
 - `thermal_state_stable`
-- `thread_environment_confirmed`
-- `unrelated_applications_closed`
 
 A missing or false declaration prevents production authorization. These are
-operator statements, not values inferred from an unreliable platform API.
+operator statements, not values inferred from an unreliable platform API. The
+release candidate separately captures observable AC-power state, governor,
+thread environment, and CPU affinity from the host.
 
 ## Session discipline
 
