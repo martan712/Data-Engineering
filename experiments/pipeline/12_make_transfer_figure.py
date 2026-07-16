@@ -39,11 +39,11 @@ def main() -> None:
     ivf = {
         "SciFact": load(
             "scifact_ivf_test_40q_final.json",
-            "controlled_ivf_pilot_v1",
+            "controlled_ivf_plaid_v2",
         ),
         "NFCorpus": load(
             "nfcorpus_ivf_test_40q_final.json",
-            "controlled_ivf_pilot_v1",
+            "controlled_ivf_plaid_v2",
         ),
     }
     bond = {

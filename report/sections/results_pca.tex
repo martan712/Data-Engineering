@@ -20,7 +20,7 @@ embeddings (\cref{tab:bond}, second row), oracle seeding raises document
 pruning from 22.44\% to 36.32\%, but the evaluated component products drop
 only from 95.47\% to 92.43\%, because every prune still occurs at checkpoint
 96. The oracle arm is in fact marginally \emph{slower}
-(\SI{48.13}{\second} median, $11.26\times$ the same-run exhaustive arm):
+(\SI{45.09}{\second} median, $11.50\times$ the same-run exhaustive arm):
 earlier threshold tightening increases bound-check activity without saving
 meaningful arithmetic. Seed selection is therefore not the bottleneck; the
 bound geometry is.
@@ -32,8 +32,8 @@ resulting orthogonal rotation is applied offline to both documents and
 queries. Because the rotation is orthogonal, it preserves inner products in
 exact arithmetic (measured float32 orthogonality error
 $2.53 \times 10^{-8}$), so the exact ranking is unchanged. The offline costs
-are small and reported separately: \SI{0.513}{\second} to fit,
-\SI{0.230}{\second} to transform, and \SI{1.681}{\second} to build the
+are small and reported separately: \SI{0.592}{\second} to fit,
+\SI{0.227}{\second} to transform, and \SI{1.692}{\second} to build the
 vertical index. After rotation, the first 8 of 128 components carry 90.91\%
 of total token energy, and the first 64 carry 97.76\%.
 
@@ -55,16 +55,16 @@ checkpoints 64 and 96 rather than exclusively at 96.
     oracle seed policies. Right: BOND median latency relative to the
     precision-matched exhaustive median of the same run. PCA rotation improves
     pruning substantially (69.0\% and 61.5\% of products evaluated) yet every
-    arm remains $8.7$--$11.3\times$ slower than exhaustive scoring.}
+    arm remains $8.4$--$11.5\times$ slower than exhaustive scoring.}
   \label{fig:bond}
 \end{figure}
 
 \subsection{Arithmetic reduction does not become latency}
 
 Despite removing 31--38\% of the component products, both PCA arms remain
-about $8.7\times$ slower than the exhaustive arm interleaved in the same run
-(\SI{35.52}{\second} and \SI{35.49}{\second} versus \SI{4.06}{\second}
-median). The latency gap narrows from $10.9\times$ to $8.7\times$ while the
+8.38--8.51 times slower than the exhaustive arm interleaved in the same run
+(\SI{36.95}{\second} and \SI{37.55}{\second} versus \SI{4.41}{\second}
+median). The latency gap narrows from $10.76\times$ to 8.38--8.51 times while the
 arithmetic drops by nearly a third, which localizes the remaining cost: bound
 maintenance, threshold updates, branching, partial-state reads and writes, and
 the irregular access pattern of surviving documents dominate the runtime of

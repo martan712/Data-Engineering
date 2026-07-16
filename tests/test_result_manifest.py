@@ -118,6 +118,15 @@ class LegacyResultManifestTests(unittest.TestCase):
         )
         for name in ivf_names:
             result = json.loads((result_dir / name).read_text(encoding="utf-8"))
+            self.assertEqual(result["schema_version"], "controlled_ivf_plaid_v2")
+            self.assertEqual(
+                [
+                    (item["n_ivf_probe"], item["n_full_scores"])
+                    for item in result["config"]["plaid"]["configs"]
+                ],
+                [(8, 100), (8, 400)],
+                name,
+            )
             for agreement in result["cross_engine_agreement"].values():
                 self.assertTrue(agreement["candidate_pools_equal"], name)
                 self.assertTrue(agreement["topk_rankings_equal"], name)
@@ -149,6 +158,66 @@ class LegacyResultManifestTests(unittest.TestCase):
             ["mean_recall@10"],
             0.975,
         )
+
+    def test_final_plaid_results_preserve_selection_and_posthoc_contracts(self) -> None:
+        result_dir = PROJECT_ROOT / "results" / "final"
+
+        for dataset in ("scifact", "nfcorpus"):
+            selected_name = f"{dataset}_ivf_test_40q_final.json"
+            selected = json.loads(
+                (result_dir / selected_name).read_text(encoding="utf-8")
+            )
+            self.assertFalse(selected["config"]["skip_ivf"], selected_name)
+            self.assertEqual(
+                set(selected["plaid_arms"]),
+                {"plaid_np8_c100", "plaid_np8_c400"},
+                selected_name,
+            )
+            for arm in selected["plaid_arms"].values():
+                self.assertFalse(
+                    arm["configured_work"]["actual_candidate_count_exposed_by_api"],
+                    selected_name,
+                )
+                self.assertLess(
+                    arm["exact_recovery"]["mean_recall@10"],
+                    1.0,
+                    selected_name,
+                )
+
+            sensitivity_name = (
+                f"{dataset}_plaid_fullscore_sensitivity_40q_final.json"
+            )
+            sensitivity = json.loads(
+                (result_dir / sensitivity_name).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                sensitivity["schema_version"],
+                "controlled_ivf_plaid_v2",
+                sensitivity_name,
+            )
+            self.assertTrue(sensitivity["config"]["skip_ivf"], sensitivity_name)
+            self.assertFalse(sensitivity["approximate_arms"], sensitivity_name)
+            self.assertEqual(len(sensitivity["plaid_arms"]), 1, sensitivity_name)
+            arm = next(iter(sensitivity["plaid_arms"].values()))
+            self.assertEqual(
+                arm["config"]["n_full_scores"],
+                sensitivity["dataset"]["documents"],
+                sensitivity_name,
+            )
+            self.assertEqual(
+                arm["configured_work"]["upper_bound_full_score_ratio"],
+                1.0,
+                sensitivity_name,
+            )
+            self.assertFalse(
+                arm["configured_work"]["actual_candidate_count_exposed_by_api"],
+                sensitivity_name,
+            )
+            self.assertLess(
+                arm["exact_recovery"]["mean_recall@10"],
+                1.0,
+                sensitivity_name,
+            )
 
 
 if __name__ == "__main__":

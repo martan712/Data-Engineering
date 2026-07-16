@@ -75,11 +75,11 @@ similarities, exact ties, forced-pruning workloads, and invalid inputs.
     \toprule
     Arm & {BOND med.\ (\si{\second})} & {Exact med.\ (\si{\second})} & {Ratio ($\times$)} & {Pruned (\%)} & {Products (\%)} \\
     \midrule
-    SciFact raw, prefix-500     & 46.4861 & 4.2740 & 10.88 & 22.44 & 95.47 \\
-    SciFact raw, free oracle    & 48.1283 & 4.2740 & 11.26 & 36.32 & 92.43 \\
-    SciFact PCA, prefix-500     & 35.5169 & 4.0591 &  8.75 & 86.30 & 69.02 \\
-    SciFact PCA, free oracle    & 35.4903 & 4.0591 &  8.74 & 97.91 & 61.53 \\
-    NFCorpus raw, prefix-500    & 20.3855 & 2.0397 &  9.99 & 23.36 & 94.16 \\
+    SciFact raw, prefix-500     & 42.1947 & 3.9208 & 10.76 & 22.44 & 95.47 \\
+    SciFact raw, free oracle    & 45.0854 & 3.9208 & 11.50 & 36.32 & 92.43 \\
+    SciFact PCA, prefix-500     & 36.9539 & 4.4111 &  8.38 & 86.30 & 69.02 \\
+    SciFact PCA, free oracle    & 37.5548 & 4.4111 &  8.51 & 97.91 & 61.53 \\
+    NFCorpus raw, prefix-500    & 19.1847 & 1.9501 &  9.84 & 23.36 & 94.16 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -88,10 +88,10 @@ similarities, exact ties, forced-pruning workloads, and invalid inputs.
 40 held-out SciFact queries the BOND kernel reproduces the exact ordered
 top-10 for every query, prunes 22.44\% of the 207{,}320 query--document pairs,
 and yet still evaluates \textbf{95.47\%} of the component products required by
-exhaustive scoring. Its median online latency is \SI{46.49}{\second} versus
-\SI{4.27}{\second} (p95: \SI{48.11}{\second} versus \SI{4.41}{\second}) for
+exhaustive scoring. Its median online latency is \SI{42.19}{\second} versus
+\SI{3.92}{\second} (p95: \SI{43.40}{\second} versus \SI{4.10}{\second}) for
 the precision-matched exhaustive arm in the same interleaved run---a
-\textbf{10.88-fold slowdown}. This is the main negative result of the project,
+\textbf{10.76-fold slowdown}. This is the main negative result of the project,
 and it is a controlled slowdown measurement, not a withdrawn-style estimate.
 
 \paragraph{Why the bounds do not help: late pruning.} The per-checkpoint
@@ -116,8 +116,8 @@ The frozen raw-order configuration was rerun unchanged on NFCorpus
 The diagnosis transfers: the kernel preserves the exact ordered top-10 for
 all 40 held-out queries (maximum score deviation $7.11 \times 10^{-15}$),
 prunes 23.36\% of pairs, evaluates 94.16\% of component products, and is
-9.99 times slower than its same-run exhaustive arm
-(\SI{20.39}{\second} versus \SI{2.04}{\second} median). Pruning is again
+9.84 times slower than its same-run exhaustive arm
+(\SI{19.18}{\second} versus \SI{1.95}{\second} median). Pruning is again
 late, though marginally earlier than on SciFact: 730 documents prune at
 checkpoint 64 and 33{,}210 at checkpoint 96.
 

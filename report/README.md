@@ -2,7 +2,7 @@
 
 Academic report generated from the Markdown documentation and the audited
 release artifacts under `results/final/`. All numbers in the tables and text
-were cross-checked against those JSON artifacts (clean commit `0cc6145`).
+were cross-checked against those JSON artifacts (clean commit `0a11fda`).
 
 ## Layout
 
@@ -16,6 +16,7 @@ report/
 |   |-- architecture.tex
 |   |-- methodology.tex
 |   |-- results_ivf.tex
+|   |-- results_plaid.tex
 |   |-- results_bond.tex
 |   |-- results_pca.tex
 |   |-- discussion.tex
@@ -29,7 +30,8 @@ report/
 Figures are **not** duplicated: `main.tex` sets
 `\graphicspath{{../docs/figures/}}` and references
 `fig5_controlled_quality_latency.png`, `fig6_controlled_stage_breakdown.png`,
-`fig7_controlled_bond.png`, and `fig8_controlled_transfer.png` in place.
+`fig7_controlled_bond.png`, `fig8_controlled_transfer.png`, and
+`fig9_controlled_plaid.png` in place.
 The report must therefore be compiled from inside the `report/` directory of
 this repository (or with the `docs/figures/` tree present one level up).
 

@@ -14,8 +14,8 @@ are measured against a strong exact implementation.
 
 - P0-P2: complete in the current worktree.
 - P3: exact-safe compiled BOND, free-oracle, and PCA clean release complete.
-- P4: matched-budget FAISS-IVF/PDX-IVF clean release complete; matched PLAID is
-  an optional extension, not part of the frozen core.
+- P4: matched-budget FAISS-IVF/PDX-IVF clean release complete; controlled
+  validation-selected PLAID operating points and post-hoc sensitivity complete.
 - P5: SciFact and NFCorpus clean controlled release complete.
 - P6: repository report, final artifacts, figures, provenance, and tests are
   complete. Supervisor-specific submission packaging is external to this plan.
@@ -26,8 +26,9 @@ are measured against a strong exact implementation.
    beat an optimized exact MaxSim kernel?
 2. If exact-safe BOND does not win, which property of ColBERT embeddings limits
    pruning?
-3. At matched rerank budgets, how do PDX-IVF, FAISS-IVF, and PLAID trade exact
-   ranking recovery for online latency?
+3. At matched rerank budgets, how do PDX-IVF and FAISS-IVF trade exact ranking
+   recovery for online latency, and where do validation-selected PLAID native
+   operating points lie under the same timing boundary?
 4. Which conclusions transfer from SciFact to a second small BEIR dataset?
 
 ## Work packages and acceptance gates
@@ -126,9 +127,15 @@ depends on a cross-machine wall-clock ratio.
 
 ## Release state
 
-1. Implementation and benchmark protocol frozen at source commit `0cc6145`.
-2. Five clean-commit result artifacts accepted by `results/final/manifest.json`.
-3. Figures 5-8 generated only from those accepted artifacts.
-4. Complete Windows/reference and WSL/native test suites pass.
-5. Matched-budget PLAID and larger-scale evaluation remain optional extensions,
-   not blockers for the frozen core result.
+1. Core implementation and the PLAID comparison protocol were frozen before
+   held-out execution at source commit `0a11fda`.
+2. Seven clean-commit result artifacts are accepted by
+   `results/final/manifest.json`: five held-out IVF/BOND artifacts and two
+   explicitly post-hoc PLAID full-score sensitivity artifacts.
+3. Figures 5-9 are generated only from accepted release artifacts.
+4. Complete Windows/reference and WSL/native test suites are release gates.
+5. Controlled CPU PLAID operating points are now included. Their configured
+   work budgets, validation/test shift, and post-hoc sensitivity status are
+   reported without claiming a general or end-to-end speedup.
+6. Larger-scale evaluation remains future work, not a blocker for the current
+   controlled result.

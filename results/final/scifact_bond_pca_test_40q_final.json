@@ -3,9 +3,9 @@
   "status": "pilot_not_final_claim",
   "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
   "metadata": {
-    "captured_at_utc": "2026-07-13T20:38:04.916055+00:00",
+    "captured_at_utc": "2026-07-16T17:21:17.510506+00:00",
     "git": {
-      "commit": "0cc61454dfcde529ba6744e3f1fb79429350cc57",
+      "commit": "0a11fda8f21a8f1052527ab72f28089feccd5c7d",
       "dirty": false
     },
     "runtime": {
@@ -25,17 +25,17 @@
         0
       ],
       "affinity_note": "initial_cpu_affinity is captured when benchmarking.py is imported; process_cpu_affinity is the calling thread at metadata capture and may be narrowed to one OpenMP place after a native kernel runs",
-      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
-      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "python": "3.11.9 (main, Aug 14 2024, 05:07:28) [Clang 18.1.8 ]",
+      "python_executable": "/home/telle/data-engineering-plaid/.venv/bin/python",
       "command": [
-        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "/home/telle/data-engineering-plaid/.venv/bin/python",
         "experiments/pipeline/10_controlled_bond_pilot.py",
         "--corpus-dir",
         "../artifacts/scifact_full_benchmark",
         "--embeddings-dir",
         "../artifacts/scifact_full_benchmark_embeddings",
         "--output",
-        "../artifacts/final_results_0cc6145/scifact_bond_pca_test_40q_final.json",
+        "../artifacts/plaid_work/final_0a11fda/scifact_bond_pca_test_40q.json",
         "--max-documents",
         "0",
         "--query-start",
@@ -61,17 +61,19 @@
         "OMP_NUM_THREADS": "4",
         "OMP_DYNAMIC": "FALSE",
         "OMP_PROC_BIND": "TRUE",
-        "OMP_PLACES": "threads",
+        "OMP_PLACES": "cores",
         "OPENBLAS_NUM_THREADS": "4",
         "MKL_NUM_THREADS": "4",
-        "NUMEXPR_NUM_THREADS": null,
+        "NUMEXPR_NUM_THREADS": "4",
         "VECLIB_MAXIMUM_THREADS": null,
-        "GOMP_CPU_AFFINITY": null
+        "GOMP_CPU_AFFINITY": null,
+        "RAYON_NUM_THREADS": "4",
+        "TOKENIZERS_PARALLELISM": "false"
       },
       "packages": {
         "numpy": "2.4.6",
         "faiss-cpu": "1.14.2",
-        "pylate": null,
+        "pylate": "1.5.0",
         "pdxearch": "0.1"
       }
     },
@@ -136,8 +138,8 @@
   "offline_index_build": {
     "preprocessing": {
       "rotation": "uncentered_pca_descending_second_moment",
-      "fit_seconds": 0.513291750999997,
-      "transform_seconds": 0.229503066999996,
+      "fit_seconds": 0.5916285539999535,
+      "transform_seconds": 0.22711193099985394,
       "batch_size": 32768,
       "rotation_sha256": "e473f8a7236556ece4c539c0662da3920bfb4c73717ad0086589b3f538e7a9fb",
       "float32_orthogonality_max_abs_error": 2.5305115003426693e-08,
@@ -150,7 +152,7 @@
         "128": 1.0
       }
     },
-    "bond_vertical_index_seconds": 1.6809202800000094,
+    "bond_vertical_index_seconds": 1.6916971569999077,
     "estimated_vertical_values_bytes": 611299840,
     "estimated_residual_norm_bytes": 57309360
   },
@@ -193,58 +195,58 @@
       "warmup_runs": 1,
       "measured_runs": 5,
       "end_to_end_seconds": [
-        4.055961189000072,
-        3.8285972029998447,
-        4.324596493999934,
-        4.061745020999979,
-        4.059123100000079
+        4.355673144000093,
+        5.174520331999929,
+        4.340481031999843,
+        4.411121862000073,
+        4.667452378000235
       ],
       "end_to_end_summary": {
         "count": 5,
-        "min": 3.8285972029998447,
-        "p25": 4.055961189000072,
-        "median": 4.059123100000079,
-        "mean": 4.066004601399982,
-        "p75": 4.061745020999979,
-        "p95": 4.272026199399943,
-        "max": 4.324596493999934
+        "min": 4.340481031999843,
+        "p25": 4.355673144000093,
+        "median": 4.411121862000073,
+        "mean": 4.589849749600035,
+        "p75": 4.667452378000235,
+        "p95": 5.07310674119999,
+        "max": 5.174520331999929
       },
       "stage_seconds": {
         "exact_score": [
-          4.04141026100001,
-          3.8153062680000858,
-          4.311151382000162,
-          4.047677080000085,
-          4.044898813000145
+          4.341031642999951,
+          5.160426961999974,
+          4.323927554999955,
+          4.3970115590000205,
+          4.653147685000022
         ],
         "topk": [
-          0.014536791999944398,
-          0.013276966999910655,
-          0.013431146000129957,
-          0.014053913999987344,
-          0.014209127999947668
+          0.014625079999859736,
+          0.014079174000016792,
+          0.01653659599992352,
+          0.014096587000040017,
+          0.014290125999650627
         ]
       },
       "stage_summaries": {
         "exact_score": {
           "count": 5,
-          "min": 3.8153062680000858,
-          "p25": 4.04141026100001,
-          "median": 4.044898813000145,
-          "mean": 4.052088760800098,
-          "p75": 4.047677080000085,
-          "p95": 4.258456521600147,
-          "max": 4.311151382000162
+          "min": 4.323927554999955,
+          "p25": 4.341031642999951,
+          "median": 4.3970115590000205,
+          "mean": 4.575109080799985,
+          "p75": 4.653147685000022,
+          "p95": 5.058971106599984,
+          "max": 5.160426961999974
         },
         "topk": {
           "count": 5,
-          "min": 0.013276966999910655,
-          "p25": 0.013431146000129957,
-          "median": 0.014053913999987344,
-          "mean": 0.013901589399984005,
-          "p75": 0.014209127999947668,
-          "p95": 0.014471259199945052,
-          "max": 0.014536791999944398
+          "min": 0.014079174000016792,
+          "p25": 0.014096587000040017,
+          "median": 0.014290125999650627,
+          "mean": 0.014725512599898138,
+          "p75": 0.014625079999859736,
+          "p95": 0.016154292799910763,
+          "max": 0.01653659599992352
         }
       }
     },
@@ -747,41 +749,41 @@
         "warmup_runs": 1,
         "measured_runs": 5,
         "end_to_end_seconds": [
-          35.63351249099992,
-          34.746884604000115,
-          35.03656920100002,
-          35.51693351800009,
-          35.84221404200002
+          36.36968325499993,
+          38.866016918000014,
+          36.953897550999955,
+          37.45860027599997,
+          35.81841287399993
         ],
         "end_to_end_summary": {
           "count": 5,
-          "min": 34.746884604000115,
-          "p25": 35.03656920100002,
-          "median": 35.51693351800009,
-          "mean": 35.35522277120003,
-          "p75": 35.63351249099992,
-          "p95": 35.800473731800004,
-          "max": 35.84221404200002
+          "min": 35.81841287399993,
+          "p25": 36.36968325499993,
+          "median": 36.953897550999955,
+          "mean": 37.09332217479996,
+          "p75": 37.45860027599997,
+          "p95": 38.58453358960001,
+          "max": 38.866016918000014
         },
         "stage_seconds": {
           "bond_search_topk": [
-            35.63349650000009,
-            34.74686940399988,
-            35.03655336099996,
-            35.51691813899993,
-            35.84219923399996
+            36.369667875999994,
+            38.86600122899995,
+            36.95388220099994,
+            37.458585487000164,
+            35.818397153000205
           ]
         },
         "stage_summaries": {
           "bond_search_topk": {
             "count": 5,
-            "min": 34.74686940399988,
-            "p25": 35.03655336099996,
-            "median": 35.51691813899993,
-            "mean": 35.35520732759996,
-            "p75": 35.63349650000009,
-            "p95": 35.80045868719999,
-            "max": 35.84219923399996
+            "min": 35.818397153000205,
+            "p25": 36.369667875999994,
+            "median": 36.95388220099994,
+            "mean": 37.09330678920005,
+            "p75": 37.458585487000164,
+            "p95": 38.58451808059999,
+            "max": 38.86600122899995
           }
         }
       },
@@ -1324,41 +1326,41 @@
         "warmup_runs": 1,
         "measured_runs": 5,
         "end_to_end_seconds": [
-          35.23498957900006,
-          35.49027493099993,
-          34.968302709,
-          36.15875463800012,
-          36.32274036099989
+          37.554802419,
+          36.17821699000001,
+          36.31647031900002,
+          38.42874790000019,
+          37.90739816899986
         ],
         "end_to_end_summary": {
           "count": 5,
-          "min": 34.968302709,
-          "p25": 35.23498957900006,
-          "median": 35.49027493099993,
-          "mean": 35.6350124436,
-          "p75": 36.15875463800012,
-          "p95": 36.289943216399934,
-          "max": 36.32274036099989
+          "min": 36.17821699000001,
+          "p25": 36.31647031900002,
+          "median": 37.554802419,
+          "mean": 37.27712715940002,
+          "p75": 37.90739816899986,
+          "p95": 38.32447795380013,
+          "max": 38.42874790000019
         },
         "stage_seconds": {
           "bond_search_topk": [
-            35.2349740799998,
-            35.490257718000066,
-            34.96828703899996,
-            36.1587403609999,
-            36.32272536200003
+            37.554787630999954,
+            36.17820299300001,
+            36.316455431999884,
+            38.42873325300002,
+            37.907383321
           ]
         },
         "stage_summaries": {
           "bond_search_topk": {
             "count": 5,
-            "min": 34.96828703899996,
-            "p25": 35.2349740799998,
-            "median": 35.490257718000066,
-            "mean": 35.63499691199995,
-            "p75": 36.1587403609999,
-            "p95": 36.2899283618,
-            "max": 36.32272536200003
+            "min": 36.17820299300001,
+            "p25": 36.316455431999884,
+            "median": 37.554787630999954,
+            "mean": 37.277112525999975,
+            "p75": 37.907383321,
+            "p95": 38.32446326660001,
+            "max": 38.42873325300002
           }
         }
       },

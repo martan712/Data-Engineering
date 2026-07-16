@@ -154,7 +154,7 @@ hard-coded headline values.
 | NumPy MaxSim BOND work-ratio/oracle study | Mechanism evidence; not kernel wall-clock evidence |
 | IVF candidate-pool and selector-recall measurements | Clean controlled quality-latency evidence under `results/final/` |
 | Reported 30x/100x IVF speedups | Withdrawn; clean same-stack measurements replace them |
-| Current PLAID versus IVF wall-clock bars | Withdraw pending matched budgets and timing boundaries |
+| Historical PLAID versus IVF wall-clock bars | Withdrawn; replaced by validation-selected same-process PLAID points and separately labelled post-hoc sensitivity arms |
 
 ## Claim language
 

@@ -45,6 +45,9 @@ Three secondary questions structure the supporting experiments:
     candidates with high exact-MaxSim recall?
   \item \textbf{RQ4.} At matched rerank budgets, how do PDX-IVF and FAISS-IVF
     trade exact-ranking recovery for online latency?
+  \item \textbf{RQ5.} Under the same machine, query split, and complete online
+    timing boundary, how does a validation-selected CPU PLAID configuration
+    compare with the exact and IVF pipelines?
 \end{itemize}
 
 The project explicitly does \emph{not} claim inverted-file (IVF) candidate
@@ -72,6 +75,11 @@ The report makes the following evidence-based contributions:
     MaxSim reranking on SciFact and NFCorpus~\citep{thakur2021beir}, showing
     identical FAISS-IVF and PDX-IVF recovery curves and no consistent
     engine-specific latency advantage (\cref{sec:results-ivf}).
+  \item A controlled CPU PLAID comparison with predeclared validation-based
+    parameter selection, held-out evaluation, and a separately labelled
+    post-hoc full-score sensitivity check. The result documents a strong
+    validation--test shift and prevents the earlier unmatched PLAID comparison
+    from being reused as performance evidence (\cref{sec:results-plaid}).
   \item An independently implemented, provably exact-safe BOND-MaxSim kernel
     and a matched-precision comparison against a compiled exhaustive MaxSim
     baseline. The central result is negative: on raw ColBERT dimensions the
@@ -95,8 +103,8 @@ and to arms measured in the same interleaved run.
 \Cref{sec:background} reviews late interaction, MaxSim, PDX, BOND, IVF, and
 related adaptive-distance work. \Cref{sec:architecture} describes the data
 representation and the system components. \Cref{sec:methodology} defines the
-controlled benchmark protocol. \Cref{sec:results-ivf,sec:results-bond,sec:results-pca}
-present the IVF, BOND, and PCA results. \Cref{sec:discussion} interprets the
+controlled benchmark protocol. \Cref{sec:results-ivf,sec:results-plaid,sec:results-bond,sec:results-pca}
+present the IVF, PLAID, BOND, and PCA results. \Cref{sec:discussion} interprets the
 evidence, \cref{sec:limitations} discusses threats to validity,
 \cref{sec:reproducibility} documents reproducibility measures, and
 \cref{sec:conclusion} concludes.

@@ -24,7 +24,7 @@ performance claim in this report relies on them.
 \subsection{Controlled benchmark protocol}
 \label{sec:protocol}
 
-All results in \cref{sec:results-ivf,sec:results-bond,sec:results-pca} were
+All results in \cref{sec:results-ivf,sec:results-plaid,sec:results-bond,sec:results-pca} were
 produced under the replacement protocol recorded in
 \texttt{docs/benchmark\_protocol.md}, whose core requirements are:
 
@@ -33,9 +33,12 @@ produced under the replacement protocol recorded in
     Python process on one machine (Ubuntu WSL2 on an AMD Ryzen~7~5800H),
     pinned to CPU affinity $\{0, 2, 4, 6\}$ (one hardware thread on each of
     four physical cores) with four OpenMP/BLAS threads.
-  \item \textbf{Matched work and output contract.} Every arm must emit ranked
-    document identifiers under the same exact MaxSim definition; approximate
-    arms are compared at matched rerank budgets.
+  \item \textbf{Matched output and declared work contract.} Every arm must
+    emit ranked document identifiers under the same exact MaxSim definition.
+    IVF arms are compared at matched rerank budgets. PLAID's public API does
+    not expose realized candidate counts, so its \texttt{n\_full\_scores}
+    values are reported as configured upper-bound budgets rather than equated
+    with observed IVF work.
   \item \textbf{Complete online timing boundary.} The online timer starts with
     normalized query token vectors resident in memory and stops when final
     ranked document identifiers are available. It covers index search,
@@ -51,7 +54,7 @@ produced under the replacement protocol recorded in
   \item \textbf{Provenance.} Every result JSON records the Git commit and
     dirty flag, input SHA-256 hashes, package versions, thread environment,
     CPU affinity, stage timings, and per-repetition samples. The release
-    manifest accepts only artifacts from clean commit \texttt{0cc6145}.
+    manifest accepts only artifacts from clean commit \texttt{0a11fda}.
 \end{itemize}
 
 \subsection{Quality metrics}
@@ -85,6 +88,17 @@ the rerank budget $C \in \{50, 100, 200, 400, \text{full pool}\}$ varies
 (SciFact; NFCorpus uses $\{50, 200, \text{full pool}\}$). ``Full pool'' means
 that every unique document in the candidate pool is reranked.
 
+PLAID parameters were selected only on the first 10 SciFact queries. The
+validation sweep varied \texttt{n\_ivf\_probe} from 8 to 128 and
+\texttt{n\_full\_scores} from 50 to 400. The fastest configuration reaching
+validation exact recall@10 of at least 0.85 was $(8,100)$ (recall 0.89), and
+the maximum-recall configuration was $(8,400)$ (recall 0.92). An expanded
+validation-only sweep through 5{,}183 full scores did not exceed 0.92. The two
+selected configurations were frozen before either held-out dataset was run.
+After the unexpectedly large validation--test shift was observed, one
+full-corpus \texttt{n\_full\_scores} arm per dataset was added as an explicitly
+post-hoc sensitivity analysis; it is not treated as a selected operating point.
+
 \subsection{Numerical precision contracts}
 \label{sec:precision}
 
@@ -94,7 +108,7 @@ matching the float32 ColBERT embeddings, whereas the \textbf{BOND comparison}
 uses float64 products and accumulation in \emph{both} the exhaustive and the
 BOND arm, because the exact-safe pruning proof requires controlled rounding
 (\cref{sec:results-bond}). Consequently, float32 IVF latencies (e.g., the
-\SI{2.93}{\second} SciFact exhaustive median) must not be compared with
-float64 BOND-comparison latencies (e.g., the \SI{4.27}{\second} SciFact
+\SI{2.58}{\second} SciFact exhaustive median) must not be compared with
+float64 BOND-comparison latencies (e.g., the \SI{3.92}{\second} SciFact
 exhaustive median); each table names its own precision-matched baseline, and
 every BOND-to-exact ratio uses the exhaustive arm interleaved in the same run.

@@ -3,7 +3,7 @@
 
 This project asked whether the PDX vertical layout and BOND-style exact-safe
 dimension pruning can accelerate ColBERT MaxSim search, and answered the
-question with a controlled, audited benchmark. Five conclusions are supported
+question with a controlled, audited benchmark. Six conclusions are supported
 by the release artifacts:
 
 \begin{enumerate}
@@ -21,6 +21,13 @@ by the release artifacts:
   \item \textbf{FAISS-IVF and PDX-IVF are indistinguishable here.} Both
     engines produced identical candidate pools and recovery curves, and
     neither showed a consistent latency advantage across budgets and datasets.
+  \item \textbf{The controlled PLAID operating points are dominated at this
+    tested scale.} Validation-selected CPU PLAID configurations suffer a
+    strong held-out quality drop and are slower than compiled exact MaxSim. A
+    post-hoc corpus-sized full-score budget improves exact recall@10 only to
+    0.6750 (SciFact) and 0.5975 (NFCorpus), while taking 24.65--35.86 times the
+    same-run exact latency. This is a result for the pinned implementation and
+    small corpora, not a general rejection of PLAID.
   \item \textbf{Exact-safe BOND pruning on raw ColBERT dimensions is a clear
     negative result.} The kernel preserves every exact top-10 but retains
     94--95\% of the exhaustive component products---all pruning occurs at
@@ -30,15 +37,17 @@ by the release artifacts:
   \item \textbf{Dimension ordering helps the bound, not the kernel.} An
     offline PCA rotation concentrating 90.9\% of token energy in eight
     components cuts evaluated products to 61.5--69.0\%, yet both PCA arms
-    remain about $8.7\times$ slower than their same-run exhaustive reference;
+    remain 8.38--8.51 times slower than their same-run exhaustive reference;
     bound maintenance and irregular memory access dominate.
 \end{enumerate}
 
 \paragraph{Future work.} Four directions follow naturally from the evidence:
-(i)~a quality-matched PLAID comparison point under the same protocol and
-full-score budget; (ii)~a larger corpus with a predeclared scaling protocol,
+(i)~a larger corpus with a predeclared scaling protocol,
 to test whether the IVF coverage ceiling observed on NFCorpus widens or
-narrows with scale; (iii)~a redesigned pruning kernel with near-zero per-pair
+narrows with scale and whether PLAID reaches its intended operating regime;
+(ii)~a broader PLAID validation set and additional predeclared compression
+settings, without tuning on the held-out split; (iii)~a redesigned pruning
+kernel with near-zero per-pair
 bookkeeping (e.g., block-level rather than document-level bounds), which the
 PCA evidence suggests is the only path by which the improved pruning could
 become latency; and (iv)~candidate-generation improvements

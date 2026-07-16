@@ -153,12 +153,13 @@ OMP_NUM_THREADS=2 \
   -m unittest discover -s tests -v
 ```
 
-Current result: 34 tests pass in WSL. On Windows, 22 reference tests pass; three
-exact-kernel and nine BOND-kernel tests are explicitly skipped because Linux
-extensions are not built there.
+Final verification after the PLAID addition: all 39 tests pass in the unified
+WSL Python 3.11 environment. On Windows, the same suite reports 39 tests with
+12 expected native-extension skips and no failures. The skipped exact/BOND
+tests require Linux extensions and run in the WSL gate.
 
 Final controlled runs use `taskset -c 0,2,4,6`, four OpenMP/BLAS threads,
-`OMP_PROC_BIND=TRUE`, and `OMP_PLACES=threads`. This selects one hardware thread
+`OMP_PROC_BIND=TRUE`, and `OMP_PLACES=cores`. This selects one hardware thread
 from each of four physical cores on the recorded Ryzen topology. OpenMP narrows
 the calling thread to one place after native work, so metadata stores both
 `initial_cpu_affinity=[0,2,4,6]` and the post-kernel calling-thread affinity.
@@ -176,7 +177,10 @@ The repository now also tracks `.gitattributes` with fixed LF endings for JSON,
 source, scripts, and Markdown, so future clones preserve result hashes without
 depending on that machine-local setting.
 
-All five `results/final/` artifacts record commit `0cc6145`, `dirty=false`, and
+All seven `results/final/` artifacts record commit `0a11fda`, `dirty=false`, and
 the expected initial affinity. BOND final comparisons use float64 products and
-accumulation in both exhaustive and exact-safe kernels; IVF reranking retains
-the established float32 contract.
+accumulation in both exhaustive and exact-safe kernels; IVF reranking and the
+compiled exact reference used beside PLAID retain the established float32
+contract. The two selected PLAID arms were frozen from validation before the
+held-out runs. The corpus-sized PLAID arms are separately labelled post-hoc
+sensitivity results in the manifest and report.

@@ -40,7 +40,10 @@ def resolve(path: Path) -> Path:
 def load_result(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as file:
         result = json.load(file)
-    if result.get("schema_version") != "controlled_ivf_pilot_v1":
+    if result.get("schema_version") not in {
+        "controlled_ivf_pilot_v1",
+        "controlled_ivf_plaid_v2",
+    }:
         raise SystemExit(f"Unsupported result schema: {result.get('schema_version')}")
     return result
 

@@ -59,7 +59,7 @@ withdraw the historical headline speedups, and rerun a smaller comparison under
 | Flat PDX-BOND and batch/shared-scan prototype timings | Keep as exploratory engineering observations |
 | BOND/PCA/oracle work ratios | Keep as bounded mechanism analysis, with narrower language |
 | 30x/39x/32x/8x/7.4x speedup statements | Withdrawn; replaced by clean controlled measurements under `results/final/` |
-| Current PLAID versus IVF latency bars | Withdraw pending matched-work rerun |
+| Historical PLAID versus IVF latency bars | Withdrawn; replaced by validation-selected same-process points with explicit configured budgets and post-hoc sensitivity labels |
 
 Compact historical JSON files are preserved under `results/legacy/`. They are
 not inputs to final speedup claims.
@@ -98,5 +98,7 @@ The repair produced independently implemented compiled exact and exact-safe
 BOND-MaxSim kernels, automated NumPy-oracle tests, complete online timing,
 matched FAISS/PDX rerank budgets, SciFact and NFCorpus transfer runs, and
 clean-commit release artifacts under `results/final/`. The final BOND comparison
-uses float64 products and accumulation in both arms. Historical speedup claims
-remain withdrawn; matched-budget PLAID is optional future work.
+uses float64 products and accumulation in both arms. The controlled PLAID
+addition uses the same process and complete timing boundary, freezes two points
+on validation, and reports corpus-sized score budgets only as post-hoc
+sensitivity checks. Historical speedup claims remain withdrawn.
