@@ -49,6 +49,25 @@ class LegacyResultManifestTests(unittest.TestCase):
         )
         self.assertEqual(manifest["status"], "controlled_pilots_pending_clean_rerun")
 
+    def test_validation_manifest_freezes_plaid_selection(self) -> None:
+        result_dir = PROJECT_ROOT / "results" / "validation"
+        manifest = self.assert_manifest_matches_directory(
+            result_dir,
+            wall_clock_claims_allowed=False,
+        )
+        self.assertEqual(manifest["status"], "validation_only_parameter_selection")
+        selection = json.loads(
+            (result_dir / "plaid_release_selection.json").read_text(encoding="utf-8")
+        )
+        self.assertFalse(selection["validation_result"]["git"]["dirty"])
+        self.assertEqual(
+            [
+                (item["config"]["n_ivf_probe"], item["config"]["n_full_scores"])
+                for item in selection["selected"]
+            ],
+            [(8, 100), (8, 400)],
+        )
+
     def test_final_manifest_matches_clean_result_metadata(self) -> None:
         result_dir = PROJECT_ROOT / "results" / "final"
         manifest = self.assert_manifest_matches_directory(

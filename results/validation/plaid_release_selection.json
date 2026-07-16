@@ -1,0 +1,62 @@
+{
+  "schema_version": "plaid_validation_selection_v1",
+  "selection_policy": "fastest validation arm meeting each declared exact-recall@10 target, plus the highest-recall arm; ties are deterministic",
+  "validation_result": {
+    "path": "C:\\Users\\telle\\Desktop\\Cybersecurity & AI\\1. YEAR\\2nd Semester\\Data Engineering\\artifacts\\plaid_work\\scifact_plaid_validation_expanded_b1ffac6.json",
+    "sha256": "afab614ff9af7fb18e8eace654819bcd5aed8946bb8a1eb4ee87cea58c04f379",
+    "git": {
+      "commit": "b1ffac6419f1c120bedd4d8fe1af21d788360f87",
+      "dirty": false
+    },
+    "dataset": {
+      "corpus_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark",
+      "embeddings_dir": "/mnt/c/Users/telle/Desktop/Cybersecurity & AI/1. YEAR/2nd Semester/Data Engineering/artifacts/scifact_full_benchmark_embeddings",
+      "selection": "subset pilot",
+      "query_start": 0,
+      "documents": 5183,
+      "queries": 10,
+      "document_token_vectors": 1193945,
+      "query_token_vectors": 180,
+      "embedding_dimension": 128,
+      "retained_qrels_labels": 11
+    }
+  },
+  "recall_targets": [
+    0.85,
+    0.95
+  ],
+  "decisions": [
+    {
+      "criterion": "fastest_recall_at_least_0.85",
+      "selected": "plaid_np8_c100"
+    },
+    {
+      "criterion": "fastest_recall_at_least_0.95",
+      "selected": null
+    },
+    {
+      "criterion": "highest_recall_then_fastest",
+      "selected": "plaid_np8_c400"
+    }
+  ],
+  "selected": [
+    {
+      "name": "plaid_np8_c100",
+      "config": {
+        "n_ivf_probe": 8,
+        "n_full_scores": 100
+      },
+      "validation_exact_recall@10": 0.89,
+      "validation_median_seconds": 2.1190511309998783
+    },
+    {
+      "name": "plaid_np8_c400",
+      "config": {
+        "n_ivf_probe": 8,
+        "n_full_scores": 400
+      },
+      "validation_exact_recall@10": 0.9200000000000002,
+      "validation_median_seconds": 2.552720446999956
+    }
+  ]
+}

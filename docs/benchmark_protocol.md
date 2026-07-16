@@ -63,6 +63,14 @@ online latency, exact-ranking recovery, qrels metrics, configured budget, and
 offline index size/build time. Quality-matched points and frontiers are valid;
 an unqualified same-work claim is not.
 
+The frozen validation outcome is preserved under `results/validation/`.
+Changing `n_ivf_probe` from 8 through 128 left validation exact recall@10
+unchanged at every tested full-score budget and only increased latency. At
+`n_ivf_probe=8`, recall rose from 0.74 (`n_full_scores=50`) to 0.92
+(`n_full_scores=400`) and then remained 0.92 through full-corpus scoring. The
+selection rule therefore freezes `(8,100)` as the fastest arm exceeding 0.85
+and `(8,400)` as the maximum-recall arm. No arm met the 0.95 target.
+
 ## Timing boundaries
 
 Report index construction separately as offline cost. Query encoding is also a
