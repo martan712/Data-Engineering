@@ -15,3 +15,13 @@ external/PDX/
 !docs/figures/
 !docs/figures/*.png
 Notes/
+*.pdf
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.gz
+*.json
+*.tdo
+*.synctex*

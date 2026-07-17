@@ -1,63 +1,44 @@
-\section{Introduction}
+\section*{Introduction}
 \label{sec:introduction}
 
-\subsection{Motivation}
+Late-interaction retrieval models like ColBERT \citep{khattab2020colbert} achieve 
+strong ranking quality by representing queries and documents as sets of contextualized 
+token vectors instead of a single embedding. This representational richness comes at a 
+query-time cost: the MaxSim scoring operator compares every query token with every 
+document token, so exhaustive scoring scales with the product of query length, document 
+length, corpus size, and embedding dimension. Existing systems work, most prominently 
+ColBERTv2 \citep{santhanam2022colbertv2} and PLAID \citep{santhanam2022plaid}, address 
+this cost with compression and approximate candidate pruning.
 
-Late-interaction retrieval models such as ColBERT~\citep{khattab2020colbert}
-achieve strong ranking quality by representing every query and every document
-as a \emph{set} of contextualized token vectors rather than a single embedding.
-The price of this representational richness is paid at query time: the MaxSim
-scoring operator must compare every query token with every document token, so
-exhaustive scoring of a corpus grows with the product of query length,
-document length, corpus size, and embedding dimension. A large body of systems
-work, most prominently ColBERTv2~\citep{santhanam2022colbertv2} and
-PLAID~\citep{santhanam2022plaid}, addresses this cost with compression and
-approximate candidate pruning.
-
-An orthogonal line of database research reduces the cost of high-dimensional
-similarity search by decomposing vectors \emph{vertically}, that is, by
-dimension. BOND~\citep{devries2002bond} scans dimensions incrementally and
-uses partial distances together with residual bounds to prune objects that can
-no longer enter the top-$k$. PDX~\citep{kuffo2025pdx} revisits this
-dimension-major layout for modern hardware and combines it with
-dimension-pruning search algorithms, including a PDX-BOND variant. These
-techniques were designed for single-vector nearest-neighbor search. Whether
-they transfer to the multi-vector MaxSim operator---where the scored object is
-a variable-length token matrix and the score is a sum of token-wise
-maxima---is an open engineering question, and it is the question this project
+An orthogonal line of database research reduces the cost of high-dimensional similarity 
+search by decomposing vectors vertically, that is, by dimension. BOND \citep{devries2002bond} 
+scans dimensions incrementally and uses partial distances together with residual bounds 
+to prune objects that cannot enter the top-k. PDX \citep{kuffo2025pdx} revisits this dimension-major 
+layout for modern hardware and combines it with dimension-pruning search algorithms, including a 
+PDX-BOND variant. These techniques were designed for single-vector nearest-neighbor search. Whether 
+they transfer to the multi-vector MaxSim operator, where the scored object is a variable-length 
+token matrix and the score is a sum of token-wise maxima, is an open engineering question that we 
 set out to answer.
 
-\subsection{Research questions}
-
-The primary research question is:
-
-\begin{quote}
-\textbf{RQ1.} Can BOND-style, exact-safe dimension pruning accelerate exact
-ColBERT MaxSim search over a strong compiled exhaustive implementation?
-\end{quote}
-
-Three secondary questions structure the supporting experiments:
-
-\begin{itemize}
-  \item \textbf{RQ2.} Why do the BOND residual bounds become useful, or remain
-    loose, on normalized ColBERT token embeddings?
-  \item \textbf{RQ3.} Can a flat token-vector index generate document
-    candidates with high exact-MaxSim recall?
-  \item \textbf{RQ4.} At matched rerank budgets, how do PDX-IVF and FAISS-IVF
-    trade exact-ranking recovery for online latency?
+Our primary research question is whether BOND-style, exact-safe dimension pruning can accelerate 
+exact ColBERT MaxSim search over a strong compiled exhaustive implementation (PRQ). To support our 
+investigation, we also ask three secondary questions:
+\begin{itemize}[noitemsep]
+  \item \textbf{RQ1.} Why do the BOND residual bounds become useful, or remain loose, on normalized 
+  ColBERT token embeddings?
+  \item \textbf{RQ2.} Can a flat token-vector index generate document candidates with high exact-MaxSim recall?
+  \item \textbf{RQ3.} At matched rerank budgets, how do PDX-IVF and FAISS-IVF trade exact-ranking 
+  recovery for online latency?
 \end{itemize}
+We explicitly do not claim inverted-file (IVF) candidate generation as a novel contribution. IVF 
+is standard approximate nearest-neighbor practice; in this project it serves as a practical comparison 
+architecture and as a fallback that we adopted while testing the BOND hypothesis.
 
-The project explicitly does \emph{not} claim inverted-file (IVF) candidate
-generation as a novel contribution. IVF is standard approximate
-nearest-neighbor practice; in this project it serves as a practical comparison
-architecture and as a fallback that was adopted while testing the BOND
-hypothesis.
-
-\subsection{Contributions}
+\subsection*{Contributions}
 
 The report makes the following evidence-based contributions:
 
-\begin{enumerate}
+\begin{enumerate}[noitemsep]
   \item A packed, flattened token-index representation of variable-length
     ColBERT embeddings, with a token-to-document mapping that supports both
     vertically decomposed (PDX) and conventional (FAISS) indexes over the same
@@ -85,18 +66,18 @@ The report makes the following evidence-based contributions:
     (\cref{sec:results-pca}).
 \end{enumerate}
 
-Throughout the report, approximate IVF results and exact-safe BOND results are
-kept strictly separate, and no end-to-end retrieval-system speedup is claimed:
-all latency statements refer to a declared online query-processing boundary
+Throughout the report, approximate IVF results and exact-safe BOND results 
+are kept strictly separate, and we do not claim any end-to-end retrieval-system speedup. 
+All latency statements refer to a declared online query-processing boundary 
 and to arms measured in the same interleaved run.
 
-\subsection{Report organization}
+% \subsection{Report organization}
 
-\Cref{sec:background} reviews late interaction, MaxSim, PDX, BOND, IVF, and
-related adaptive-distance work. \Cref{sec:architecture} describes the data
-representation and the system components. \Cref{sec:methodology} defines the
-controlled benchmark protocol. \Cref{sec:results-ivf,sec:results-bond,sec:results-pca}
-present the IVF, BOND, and PCA results. \Cref{sec:discussion} interprets the
-evidence, \cref{sec:limitations} discusses threats to validity,
-\cref{sec:reproducibility} documents reproducibility measures, and
-\cref{sec:conclusion} concludes.
+% \Cref{sec:background} reviews late interaction, MaxSim, PDX, BOND, IVF, and
+% related adaptive-distance work. \Cref{sec:architecture} describes the data
+% representation and the system components. \Cref{sec:methodology} defines the
+% controlled benchmark protocol. \Cref{sec:results-ivf,sec:results-bond,sec:results-pca}
+% present the IVF, BOND, and PCA results. \Cref{sec:discussion} interprets the
+% evidence, \cref{sec:limitations} discusses threats to validity,
+% \cref{sec:reproducibility} documents reproducibility measures, and
+% \cref{sec:conclusion} concludes.

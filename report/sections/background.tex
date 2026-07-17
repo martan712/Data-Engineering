@@ -1,78 +1,114 @@
-\section{Background}
-\label{sec:background}
+\section*{Background}
 
-\subsection{ColBERT and late interaction}
-
-ColBERT~\citep{khattab2020colbert} encodes queries and documents
-\emph{independently} into sets of contextualized token vectors and delays
-their interaction until retrieval time. Let a query $q$ be represented by
-token vectors $q_1, \dots, q_m \in \mathbb{R}^{D}$ and a document $d$ by token
-vectors $d_1, \dots, d_n \in \mathbb{R}^{D}$. The late-interaction score is
-the MaxSim operator:
+Dense retrieval has evolved from single-vector representations, where a query or 
+document is compressed into one embedding, toward multi-vector representations 
+that keep a separate embedding for every token. ColBERT \citep{khattab2020colbert} 
+popularised this idea for information retrieval. Instead of pooling a passage into 
+a single vector, ColBERT encodes the query and the document independently with a 
+language model and keeps one contextualised embedding per token. At retrieval time, 
+the similarity between a query and a document is computed with a late-interaction 
+mechanism called MaxSim:
 \begin{equation}
   \operatorname{score}(q, d)
   \;=\;
   \sum_{i=1}^{m} \max_{j = 1, \dots, n} \; q_i^{\top} d_j .
   \label{eq:maxsim}
 \end{equation}
-Each query token contributes its single best match among the document tokens,
-and these maxima are summed. Because token vectors are L2-normalized, the
-inner product in \cref{eq:maxsim} equals the cosine similarity. Exhaustive
-evaluation of \cref{eq:maxsim} over a corpus requires $m \times n \times D$
-multiply--accumulate operations per document, which motivates both candidate
-pruning and cheaper scoring kernels.
+Each query token contributes its single best match among the document tokens, and 
+these maxima are summed. Because token vectors are L2-normalised, the inner product 
+equals the cosine similarity. This design preserves most of the expressive power 
+of full cross-attention while allowing document representations to be pre-computed 
+offline, which made ColBERT two orders of magnitude faster than earlier BERT-based 
+rerankers \citep{khattab2020colbert}.
 
-ColBERTv2~\citep{santhanam2022colbertv2} reduces the storage footprint of the
-token representation through residual compression, and
-PLAID~\citep{santhanam2022plaid} adds centroid-based candidate pruning inside
-a highly optimized retrieval engine. These systems establish that efficient
-multi-vector retrieval requires methods designed around the late-interaction
-operator itself rather than a single-vector distance alone.
+The price of this expressiveness is size and search cost. A multi-vector index 
+stores tens to hundreds of embeddings per document rather than one, so the number 
+of vectors to search grows accordingly, and MaxSim scoring means that every query 
+token embedding needs its own nearest-neighbour search over the entire collection 
+of token embeddings. Exhaustive evaluation of \cref{eq:maxsim} over a corpus 
+requires $m \times n \times D$ multiply-accumulate operations per document. 
+However, the multi-vector search problem shares the same underlying computational 
+bottleneck with single-vector $k$-nearest neighbour search (KNNS): the distance 
+comparison operation (DCO) between a query vector and a stored vector 
+\citep{kuffo2025pdx}. Any improvement to the DCO directly benefits multi-vector 
+retrieval, since a MaxSim query is effectively a batch of ordinary vector searches.
 
-An important structural property of \cref{eq:maxsim} is that the document
-score is \emph{not} decomposable over individually retrieved tokens: knowing
-the best-matching document tokens for some query tokens does not determine the
-document score, because unretrieved query-token/document pairs still
-contribute their own maxima. This property drives the two-stage architecture
-analyzed in this report (\cref{sec:architecture}).
+Improving the DCO is not new. Twenty years before ColBERT, the observation that 
+computing a full distance is wasteful when most vectors can be discarded after 
+inspecting a few dimensions led to the Branch-and-bound ON Decomposed data 
+algorithm (BOND) \citep{devries2002bond}. BOND stores each dimension of a vector 
+collection as a separate column, similar to a decomposed storage model, and processes 
+the query dimension by dimension. After scanning a small number of dimensions, BOND 
+derives a lower and an upper bound on the final distance for every candidate vector. 
+If the upper bound of a candidate is worse than the lower bound of the current $k$-th 
+best candidate, the vector can be pruned without computing the remaining dimensions. 
+Because the bound is exact, BOND performs true $k$-NN search rather than an approximation, 
+and it requires no preprocessing or index structure beyond the vertical decomposition 
+of the vectors \citep{devries2002bond}. The original paper showed that ordering dimensions 
+by decreasing query value gives the best pruning behaviour on skewed feature distributions, 
+and that the technique can be expressed directly in relational algebra, making it implementable 
+inside a database system.
 
-\subsection{Vertical decomposition: BOND and PDX}
+BOND's dimension-pruning idea resurfaced recently in the context of high-dimensional 
+approximate nearest-neighbour search. ADSampling projects the vector collection with 
+a random orthogonal transform and, at search time, reads only a controlled subset of 
+dimensions before applying a hypothesis test that estimates whether a vector can still 
+make it into the top-$k$ result \citep{gao2023adsampling}. BSA follows the same principle 
+but replaces the random projection with a learned PCA projection, tightening the 
+approximation error and enabling earlier pruning at the cost of a more expensive 
+preprocessing step \citep{yang2024bsa}. Both algorithms reduce the number of dimensions 
+that must be read per vector substantially, but both target approximate search and 
+require the collection to be transformed beforehand.
 
-BOND~\citep{devries2002bond} stores vectors column-wise (dimension-major) and
-answers top-$k$ nearest-neighbor queries by scanning dimensions incrementally.
-After processing a prefix of the dimensions, each candidate has a partial
-distance and a residual term that bounds its best possible final distance;
-candidates whose optimistic bound cannot enter the current top-$k$ are pruned,
-so later dimensions are read for fewer and fewer objects. The effectiveness of
-this scheme depends on how much of the distance signal is concentrated in the
-early dimensions.
+The recent PDX paper by the CWI database group revisits this line of work from the 
+perspective of physical data layout \citep{kuffo2025pdx}. The authors observe that 
+ADSampling and BSA, although effective in theory, can lose to plain SIMD-optimised 
+linear scans when the vectors are stored in the conventional horizontal, vector-by-vector 
+layout, because evaluating the pruning bound introduces latency that a straightforward, 
+well-vectorised distance kernel does not have. PDX (Partition Dimensions Across) 
+addresses this by storing vectors dimension-at-a-time within blocks, so that a 
+search can proceed dimension by dimension over many vectors at once rather than 
+vector by vector. This layout is a direct descendant of the vertical decomposition 
+first used in BOND, but PDX combines it with block-level processing so that scalar 
+code auto-vectorises efficiently on modern CPUs. Built on top of this layout, PDXearch 
+is a generic search framework that adaptively decides how many dimensions to fetch at 
+each step. PDX-BOND is a new instance of the original BOND idea implemented inside 
+PDXearch. It accesses first the dimensions whose collection mean is farthest from the 
+query value, obtaining a tight pruning bound early, and requires no data transformation, 
+which the authors highlight as attractive for vector databases that face frequent 
+updates \citep{kuffo2025pdx}. In parallel, preliminary work has started to integrate 
+PDXearch as a DuckDB extension, aiming to bring lightweight, IVF-based vector search 
+with PDX-style pruning to an analytical database engine \citep{noorts2025pdxearch}.
 
-PDX~\citep{kuffo2025pdx} revisits the vertical layout for modern vector
-workloads. It decomposes vectors by dimension \emph{within} blocks of the
-index, which preserves cache locality while enabling dimension-by-dimension
-kernels, and it pairs the layout with pruning-based search algorithms
-including a PDX-BOND variant that requires no offline transformation of the
-data. ADSampling~\citep{gao2023adsampling} is related adaptive work in the
-approximate setting: it randomly rotates vectors and terminates distance
-computations early with probabilistic guarantees. In contrast, this project
-studies an \emph{exact-safe} regime in which no correct top-$k$ result may be
-lost, and asks whether such bounds remain selective when the scored object is
-a variable-length token matrix combined through \cref{eq:maxsim}.
+While PDX and PDX-BOND are evaluated on generic high-dimensional similarity search using 
+single-vector benchmark datasets, the intended use of BOND-style pruning in this project 
+is information retrieval with multi-vector representations in the style of ColBERT. This 
+introduces a search pattern that PDX has not yet been tested on directly: many small 
+per-token queries against a shared document collection, aggregated through MaxSim rather 
+than through a single top-$k$ ranking. To evaluate the effect of dimension-pruned 
+multi-vector search on actual retrieval quality and efficiency, this project makes use 
+of the CoRECT framework, introduced at ECIR 2026 by colleagues from the University of 
+Passau within the OWS.EU project partnership \citep{caspari2025corect}. CoRECT 
+(Controlled Retrieval Evaluation of Compression Techniques) was designed to benchmark 
+embedding compression methods at scale while controlling for corpus size and document 
+length. Although CoRECT was built to evaluate compression rather than pruning, its 
+controlled, large-scale retrieval benchmarks and curated dataset collection make it a 
+suitable environment to measure whether PDX-based dimension pruning, applied to 
+multi-vector ColBERT-style retrieval, preserves ranking quality while reducing the cost 
+of the underlying distance comparisons \citep{caspari2025corect}.
 
-\subsection{IVF candidate generation}
 
-An inverted-file (IVF) index clusters vectors into buckets (via $k$-means)
-and, at query time, scans only the \texttt{nprobe} buckets whose centroids are
-closest to the query vector. IVF is a standard, well-understood approximate
-nearest-neighbor technique; FAISS provides a reference implementation
-(\texttt{IndexIVFFlat}), and PDX provides an IVF variant
-(\texttt{IndexPDXBONDIVFFlat}) that applies its vertical layout and BOND-style
-scanning within probed buckets. In this project both engines index
-\emph{individual document token vectors}, and their retrieved token hits are
-aggregated into document candidates that are subsequently reranked exactly
-(\cref{sec:architecture}).
+For candidate generation, we also use an inverted-file (IVF) index, which clusters 
+vectors into buckets via $k$-means and, at query time, scans only the \texttt{nprobe} 
+buckets whose centroids are closest to the query vector. IVF is a standard, 
+well-understood approximate nearest-neighbour technique; FAISS provides a reference 
+implementation (\texttt{IndexIVFFlat}), and PDX provides an IVF variant 
+(\texttt{IndexPDXBONDIVFFlat}) that applies its vertical layout and BOND-style 
+scanning within probed buckets. In this project both engines index individual 
+document token vectors, and their retrieved token hits are aggregated into document 
+candidates that are subsequently reranked exactly.
 
-\subsection{Distance equivalence for normalized vectors}
+\subsection*{Distance equivalence for normalized vectors}
 
 The PDX Python API exposes squared Euclidean distance only. For
 unit-normalized vectors $x$ and $y$,
@@ -86,13 +122,11 @@ similarities as $s = 1 - \lVert x - y \rVert_2^2 / 2$. All indexes in this
 study therefore operate on identical geometry despite exposing different
 metrics.
 
-\subsection{Benchmark datasets}
+\subsection*{Benchmark datasets}
 
-SciFact and NFCorpus are drawn from BEIR~\citep{thakur2021beir}, a
-heterogeneous zero-shot retrieval benchmark. SciFact is a scientific
-claim-verification corpus (5{,}183 documents in the configuration used here);
-NFCorpus is a nutrition-domain corpus (3{,}633 documents) with denser but
-still incomplete relevance labels. Embeddings are produced with
-PyLate~\citep{pylate} using the checkpoint
-\texttt{lightonai/GTE-ModernColBERT-v1}, which emits 128-dimensional
-L2-normalized token vectors.
+We conduct experiments on SciFact and NFCorpus, drawn from BEIR \citep{thakur2021beir}, 
+a heterogeneous zero-shot retrieval benchmark. SciFact is a scientific claim-verification 
+corpus (5,183 documents in the configuration used here); NFCorpus is a nutrition-domain 
+corpus (3,633 documents) with denser but still incomplete relevance labels. Embeddings 
+are produced with PyLate \citep{pylate} using the checkpoint \texttt{lightonai/GTE-ModernColBERT-v1}, 
+which emits 128-dimensional L2-normalised token vectors.

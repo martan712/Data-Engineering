@@ -16,6 +16,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[a4paper,margin=2.5cm]{geometry}
+% \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
@@ -24,6 +25,20 @@
 \usepackage{caption}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
+% \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[english]{babel}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{textgreek}
+\usepackage[toc,page]{appendix}
+\usepackage{xcolor}
+\usepackage{nameref}
+\usepackage{url}
+\usepackage{todonotes}
+\usepackage{bookmark}
+\usepackage{multicol}
 \usepackage{cleveref}
 
 % Figures live in the existing documentation tree; they are referenced,
@@ -47,46 +62,59 @@
   Accelerating ColBERT Multi-Vector Search with PDX/BOND:\\
   A Controlled Evaluation of Candidate Generation and\\
   Exact-Safe Dimension Pruning}
-
+\author{Mikel Telleria Iraeta \and Jason Kasdiran}
 \begin{document}
+	\maketitle
+\begin{multicols}{2}
 
-% ---------------------------------------------------------------------
-% 1. Title page
-% ---------------------------------------------------------------------
-\hypersetup{pageanchor=false}
-\begin{titlepage}
-  \centering
-  \vspace*{2cm}
-  {\LARGE\bfseries Accelerating ColBERT Multi-Vector Search with PDX/BOND\par}
-  \vspace{0.6cm}
-  {\Large A Controlled Evaluation of Candidate Generation and\\
-   Exact-Safe Dimension Pruning\par}
-  \vspace{2.5cm}
-  {\large Project Report\par}
-  \vspace{1.5cm}
-  \begin{tabular}{rl}
-    Author:          & \todometa{author name}\\[2pt]
-    University:      & \todometa{university}\\[2pt]
-    Programme:       & \todometa{programme / degree}\\[2pt]
-    Course:          & Data Engineering \todometa{official course code}\\[2pt]
-    Supervisor:      & \todometa{supervisor}\\[2pt]
-    Submission date: & \todometa{submission date}\\
-  \end{tabular}
-  \vfill
-  {\small All final numerical claims in this report are generated from the
-   audited release artifacts under \texttt{results/final/} at clean Git commit
-   \texttt{0cc6145}.\par}
-  \vspace{1cm}
-\end{titlepage}
+% \begin{document}
+
+% % ---------------------------------------------------------------------
+% % 1. Title page
+% % ---------------------------------------------------------------------
+% \hypersetup{pageanchor=false}
+% \begin{titlepage}
+%   \centering
+%   \vspace*{2cm}
+%   {\LARGE\bfseries Accelerating ColBERT Multi-Vector Search with PDX/BOND\par}
+%   \vspace{0.6cm}
+%   {\Large A Controlled Evaluation of Candidate Generation and\\
+%    Exact-Safe Dimension Pruning\par}
+%   \vspace{2.5cm}
+%   {\large Project Report\par}
+%   \vspace{1.5cm}
+%   \begin{tabular}{rl}
+%     Author:          & \todometa{author name}\\[2pt]
+%     University:      & \todometa{university}\\[2pt]
+%     Programme:       & \todometa{programme / degree}\\[2pt]
+%     Course:          & Data Engineering \todometa{official course code}\\[2pt]
+%     Supervisor:      & \todometa{supervisor}\\[2pt]
+%     Submission date: & \todometa{submission date}\\
+%   \end{tabular}
+%   \vfill
+%   {\small All final numerical claims in this report are generated from the
+%    audited release artifacts under \texttt{results/final/} at clean Git commit
+%    \texttt{0cc6145}.\par}
+%   \vspace{1cm}
+% \end{titlepage}
 
 \pagenumbering{roman}
 \hypersetup{pageanchor=true}
+\renewenvironment{abstract}
+ {\small
+  \begin{center}
+  \bfseries \abstractname\vspace{-.5em}\vspace{0pt}
+  \end{center}
+  \list{}{%
+    \setlength{\leftmargin}{0.5mm}
+    \setlength{\rightmargin}{\leftmargin}%
+  }%
+  \item\relax}
+ {\endlist}
 
-% ---------------------------------------------------------------------
-% 2. Abstract
-% ---------------------------------------------------------------------
+
 \begin{abstract}
-\noindent
+% \noindent
 ColBERT-style late-interaction retrieval represents queries and documents as
 sets of token vectors and scores each document with MaxSim, the sum over query
 tokens of the maximum token-level similarity. This report investigates whether
@@ -118,9 +146,9 @@ tested ColBERT embeddings, while candidate generation plus exact reranking
 remains the practical architecture.
 \end{abstract}
 
-\newpage
-\tableofcontents
-\newpage
+% \newpage
+% \tableofcontents
+% \newpage
 \pagenumbering{arabic}
 
 % ---------------------------------------------------------------------
@@ -143,7 +171,7 @@ remains the practical architecture.
 % ---------------------------------------------------------------------
 \bibliographystyle{plainnat}
 \bibliography{references}
-
+\end{multicols}
 \appendix
 \input{sections/appendix}
 
