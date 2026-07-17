@@ -15,7 +15,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
-\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage[a4paper,margin=2cm]{geometry}
 % \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb}
@@ -52,6 +52,13 @@
   group-minimum-digits = 4,
   table-number-alignment = center,
 }
+
+% --- Tighter vertical spacing ---
+\usepackage{titlesec}
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
 
 \captionsetup{font=small,labelfont=bf,width=0.92\textwidth}
 

@@ -1,27 +1,48 @@
-\section{Experimental Methodology}
+\section*{Methodology}
 \label{sec:methodology}
 
-\subsection{Measurement audit and withdrawn results}
+\subsection*{Measurement audit and withdrawn results}
 \label{sec:audit}
 
-Before the controlled campaign, an internal audit examined the project's early
-wall-clock comparisons and found them unsuitable as performance evidence.
-The principal defects were: (i)~PDX and FAISS candidate timers excluded
-token-to-document aggregation, candidate selection, reranking, and final
-ranking; (ii)~PLAID was allowed up to 8{,}192 full scores per query while the
-IVF pipelines commonly reranked 50 documents, so the compared methods
-performed very different work; (iii)~the exact baseline was a per-document
-Python/NumPy loop rather than a compiled kernel; and (iv)~measurements from
-Windows and WSL environments appeared in the same figures. Additional issues
-included uncontrolled thread counts, no repeated or interleaved runs,
-parameter selection on the evaluation queries, favorable corpus prefixes, and
-IVF bucket counts that changed with corpus size in scaling plots.
-The historical headline ratios (approximately $30\times$, $39\times$, and
-$32\times$) were consequently withdrawn. Legacy artifacts are preserved under
-\texttt{results/legacy/} for mechanism and quality analysis only; no
-performance claim in this report relies on them.
+% Before the controlled campaign, an internal audit examined the project's early
+% wall-clock comparisons and found them unsuitable as performance evidence.
+% The principal defects were: (i)~PDX and FAISS candidate timers excluded
+% token-to-document aggregation, candidate selection, reranking, and final
+% ranking; (ii)~PLAID was allowed up to 8{,}192 full scores per query while the
+% IVF pipelines commonly reranked 50 documents, so the compared methods
+% performed very different work; (iii)~the exact baseline was a per-document
+% Python/NumPy loop rather than a compiled kernel; and (iv)~measurements from
+% Windows and WSL environments appeared in the same figures. Additional issues
+% included uncontrolled thread counts, no repeated or interleaved runs,
+% parameter selection on the evaluation queries, favorable corpus prefixes, and
+% IVF bucket counts that changed with corpus size in scaling plots.
+% The historical headline ratios (approximately $30\times$, $39\times$, and
+% $32\times$) were consequently withdrawn. Legacy artifacts are preserved under
+% \texttt{results/legacy/} for mechanism and quality analysis only; no
+% performance claim in this report relies on them.
 
-\subsection{Controlled benchmark protocol}
+Before the controlled campaign, an internal audit examined the project's early 
+wall-clock comparisons and found them unsuitable as performance evidence. The 
+principal defects were the following:
+\begin{itemize}
+  \item PDX and FAISS candidate timers excluded token-to-document aggregation, 
+  candidate selection, reranking, and final ranking.
+  \item PLAID was allowed up to 8,192 full scores per query while the IVF 
+  pipelines commonly reranked 50 documents, so the compared methods performed 
+  very different work.
+  \item The exact baseline was a per-document Python/NumPy loop rather than 
+  a compiled kernel.
+  \item Measurements from Windows and WSL environments appeared in the same figures.
+\end{itemize}
+Additional issues included uncontrolled thread counts, no repeated or interleaved 
+runs, parameter selection on the evaluation queries, favourable corpus prefixes, 
+and IVF bucket counts that changed with corpus size in scaling plots. The historical 
+headline ratios (approximately $30\times$, $39\times$, and $32\times$) were 
+consequently withdrawn. Legacy artifacts are preserved under \texttt{results/legacy/} 
+for mechanism and quality analysis only; no performance claim in this report relies 
+on them.
+
+\subsection*{Controlled benchmark protocol}
 \label{sec:protocol}
 
 All results in \cref{sec:results-ivf,sec:results-plaid,sec:results-bond,sec:results-pca} were
@@ -57,10 +78,10 @@ produced under the replacement protocol recorded in
     manifest accepts only artifacts from clean commit \texttt{0a11fda}.
 \end{itemize}
 
-\subsection{Quality metrics}
+\subsection*{Qualitative metrics}
 \label{sec:metrics}
 
-Two families of quality metrics are kept strictly separate:
+Two families of qualitative metrics are kept strictly separate:
 
 \begin{description}
   \item[Exact-ranking recovery.] The primary architecture metric. For each
@@ -75,7 +96,7 @@ Two families of quality metrics are kept strictly separate:
     only.
 \end{description}
 
-\subsection{Datasets, splits, and configuration}
+\subsection*{Datasets, splits, and configuration}
 
 For each dataset the first 10 queries were used for pilot validation and
 selector-policy freezing, and the remaining \textbf{40 held-out queries} form
@@ -99,7 +120,7 @@ After the unexpectedly large validation--test shift was observed, one
 full-corpus \texttt{n\_full\_scores} arm per dataset was added as an explicitly
 post-hoc sensitivity analysis; it is not treated as a selected operating point.
 
-\subsection{Numerical precision contracts}
+\subsection*{Numerical precision contracts}
 \label{sec:precision}
 
 Two distinct precision contracts are used, and their timings are never mixed:
