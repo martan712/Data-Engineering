@@ -30,6 +30,8 @@ THREAD_ENVIRONMENT_VARIABLES = (
     "NUMEXPR_NUM_THREADS",
     "VECLIB_MAXIMUM_THREADS",
     "GOMP_CPU_AFFINITY",
+    "RAYON_NUM_THREADS",
+    "TOKENIZERS_PARALLELISM",
 )
 
 
@@ -212,6 +214,35 @@ def sha256_file(path: str | Path, chunk_size: int = 1024 * 1024) -> str:
         while chunk := file.read(chunk_size):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def sha256_directory(path: str | Path, chunk_size: int = 1024 * 1024) -> dict[str, Any]:
+    """Hash a directory tree, including relative paths and file contents."""
+    root = Path(path)
+    if not root.is_dir():
+        raise ValueError(f"Expected a directory, got {root}")
+
+    digest = hashlib.sha256()
+    file_count = 0
+    total_bytes = 0
+    for file_path in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = file_path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(8, "little"))
+        digest.update(relative)
+        size = file_path.stat().st_size
+        digest.update(size.to_bytes(8, "little"))
+        total_bytes += size
+        file_count += 1
+        with file_path.open("rb") as file:
+            while chunk := file.read(chunk_size):
+                digest.update(chunk)
+
+    return {
+        "path": str(root.resolve()),
+        "files": file_count,
+        "bytes": total_bytes,
+        "sha256": digest.hexdigest(),
+    }
 
 
 def package_versions(package_names: Iterable[str]) -> dict[str, str | None]:

@@ -3,9 +3,9 @@
   "status": "pilot_not_final_claim",
   "timing_boundary": "resident normalized packed query token vectors to exact top-k document IDs; BOND query preparation, bounds, pruning, scoring, and top-k are included",
   "metadata": {
-    "captured_at_utc": "2026-07-13T20:41:05.990089+00:00",
+    "captured_at_utc": "2026-07-16T17:24:09.031111+00:00",
     "git": {
-      "commit": "0cc61454dfcde529ba6744e3f1fb79429350cc57",
+      "commit": "0a11fda8f21a8f1052527ab72f28089feccd5c7d",
       "dirty": false
     },
     "runtime": {
@@ -25,17 +25,17 @@
         0
       ],
       "affinity_note": "initial_cpu_affinity is captured when benchmarking.py is imported; process_cpu_affinity is the calling thread at metadata capture and may be narrowed to one OpenMP place after a native kernel runs",
-      "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
-      "python_executable": "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+      "python": "3.11.9 (main, Aug 14 2024, 05:07:28) [Clang 18.1.8 ]",
+      "python_executable": "/home/telle/data-engineering-plaid/.venv/bin/python",
       "command": [
-        "/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python",
+        "/home/telle/data-engineering-plaid/.venv/bin/python",
         "experiments/pipeline/10_controlled_bond_pilot.py",
         "--corpus-dir",
         "../artifacts/nfcorpus_benchmark",
         "--embeddings-dir",
         "../artifacts/nfcorpus_benchmark_embeddings",
         "--output",
-        "../artifacts/final_results_0cc6145/nfcorpus_bond_raw_test_40q_final.json",
+        "../artifacts/plaid_work/final_0a11fda/nfcorpus_bond_raw_test_40q.json",
         "--max-documents",
         "0",
         "--query-start",
@@ -58,17 +58,19 @@
         "OMP_NUM_THREADS": "4",
         "OMP_DYNAMIC": "FALSE",
         "OMP_PROC_BIND": "TRUE",
-        "OMP_PLACES": "threads",
+        "OMP_PLACES": "cores",
         "OPENBLAS_NUM_THREADS": "4",
         "MKL_NUM_THREADS": "4",
-        "NUMEXPR_NUM_THREADS": null,
+        "NUMEXPR_NUM_THREADS": "4",
         "VECLIB_MAXIMUM_THREADS": null,
-        "GOMP_CPU_AFFINITY": null
+        "GOMP_CPU_AFFINITY": null,
+        "RAYON_NUM_THREADS": "4",
+        "TOKENIZERS_PARALLELISM": "false"
       },
       "packages": {
         "numpy": "2.4.6",
         "faiss-cpu": "1.14.2",
-        "pylate": null,
+        "pylate": "1.5.0",
         "pdxearch": "0.1"
       }
     },
@@ -134,7 +136,7 @@
     "preprocessing": {
       "rotation": "none"
     },
-    "bond_vertical_index_seconds": 1.2236726909998197,
+    "bond_vertical_index_seconds": 1.2055817460000071,
     "estimated_vertical_values_bytes": 442727936,
     "estimated_residual_norm_bytes": 41505744
   },
@@ -171,58 +173,58 @@
       "warmup_runs": 1,
       "measured_runs": 5,
       "end_to_end_seconds": [
-        1.9846704139999929,
-        2.0597556129998793,
-        1.9910560870000609,
-        2.2789044940000167,
-        2.039707794999913
+        1.9030535840001903,
+        1.8974528069998087,
+        1.9738171449998845,
+        1.9773728760001177,
+        1.9500987679998616
       ],
       "end_to_end_summary": {
         "count": 5,
-        "min": 1.9846704139999929,
-        "p25": 1.9910560870000609,
-        "median": 2.039707794999913,
-        "mean": 2.0708188805999725,
-        "p75": 2.0597556129998793,
-        "p95": 2.2350747177999892,
-        "max": 2.2789044940000167
+        "min": 1.8974528069998087,
+        "p25": 1.9030535840001903,
+        "median": 1.9500987679998616,
+        "mean": 1.9403590359999725,
+        "p75": 1.9738171449998845,
+        "p95": 1.976661729800071,
+        "max": 1.9773728760001177
       },
       "stage_seconds": {
         "exact_score": [
-          1.9751931760001753,
-          2.0502432279999994,
-          1.982453410000062,
-          2.2692164170000524,
-          2.0310128040000563
+          1.8933712980001474,
+          1.8878392319998056,
+          1.964040782000211,
+          1.967894157000046,
+          1.9406965149996722
         ],
         "topk": [
-          0.009461708000117142,
-          0.00949822799998401,
-          0.008588719999806926,
-          0.009673840999994354,
-          0.008679871999902389
+          0.009666927000125725,
+          0.009598036000170396,
+          0.009762044999661157,
+          0.009464902999752667,
+          0.009389027999986865
         ]
       },
       "stage_summaries": {
         "exact_score": {
           "count": 5,
-          "min": 1.9751931760001753,
-          "p25": 1.982453410000062,
-          "median": 2.0310128040000563,
-          "mean": 2.061623807000069,
-          "p75": 2.0502432279999994,
-          "p95": 2.2254217792000417,
-          "max": 2.2692164170000524
+          "min": 1.8878392319998056,
+          "p25": 1.8933712980001474,
+          "median": 1.9406965149996722,
+          "mean": 1.9307683967999765,
+          "p75": 1.964040782000211,
+          "p95": 1.9671234820000791,
+          "max": 1.967894157000046
         },
         "topk": {
           "count": 5,
-          "min": 0.008588719999806926,
-          "p25": 0.008679871999902389,
-          "median": 0.009461708000117142,
-          "mean": 0.009180473799960964,
-          "p75": 0.00949822799998401,
-          "p95": 0.009638718399992285,
-          "max": 0.009673840999994354
+          "min": 0.009389027999986865,
+          "p25": 0.009464902999752667,
+          "median": 0.009598036000170396,
+          "mean": 0.009576187799939361,
+          "p75": 0.009666927000125725,
+          "p95": 0.009743021399754071,
+          "max": 0.009762044999661157
         }
       }
     },
@@ -725,41 +727,41 @@
         "warmup_runs": 1,
         "measured_runs": 5,
         "end_to_end_seconds": [
-          20.38550781899994,
-          20.095109342999876,
-          20.555066635000003,
-          20.85622331600007,
-          20.380877041000076
+          19.184732226999586,
+          19.481115432000024,
+          18.98260875400001,
+          19.445483637000052,
+          18.898478865000016
         ],
         "end_to_end_summary": {
           "count": 5,
-          "min": 20.095109342999876,
-          "p25": 20.380877041000076,
-          "median": 20.38550781899994,
-          "mean": 20.454556830799994,
-          "p75": 20.555066635000003,
-          "p95": 20.795991979800057,
-          "max": 20.85622331600007
+          "min": 18.898478865000016,
+          "p25": 18.98260875400001,
+          "median": 19.184732226999586,
+          "mean": 19.198483782999936,
+          "p75": 19.445483637000052,
+          "p95": 19.47398907300003,
+          "max": 19.481115432000024
         },
         "stage_seconds": {
           "bond_search_topk": [
-            20.385492069999827,
-            20.0950950859999,
-            20.55505085499999,
-            20.856208256999935,
-            20.38086125199993
+            19.184717008000007,
+            19.48110078400032,
+            18.98259407600017,
+            19.445469088999744,
+            18.898463445999823
           ]
         },
         "stage_summaries": {
           "bond_search_topk": {
             "count": 5,
-            "min": 20.0950950859999,
-            "p25": 20.38086125199993,
-            "median": 20.385492069999827,
-            "mean": 20.454541503999916,
-            "p75": 20.55505085499999,
-            "p95": 20.795976776599947,
-            "max": 20.856208256999935
+            "min": 18.898463445999823,
+            "p25": 18.98259407600017,
+            "median": 19.184717008000007,
+            "mean": 19.19846888060001,
+            "p75": 19.445469088999744,
+            "p95": 19.473974445000202,
+            "max": 19.48110078400032
           }
         }
       },

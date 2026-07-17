@@ -21,7 +21,10 @@ OUTPUT = PROJECT_ROOT / "docs" / "figures" / "fig7_controlled_bond.png"
 
 
 def load(name: str) -> dict:
-    return json.loads((RESULTS / name).read_text(encoding="utf-8"))
+    result = json.loads((RESULTS / name).read_text(encoding="utf-8"))
+    if result.get("schema_version") != "controlled_bond_pilot_v1":
+        raise SystemExit(f"Unexpected schema in {name}: {result.get('schema_version')}")
+    return result
 
 
 def arm(data: dict, name: str, label: str) -> dict:
@@ -42,6 +45,8 @@ def arm(data: dict, name: str, label: str) -> dict:
 def main() -> None:
     raw = load("scifact_bond_raw_test_40q_final.json")
     pca = load("scifact_bond_pca_test_40q_final.json")
+    if raw["dataset"] != pca["dataset"]:
+        raise SystemExit("Raw and PCA artifacts describe different dataset slices")
     rows = [
         arm(raw, "bond_seed500", "Raw\nprefix-500"),
         arm(raw, "bond_oracle_topk_seeds", "Raw\nfree oracle"),
@@ -115,7 +120,10 @@ def main() -> None:
 
     fig.suptitle(
         "Exact-safe BOND-MaxSim on held-out SciFact: PCA improves pruning, not latency\n"
-        "5,183 documents; 40 queries; 4 pinned physical cores; median of 5 interleaved runs; oracle seeds are free",
+        f"{raw['dataset']['documents']:,} documents; "
+        f"{raw['dataset']['queries']} queries; {raw['config']['threads']} threads; "
+        f"median of {raw['config']['measured_runs']} interleaved runs; "
+        "oracle seeds are free",
         fontsize=11,
         fontweight="bold",
     )

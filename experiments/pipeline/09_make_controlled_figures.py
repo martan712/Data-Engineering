@@ -40,7 +40,10 @@ def resolve(path: Path) -> Path:
 def load_result(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as file:
         result = json.load(file)
-    if result.get("schema_version") != "controlled_ivf_pilot_v1":
+    if result.get("schema_version") not in {
+        "controlled_ivf_pilot_v1",
+        "controlled_ivf_plaid_v2",
+    }:
         raise SystemExit(f"Unsupported result schema: {result.get('schema_version')}")
     return result
 
@@ -66,7 +69,10 @@ def budget_label(name: str, arm: dict) -> str:
 
 def quality_latency_figure(result: dict, output_dir: Path) -> None:
     fig, axis = plt.subplots(figsize=(8.2, 5.2))
-    for engine, label in (("faiss", "FAISS-IVF + exact rerank"), ("pdx", "PDX-IVF + exact rerank")):
+    for engine, label in (
+        ("faiss", "FAISS-IVF + exact rerank"),
+        ("pdx", "PDX-IVF + exact rerank"),
+    ):
         arms = sorted_arms(result, engine)
         times = [arm["timing"]["end_to_end_summary"]["median"] for _, arm in arms]
         recalls = [arm["exact_recovery"]["mean_recall@10"] for _, arm in arms]
@@ -99,7 +105,8 @@ def quality_latency_figure(result: dict, output_dir: Path) -> None:
         label="Compiled exact MaxSim",
         zorder=4,
     )
-    axis.set_xlabel("Online latency for 40 queries (median seconds)")
+    query_count = result["dataset"]["queries"]
+    axis.set_xlabel(f"Online latency for {query_count} queries (median seconds)")
     axis.set_ylabel("Recall@10 versus exact MaxSim ranking")
     axis.set_ylim(0.84, 1.012)
     axis.grid(axis="both", alpha=0.22)
@@ -108,7 +115,10 @@ def quality_latency_figure(result: dict, output_dir: Path) -> None:
     fig.text(
         0.5,
         0.01,
-        "5,183 documents; L=100; nprobe=8; 4 pinned physical cores; median of 5 interleaved runs. Online boundary only.",
+        f"{result['dataset']['documents']:,} documents; "
+        f"L={result['config']['top_l']}; nprobe={result['config']['nprobe']}; "
+        f"{result['config']['threads']} threads; median of "
+        f"{result['config']['measured_runs']} interleaved runs. Online boundary only.",
         ha="center",
         fontsize=8,
         color="#555555",
@@ -127,7 +137,14 @@ def stage_breakdown_figure(result: dict, output_dir: Path) -> None:
         "faiss_ivf_cfull",
         "pdx_ivf_cfull",
     ]
-    labels = ["FAISS\nC=50", "PDX\nC=50", "FAISS\nC=200", "PDX\nC=200", "FAISS\npool", "PDX\npool"]
+    labels = [
+        "FAISS\nC=50",
+        "PDX\nC=50",
+        "FAISS\nC=200",
+        "PDX\nC=200",
+        "FAISS\npool",
+        "PDX\npool",
+    ]
     search = []
     aggregation = []
     rerank = []
@@ -146,9 +163,17 @@ def stage_breakdown_figure(result: dict, output_dir: Path) -> None:
     axis.bar(x_values, aggregation, bottom=search, color="#d9a441", label="Aggregation + selection")
     lower = np.asarray(search) + np.asarray(aggregation)
     axis.bar(x_values, rerank, bottom=lower, color="#7a5c99", label="Exact rerank + top-k")
-    axis.scatter(x_values, total, marker="_", s=180, linewidth=2, color="#222222", label="Measured end-to-end median")
+    axis.scatter(
+        x_values,
+        total,
+        marker="_",
+        s=180,
+        linewidth=2,
+        color="#222222",
+        label="Measured end-to-end median",
+    )
     axis.set_xticks(x_values, labels)
-    axis.set_ylabel("Seconds for 40 queries")
+    axis.set_ylabel(f"Seconds for {result['dataset']['queries']} queries")
     axis.set_title("Where online time is spent (controlled clean run)")
     axis.grid(axis="y", alpha=0.22)
     axis.legend(frameon=False, ncol=2, loc="upper left")

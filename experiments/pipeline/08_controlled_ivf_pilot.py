@@ -1,9 +1,11 @@
-"""Controlled exact, FAISS-IVF, and PDX-IVF MaxSim pilot.
+"""Controlled exact, FAISS-IVF, PDX-IVF, and optional PLAID benchmark.
 
 This runner fixes the main measurement problems in the historical pipeline:
-all arms run in one Linux process, use matched exact-rerank budgets, rotate
-execution order, and time the complete online path from resident query token
-vectors to final document IDs. Index build and input loading remain offline.
+all arms run in one Linux process, rotate execution order, and time the complete
+online path from resident query token vectors to final document IDs. The IVF
+arms use matched exact-rerank budgets; PLAID's configured full-scoring budget is
+reported separately because its API does not expose the realized candidate
+count. Index build and input loading remain offline.
 
 Use a small SciFact subset first. A run with `--max-documents 0` and
 `--max-queries 0` uses all prepared inputs but should only be treated as final
@@ -40,6 +42,12 @@ from candidate_pipeline import (  # noqa: E402
     select_candidates,
 )
 from kernels import exact_maxsim_scores, extension_available  # noqa: E402
+from plaid_benchmark import (  # noqa: E402
+    PlaidConfig,
+    build_plaid_indexes,
+    parse_plaid_config,
+    plaid_action,
+)
 from utils_colbert import (  # noqa: E402
     compute_qrels_metrics,
     l2_normalize,
@@ -51,7 +59,9 @@ from utils_colbert import (  # noqa: E402
 )
 
 PDX_COMMIT = "fdc62f2d22b3793060abf633cb5407438c7f739b"
-DEFAULT_PDX_SOURCE = Path("/home/telle/data-engineering-pdx-clean/external/PDX")
+DEFAULT_PDX_SOURCE = Path(
+    os.environ.get("PDX_SOURCE", PROJECT_ROOT / "external" / "PDX")
+)
 DEFAULT_C_VALUES = (20, 50)
 REPORT_K_VALUES = (1, 3, 5, 10)
 RANDOM_SEED = 0
@@ -76,6 +86,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-runs", type=int, default=1)
     parser.add_argument("--measured-runs", type=int, default=3)
     parser.add_argument("--pdx-source", type=Path, default=DEFAULT_PDX_SOURCE)
+    parser.add_argument("--skip-ivf", action="store_true")
+    parser.add_argument(
+        "--plaid-config",
+        action="append",
+        type=parse_plaid_config,
+        default=[],
+        metavar="NPROBE:FULL_SCORES",
+        help="Repeat to add PLAID arms, for example 16:100",
+    )
+    parser.add_argument("--plaid-index-folder", type=Path)
+    parser.add_argument("--plaid-index-name", default="")
+    parser.add_argument("--plaid-nbits", type=int, default=4)
+    parser.add_argument("--plaid-kmeans-niters", type=int, default=4)
+    parser.add_argument("--plaid-rebuild-index", action="store_true")
     return parser.parse_args()
 
 
@@ -114,6 +138,19 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("invalid thread, warm-up, or measured-run count")
     if not args.c_values or any(value < 0 for value in args.c_values):
         raise SystemExit("all C values must be non-negative; C=0 means full pool")
+    if any(0 < value < args.k for value in args.c_values):
+        raise SystemExit("each finite C value must be at least k")
+    if args.plaid_nbits <= 0 or args.plaid_kmeans_niters <= 0:
+        raise SystemExit("PLAID nbits and kmeans iterations must be positive")
+    if args.plaid_rebuild_index and not args.plaid_config:
+        raise SystemExit("--plaid-rebuild-index requires at least one --plaid-config")
+    if args.plaid_config and (args.plaid_index_folder is None or not args.plaid_index_name):
+        raise SystemExit("PLAID arms require --plaid-index-folder and --plaid-index-name")
+    if any(config.n_full_scores < args.k for config in args.plaid_config):
+        raise SystemExit("every PLAID full-score budget must be at least k")
+    labels = [config.label for config in args.plaid_config]
+    if len(labels) != len(set(labels)):
+        raise SystemExit("duplicate PLAID configurations are not allowed")
 
 
 def load_inputs(corpus_dir: Path, embeddings_dir: Path, args: argparse.Namespace) -> dict[str, Any]:
@@ -414,7 +451,11 @@ def approximate_action(
     return run
 
 
-def ranking_ids(rankings: list[list[int]], document_ids: list[str], query_ids: list[str]) -> dict[str, list[str]]:
+def ranking_ids(
+    rankings: list[list[int]],
+    document_ids: list[str],
+    query_ids: list[str],
+) -> dict[str, list[str]]:
     return {
         query_id: [document_ids[index] for index in ranking]
         for query_id, ranking in zip(query_ids, rankings)
@@ -460,12 +501,21 @@ def main() -> None:
         raise SystemExit("Build the exact kernel with cpp/exact_maxsim/build_wsl.sh first")
 
     os.environ["OMP_NUM_THREADS"] = str(args.threads)
+    os.environ["RAYON_NUM_THREADS"] = str(args.threads)
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
     corpus_dir = resolve(args.corpus_dir)
     embeddings_dir = resolve(args.embeddings_dir)
     output_path = resolve(args.output)
     pdx_source = args.pdx_source.resolve()
-    pdx_snapshot = git_snapshot(pdx_source)
-    if pdx_snapshot["commit"] != PDX_COMMIT or pdx_snapshot["dirty"]:
+    if not args.skip_ivf and not pdx_source.is_dir():
+        raise SystemExit(
+            f"PDX source directory does not exist: {pdx_source}. "
+            "Pass --pdx-source or set PDX_SOURCE."
+        )
+    pdx_snapshot = git_snapshot(pdx_source) if not args.skip_ivf else None
+    if not args.skip_ivf and (
+        pdx_snapshot["commit"] != PDX_COMMIT or pdx_snapshot["dirty"]
+    ):
         raise SystemExit(
             "Controlled runs require clean PDX commit "
             f"{PDX_COMMIT}; observed {pdx_snapshot}"
@@ -487,24 +537,56 @@ def main() -> None:
         f"doc_tokens={document_values.shape[0]} nbuckets={nbuckets}"
     )
 
-    print("Building offline FAISS-IVF index...")
-    faiss_index, faiss_build = build_faiss_index(document_values, sample, nbuckets, args.threads)
-    print("Building offline PDX-IVF index...")
-    pdx_index, pdx_build = build_pdx_index(document_values, sample, nbuckets)
-
-    faiss_search = lambda query: faiss_hits(faiss_index, query, args.top_l, args.nprobe)
-    pdx_search = lambda query: pdx_hits(pdx_index, query, args.top_l, args.nprobe)
+    offline_index_build: dict[str, Any] = {}
     actions: dict[str, Callable[[], BenchmarkObservation]] = {
         "compiled_exact": exact_action(inputs, args.k)
     }
-    for top_c in args.c_values:
-        budget_label = "full" if top_c == 0 else str(top_c)
-        actions[f"faiss_ivf_c{budget_label}"] = approximate_action(
-            faiss_search, inputs, top_c, args.selection_policy, args.k
+    if not args.skip_ivf:
+        print("Building offline FAISS-IVF index...")
+        faiss_index, faiss_build = build_faiss_index(
+            document_values, sample, nbuckets, args.threads
         )
-        actions[f"pdx_ivf_c{budget_label}"] = approximate_action(
-            pdx_search, inputs, top_c, args.selection_policy, args.k
+        print("Building offline PDX-IVF index...")
+        pdx_index, pdx_build = build_pdx_index(document_values, sample, nbuckets)
+        offline_index_build.update({"faiss_ivf": faiss_build, "pdx_ivf": pdx_build})
+
+        faiss_search = lambda query: faiss_hits(faiss_index, query, args.top_l, args.nprobe)
+        pdx_search = lambda query: pdx_hits(pdx_index, query, args.top_l, args.nprobe)
+        for top_c in args.c_values:
+            budget_label = "full" if top_c == 0 else str(top_c)
+            actions[f"faiss_ivf_c{budget_label}"] = approximate_action(
+                faiss_search, inputs, top_c, args.selection_policy, args.k
+            )
+            actions[f"pdx_ivf_c{budget_label}"] = approximate_action(
+                pdx_search, inputs, top_c, args.selection_policy, args.k
+            )
+
+    plaid_configs: list[PlaidConfig] = list(args.plaid_config)
+    if plaid_configs:
+        plaid_index_folder = resolve(args.plaid_index_folder)
+        print(
+            f"Building/loading offline PLAID index with {len(plaid_configs)} "
+            "search configurations..."
         )
+        plaid_indexes, plaid_build = build_plaid_indexes(
+            inputs["documents"],
+            inputs["document_ids"],
+            plaid_configs,
+            index_folder=plaid_index_folder,
+            index_name=args.plaid_index_name,
+            nbits=args.plaid_nbits,
+            kmeans_niters=args.plaid_kmeans_niters,
+            rebuild=args.plaid_rebuild_index,
+            threads=args.threads,
+        )
+        offline_index_build["plaid"] = plaid_build
+        for config in plaid_configs:
+            actions[config.label] = plaid_action(
+                plaid_indexes[config.label],
+                inputs["queries"],
+                inputs["document_ids"],
+                args.k,
+            )
 
     print(
         f"Running {args.warmup_runs} warm-up and {args.measured_runs} measured "
@@ -529,11 +611,36 @@ def main() -> None:
     )["macro"]
 
     arm_results = {}
+    plaid_results = {}
     full_exact_comparisons = len(inputs["queries"]) * len(inputs["documents"])
     for name, value in values.items():
         if name == "compiled_exact":
             continue
         ids = ranking_ids(value["rankings"], inputs["document_ids"], inputs["query_ids"])
+        if name.startswith("plaid_"):
+            config = next(config for config in plaid_configs if config.label == name)
+            configured_scores = min(config.n_full_scores, len(inputs["documents"]))
+            plaid_results[name] = {
+                "config": config.as_dict(),
+                "timing": timing["arms"][name],
+                "exact_recovery": exact_recovery(exact_rankings, value["rankings"]),
+                "qrels_metrics": compute_qrels_metrics(
+                    ids,
+                    inputs["qrels"],
+                    k_values=REPORT_K_VALUES,
+                    mrr_k=10,
+                )["macro"],
+                "configured_work": {
+                    "full_score_budget_per_query": config.n_full_scores,
+                    "upper_bound_full_scores": configured_scores * len(inputs["queries"]),
+                    "upper_bound_full_score_ratio": configured_scores
+                    / len(inputs["documents"]),
+                    "actual_candidate_count_exposed_by_api": False,
+                },
+                "topk_rankings": ids,
+                "topk_scores": value["scores"],
+            }
+            continue
         reranked_comparisons = actual_rerank_count(value["selected"])
         arm_results[name] = {
             "timing": timing["arms"][name],
@@ -547,7 +654,9 @@ def main() -> None:
             )["macro"],
             "work": {
                 "mean_candidate_pool_size": float(np.mean([len(pool) for pool in value["pools"]])),
-                "mean_selected_candidates": float(np.mean([len(items) for items in value["selected"]])),
+                "mean_selected_candidates": float(
+                    np.mean([len(items) for items in value["selected"]])
+                ),
                 "reranked_comparisons": reranked_comparisons,
                 "reranked_comparison_ratio": reranked_comparisons / full_exact_comparisons,
                 "total_retrieved_token_hits": int(sum(value["retrieved_hits"])),
@@ -556,28 +665,32 @@ def main() -> None:
         }
 
     cross_engine_agreement = {}
-    for top_c in args.c_values:
-        budget_label = "full" if top_c == 0 else str(top_c)
-        faiss_value = values[f"faiss_ivf_c{budget_label}"]
-        pdx_value = values[f"pdx_ivf_c{budget_label}"]
-        cross_engine_agreement[f"c{budget_label}"] = {
-            "candidate_pools_equal": all(
-                set(left) == set(right)
-                for left, right in zip(faiss_value["pools"], pdx_value["pools"])
-            ),
-            "selected_candidates_equal": faiss_value["selected"] == pdx_value["selected"],
-            "topk_rankings_equal": faiss_value["rankings"] == pdx_value["rankings"],
-            "retrieved_hit_counts_equal": (
-                faiss_value["retrieved_hits"] == pdx_value["retrieved_hits"]
-            ),
-        }
+    if not args.skip_ivf:
+        for top_c in args.c_values:
+            budget_label = "full" if top_c == 0 else str(top_c)
+            faiss_value = values[f"faiss_ivf_c{budget_label}"]
+            pdx_value = values[f"pdx_ivf_c{budget_label}"]
+            cross_engine_agreement[f"c{budget_label}"] = {
+                "candidate_pools_equal": all(
+                    set(left) == set(right)
+                    for left, right in zip(faiss_value["pools"], pdx_value["pools"])
+                ),
+                "selected_candidates_equal": faiss_value["selected"] == pdx_value["selected"],
+                "topk_rankings_equal": faiss_value["rankings"] == pdx_value["rankings"],
+                "retrieved_hit_counts_equal": (
+                    faiss_value["retrieved_hits"] == pdx_value["retrieved_hits"]
+                ),
+            }
 
     result = {
-        "schema_version": "controlled_ivf_pilot_v1",
+        "schema_version": (
+            "controlled_ivf_plaid_v2" if plaid_configs else "controlled_ivf_pilot_v1"
+        ),
         "status": "pilot_not_final_claim",
         "timing_boundary": (
             "resident normalized query token vectors to final ranked document IDs; "
-            "includes search, aggregation, selection, exact reranking, and top-k"
+            "IVF includes search, aggregation, selection, exact reranking, and top-k, "
+            "while PLAID includes its complete opaque retrieval/full-scoring call"
         ),
         "metadata": collect_runtime_metadata(
             PROJECT_ROOT,
@@ -585,6 +698,14 @@ def main() -> None:
                 corpus_dir / "qrels.json",
                 embeddings_dir / "documents_packed.npz",
                 embeddings_dir / "queries_packed.npz",
+            ),
+            packages=(
+                "numpy",
+                "faiss-cpu",
+                "pylate",
+                "fast-plaid",
+                "torch",
+                "pdxearch",
             ),
         ),
         "pdx_source": pdx_snapshot,
@@ -618,9 +739,20 @@ def main() -> None:
             "warmup_runs": args.warmup_runs,
             "measured_runs": args.measured_runs,
             "metric": "squared L2 on L2-normalized tokens; similarity = 1 - distance/2",
+            "skip_ivf": args.skip_ivf,
+            "plaid": {
+                "enabled": bool(plaid_configs),
+                "configs": [config.as_dict() for config in plaid_configs],
+                "nbits": args.plaid_nbits,
+                "kmeans_niters": args.plaid_kmeans_niters,
+                "candidate_count_note": (
+                    "n_full_scores is a configured PLAID full-scoring budget; "
+                    "the current API does not expose the realized candidate count"
+                ),
+            },
         },
         "kernel_validation": validation,
-        "offline_index_build": {"faiss_ivf": faiss_build, "pdx_ivf": pdx_build},
+        "offline_index_build": offline_index_build,
         "interleaving": {
             "arm_order": timing["arm_order"],
             "measured_execution_order": timing["measured_execution_order"],
@@ -633,6 +765,7 @@ def main() -> None:
         },
         "cross_engine_agreement": cross_engine_agreement,
         "approximate_arms": arm_results,
+        "plaid_arms": plaid_results,
     }
     save_json(output_path, result)
 
@@ -643,6 +776,11 @@ def main() -> None:
         recovery = arm["exact_recovery"]["mean_recall@10"]
         selected = arm["work"]["mean_selected_candidates"]
         print(f"{name:>18}: median={median:.6f}s exactR@10={recovery:.4f} meanC={selected:.1f}")
+    for name, arm in plaid_results.items():
+        median = arm["timing"]["end_to_end_summary"]["median"]
+        recovery = arm["exact_recovery"]["mean_recall@10"]
+        budget = arm["config"]["n_full_scores"]
+        print(f"{name:>18}: median={median:.6f}s exactR@10={recovery:.4f} fullC={budget}")
     print(f"Saved pilot result: {output_path}")
 
 

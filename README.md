@@ -36,18 +36,18 @@ pruning is a poor fit for the tested 128-dimensional ColBERT embeddings.
    performance comparison.
 2. **An independently authored exact-safe C++ BOND-MaxSim kernel preserves the
    exact top-10 but prunes too late.** On 40 held-out SciFact queries it evaluates
-   95.47% of exhaustive component products and has 10.88 times the median
+   95.47% of exhaustive component products and has 10.76 times the median
    latency of the compiled exact kernel.
 3. **Batch-call and shared-scan prototypes did not solve the observed
    bottleneck.** Their historical timings are retained as diagnostics and will
    not be used as headline ratios.
 4. **The raw-order BOND conclusion transfers to NFCorpus.** It evaluates 94.16%
-   of component products and has 9.99 times the same-run exact median while
+   of component products and has 9.84 times the same-run exact median while
    preserving the exact top-10 set for all 40 held-out queries.
 
 The comparison uses identical inputs, timing boundaries, thread budgets,
 warm-ups, and repeated interleaved runs. All release artifacts point to clean
-commit `0cc6145` and preserve raw samples and input hashes.
+commit `0a11fda` and preserve raw samples and input hashes.
 
 **Historical BOND mechanism figure (exploratory operation counts):**
 
@@ -85,11 +85,11 @@ and PDX-IVF under one complete online timing boundary. On 5,183 documents and
 
 | configuration | median (s) | exact recall@10 | reranked document ratio |
 | --- | ---: | ---: | ---: |
-| Compiled exact | 2.9333 | 1.0000 | 1.0000 |
-| FAISS-IVF, C=200 | 0.5051 | 0.9750 | 0.0386 |
-| PDX-IVF, C=200 | 0.5411 | 0.9750 | 0.0386 |
-| FAISS-IVF, full candidate pool | 1.2908 | 1.0000 | 0.1195 |
-| PDX-IVF, full candidate pool | 1.2467 | 1.0000 | 0.1195 |
+| Compiled exact | 2.5774 | 1.0000 | 1.0000 |
+| FAISS-IVF, C=200 | 0.4770 | 0.9750 | 0.0386 |
+| PDX-IVF, C=200 | 0.5060 | 0.9750 | 0.0386 |
+| FAISS-IVF, full candidate pool | 0.9773 | 1.0000 | 0.1195 |
+| PDX-IVF, full candidate pool | 1.0322 | 1.0000 | 0.1195 |
 
 The PDX and FAISS quality curves are identical. Their latency ordering changes
 across budgets and datasets, so there is no consistent PDX-specific advantage.
@@ -108,8 +108,8 @@ CPUs, and five interleaved measured repetitions:
 
 | arm | median (s) | p95 (s) | exact top-10 | component-product ratio |
 | --- | ---: | ---: | ---: | ---: |
-| Compiled exhaustive MaxSim (float64 accumulation) | 4.2740 | 4.4105 | 40/40 | 1.0000 |
-| Exact-safe BOND-MaxSim, seed=500 | 46.4861 | 48.1111 | 40/40 | 0.9547 |
+| Compiled exhaustive MaxSim (float64 accumulation) | 3.9208 | 4.1007 | 40/40 | 1.0000 |
+| Exact-safe BOND-MaxSim, seed=500 | 42.1947 | 43.3968 | 40/40 | 0.9547 |
 
 BOND prunes 22.4% of query-document pairs, but every prune occurs at dimension
 96 of 128. The 4.53% arithmetic reduction does not offset bound maintenance,
@@ -118,7 +118,7 @@ branching, and less regular memory access. See
 
 A free exact-top-10 oracle seed policy still evaluates 92.43% of products. PCA
 rotation improves the component-product ratio to 0.6902 with prefix seeds and
-0.6153 with free oracle seeds, but both PCA arms retain about 8.7 times the
+0.6153 with free oracle seeds, but both PCA arms retain 8.38--8.51 times the
 same-run exhaustive median latency. This demonstrates why inverse operation
 count cannot be reported as speedup.
 
@@ -143,13 +143,38 @@ Raw-order BOND behaves similarly on both datasets:
 
 | dataset | products evaluated | document pairs pruned | BOND/exact median |
 | --- | ---: | ---: | ---: |
-| SciFact | 95.47% | 22.44% | 10.88x |
-| NFCorpus | 94.16% | 23.36% | 9.99x |
+| SciFact | 95.47% | 22.44% | 10.76x |
+| NFCorpus | 94.16% | 23.36% | 9.84x |
 
 Both BOND runs use the same float64 products and accumulation as their exact
 arms and return identical ordered top-10 rankings for all 40 queries.
 
 ![Controlled transfer check](docs/figures/fig8_controlled_transfer.png)
+
+---
+
+### Controlled PLAID comparison
+
+PLAID was rerun in the same WSL process, query split, CPU affinity, thread
+budget, interleaving schedule, and complete online timing boundary. The pinned
+stack uses PyLate 1.5.0 and CPU fast-plaid 1.3.0.290 with `nbits=4`.
+
+Two configurations were frozen on the first 10 SciFact queries before held-out
+evaluation. Validation exact recall@10 of 0.89/0.92 fell to 0.2875/0.4375 on
+the 40 held-out SciFact queries and 0.3100/0.3950 on NFCorpus. Their SciFact
+medians were 14.55/16.65 seconds, versus 2.58 seconds for compiled exact.
+
+A corpus-sized `n_full_scores` sensitivity arm was run only after observing
+that shift, so it is explicitly post hoc. It improved exact recall@10 to 0.6750
+on SciFact and 0.5975 on NFCorpus, but took 24.65x and 35.86x the same-run exact
+median. The current API hides realized candidate counts; `n_full_scores` is a
+configured upper bound, not an observed rerank count equivalent to IVF `C`.
+
+These results show no advantage for the pinned PLAID configuration on these
+small CPU workloads. They are not a general claim about PLAID at its intended
+large-corpus scale.
+
+![Controlled PLAID comparison](docs/figures/fig9_controlled_plaid.png)
 
 ---
 
@@ -180,7 +205,9 @@ arms and return identical ordered top-10 rankings for all 40 queries.
 |   |   |-- 09_make_controlled_figures.py
 |   |   |-- 10_controlled_bond_pilot.py  # exact-versus-BOND runner
 |   |   |-- 11_make_bond_figure.py
-|   |   `-- 12_make_transfer_figure.py
+|   |   |-- 12_make_transfer_figure.py
+|   |   |-- 13_select_plaid_configs.py
+|   |   `-- 14_make_plaid_figure.py
 |   `-- archive/                  # earlier experiments grouped by phase
 |-- results/
 |   |-- legacy/                   # preserved exploratory JSON
@@ -198,6 +225,8 @@ Git and are tied to controlled results through hashes and pinned commits.
 | --- | --- | --- |
 | `experiments/pipeline/08_controlled_ivf_pilot.py` | Current same-stack benchmark | **Yes** |
 | `experiments/pipeline/10_controlled_bond_pilot.py` | Exact-safe BOND decision benchmark | **Yes** |
+| `experiments/pipeline/13_select_plaid_configs.py` | Freeze PLAID points from validation only | **Yes, validation only** |
+| `experiments/pipeline/14_make_plaid_figure.py` | Regenerate the controlled PLAID figure | **Yes** |
 | `experiments/pipeline/01–07` | Historical preparation and exploratory workflow | Only when reproducing legacy evidence |
 | `experiments/archive/phase01–04` | Early corpora + selector debugging | No — background only |
 | `experiments/archive/phase05` | SciFact @ 1k docs, **flat BOND slower than exact** | No — shows the failure |
@@ -210,11 +239,13 @@ Old script numbers (e.g. `29_…`, `33_…`) map to `pipeline/01_…`, `pipeline
 
 ## Environment setup
 
-Two environments are required because **PDX does not build on Windows** (its
-`setup.py` raises `Windows not yet implemented`). Everything except the PDX
-search itself runs in a normal Windows venv; the PDX step runs in WSL2/Linux.
+PDX does not build on Windows (`setup.py` raises `Windows not yet implemented`).
+The final release therefore uses one unified WSL2 environment for PDX, FAISS,
+PLAID, and both native MaxSim kernels. A Windows venv remains useful for
+encoding and figure generation, but must not be mixed into controlled latency
+comparisons.
 
-### 1. Windows venv (PyLate encoding, FAISS, PLAID, figures)
+### 1. Optional Windows venv (encoding and figures)
 
 ```powershell
 python -m venv .venv
@@ -256,6 +287,34 @@ python -m pip install .
 python examples/pdxearch_simple.py   # smoke test
 ```
 
+For the controlled PLAID comparison, create the unified Python 3.11
+environment after cloning the pinned PDX source:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | \
+  env UV_INSTALL_DIR="$HOME/.local/bin" sh
+"$HOME/.local/bin/uv" python install 3.11.9
+"$HOME/.local/bin/uv" venv --python 3.11.9 \
+  "$HOME/data-engineering-plaid/.venv"
+
+UV="$HOME/.local/bin/uv"
+PY="$HOME/data-engineering-plaid/.venv/bin/python"
+"$UV" pip install --python "$PY" \
+  --index-url https://download.pytorch.org/whl/cpu 'torch==2.9.0'
+"$UV" pip install --python "$PY" \
+  -r "$PROJECT_REPO/requirements.txt" -r "$PROJECT_REPO/requirements-pdx.txt"
+CXX=clang++ "$UV" pip install --python "$PY" \
+  "$WORK/external/PDX"
+
+cd "$PROJECT_REPO"
+PYTHON="$PY" USE_OPENMP=1 bash cpp/exact_maxsim/build_wsl.sh
+PYTHON="$PY" USE_OPENMP=1 bash cpp/bond_maxsim/build_wsl.sh
+```
+
+The audited unified versions are Python 3.11.9, PyLate 1.5.0,
+fast-plaid 1.3.0.290, CPU PyTorch 2.9.0, NumPy 2.4.6, FAISS 1.14.2, and
+pdxearch 0.1.
+
 The older local WSL checkout contains uncommitted batch/shared-scan prototype
 methods. Do not use that dirty build for final timings; create the clean pinned
 checkout above.
@@ -291,16 +350,22 @@ held-out SciFact queries and the frozen selector policy:
 cd "$PROJECT_REPO"
 mkdir -p ../artifacts/reproduction
 taskset -c 0,2,4,6 env \
-  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=threads \
-  OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-  "$WORK/.venv-pdx/bin/python" experiments/pipeline/08_controlled_ivf_pilot.py \
+  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=cores \
+  OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 RAYON_NUM_THREADS=4 \
+  TOKENIZERS_PARALLELISM=false \
+  "$PY" experiments/pipeline/08_controlled_ivf_pilot.py \
   --corpus-dir ../artifacts/scifact_full_benchmark \
   --embeddings-dir ../artifacts/scifact_full_benchmark_embeddings \
   --output ../artifacts/reproduction/scifact_ivf_test_40q.json \
   --max-documents 0 --query-start 10 --max-queries 0 \
   --top-l 100 --nprobe 8 --c-values 50 100 200 400 0 \
   --selection-policy approx_score --threads 4 \
-  --warmup-runs 1 --measured-runs 5
+  --warmup-runs 1 --measured-runs 5 \
+  --pdx-source "$WORK/external/PDX" \
+  --plaid-config 8:100 --plaid-config 8:400 \
+  --plaid-index-folder "$HOME/data-engineering-plaid/indexes" \
+  --plaid-index-name scifact_full_nbits4_reproduction \
+  --plaid-rebuild-index
 ```
 
 The runner refuses a dirty or unexpected PDX checkout. It records raw samples,
@@ -311,9 +376,9 @@ Run the precision-matched exact-versus-BOND held-out comparison:
 
 ```bash
 taskset -c 0,2,4,6 env \
-  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=threads \
+  OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=TRUE OMP_PLACES=cores \
   OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-  "$WORK/.venv-pdx/bin/python" experiments/pipeline/10_controlled_bond_pilot.py \
+  "$PY" experiments/pipeline/10_controlled_bond_pilot.py \
   --corpus-dir ../artifacts/scifact_full_benchmark \
   --embeddings-dir ../artifacts/scifact_full_benchmark_embeddings \
   --output ../artifacts/reproduction/scifact_bond_raw_test_40q.json \
@@ -485,7 +550,7 @@ the table no longer calls them the same coverage value.
   ranking but scans 95.47% of component products and is substantially slower
   than exhaustive MaxSim on held-out SciFact queries.
 - NFCorpus independently reproduces the negative raw-order result: 94.16% of
-  component products remain and BOND has 9.99 times the same-run exact median.
+  component products remain and BOND has 9.84 times the same-run exact median.
 
 **Secondary (practical outcome discovered along the way):**
 
@@ -494,10 +559,14 @@ the table no longer calls them the same coverage value.
   PDX-specific contribution.
 - Clean matched-budget online measurements are now reported for SciFact and
   NFCorpus. Encoding and index construction remain separate costs.
+- The controlled four-bit CPU PLAID configurations are slower and less accurate
+  on these small corpora. Their validation/test shift and opaque realized work
+  counts are reported explicitly; the full-score sensitivity arm is post hoc.
 
-**Open follow-ups:** (1) a quality-matched PLAID point; (2) a larger real corpus
-with a frozen scaling protocol; and (3) CoRECT only if it does not weaken the
-controlled core.
+**Open follow-ups:** (1) a larger real corpus with a frozen scaling protocol;
+(2) a broader predeclared PLAID validation/configuration study at that scale;
+and (3) a lower-overhead block-oriented BOND bound only if kernel redesign is
+in scope.
 
 ---
 
@@ -529,7 +598,8 @@ the time and are not final controlled speedups.
 | 20 | PCA rotation revival | Partially revives pruning (1.22x realistic / 1.68x oracle); secondary optimization. |
 | 21 | Generality check on NFCorpus (2nd dataset) | FAISS-IVF + rerank reached 0.188 vs 0.194 exact qrels recall@10 (~97%); selector gap recurs (agreement@10 ~0.84). Historical latency comparisons are withdrawn. |
 | 22 | Selector-gap sweep (script 35) | Agreement rises smoothly with C; full-pool reranking reaches 1.000 agreement on SciFact, and `nprobe=32, C=200` reaches exact qrels recall on NFCorpus. Policy choice barely matters. |
-| 23 | Controlled clean release | Under the same WSL runner, NFCorpus full-pool IVF reaches 0.975 exact recall@10; raw BOND preserves every ordered top-10 but evaluates 94.16% of products and remains 9.99x slower than same-run exact. |
+| 23 | Controlled clean release | Under the same WSL runner, NFCorpus full-pool IVF reaches 0.975 exact recall@10; raw BOND preserves every ordered top-10 but evaluates 94.16% of products and remains 9.84x slower than same-run exact. |
+| 24 | Controlled PLAID addition | Validation-selected PLAID points were rerun in the unified WSL process; held-out recovery shifted sharply, and a separately labelled full-score sensitivity arm remained slower and approximate at this small CPU scale. |
 
 ### Caveats
 

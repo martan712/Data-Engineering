@@ -5,13 +5,15 @@
 
 All release measurements were taken on a single machine: AMD Ryzen 7 5800H
 (16 logical CPUs), Ubuntu WSL2 (kernel 6.6.87.2-microsoft-standard-WSL2),
-Python 3.14.4 built with GCC 15.2.0. Processes were pinned with
+Python 3.11.9 built with Clang 18.1.8. Processes were pinned with
 \texttt{taskset} to CPUs $\{0, 2, 4, 6\}$ (one hardware thread per physical
 core) with \texttt{OMP\_NUM\_THREADS=4}, \texttt{OMP\_DYNAMIC=FALSE},
-\texttt{OMP\_PROC\_BIND=TRUE}, \texttt{OMP\_PLACES=threads}, and BLAS thread
-counts fixed at 4. Recorded package versions: NumPy 2.4.6, faiss-cpu 1.14.2,
-pdxearch 0.1 (PDX commit \texttt{fdc62f2d22b3793060abf633cb5407438c7f739b},
-clean). Embeddings were produced with PyLate~1.5.0 and
+\texttt{OMP\_PROC\_BIND=TRUE}, \texttt{OMP\_PLACES=cores}, and BLAS/Rayon
+thread counts fixed at 4. Recorded package versions: NumPy 2.4.6,
+faiss-cpu 1.14.2, pdxearch 0.1, PyLate 1.5.0, fast-plaid 1.3.0.290, and CPU
+PyTorch 2.9.0 (PDX commit
+\texttt{fdc62f2d22b3793060abf633cb5407438c7f739b}, clean). Embeddings were
+produced with PyLate~1.5.0 and
 \texttt{lightonai/GTE-ModernColBERT-v1}.
 
 \subsection{Dataset statistics}
@@ -44,8 +46,13 @@ L2-normalized inputs. SciFact: 2{,}186 buckets trained on 109{,}300 sampled
 points; NFCorpus: 1{,}860 buckets trained on 93{,}000 points; both with
 $\texttt{nprobe} = 8$, $L = 100$ hits per query token, seed 0, and the frozen
 \texttt{approx\_score} selector. Offline build (train + load) times:
-SciFact \SI{18.52}{\second} (FAISS) and \SI{21.46}{\second} (PDX); NFCorpus
-\SI{12.27}{\second} (FAISS) and \SI{14.67}{\second} (PDX).
+SciFact \SI{18.15}{\second} (FAISS) and \SI{21.43}{\second} (PDX); NFCorpus
+\SI{12.37}{\second} (FAISS) and \SI{14.25}{\second} (PDX).
+
+The PLAID index uses four-bit residuals, four k-means iterations, CPU execution,
+and Triton disabled. Its offline build took \SI{1415.73}{\second} for SciFact
+and \SI{527.82}{\second} for NFCorpus; physical index sizes were 182.3 and
+131.0 MB. These offline costs are excluded from every online table.
 
 \subsection{Online stage medians (SciFact)}
 
@@ -60,10 +67,10 @@ SciFact \SI{18.52}{\second} (FAISS) and \SI{21.46}{\second} (PDX); NFCorpus
     \toprule
     Arm & {Token search} & {Aggregation} & {Selection} & {Exact rerank + top-$k$} \\
     \midrule
-    FAISS-IVF, $C{=}50$  & 0.2430 & 0.0730 & 0.0109 & 0.0491 \\
-    PDX-IVF,   $C{=}50$  & 0.2254 & 0.0651 & 0.0090 & 0.0461 \\
-    FAISS-IVF, full pool & 0.2351 & 0.0728 & 0.0109 & 0.9674 \\
-    PDX-IVF,   full pool & 0.2398 & 0.0660 & 0.0091 & 0.9253 \\
+    FAISS-IVF, $C{=}50$  & 0.2325 & 0.0598 & 0.0085 & 0.0452 \\
+    PDX-IVF,   $C{=}50$  & 0.2570 & 0.0606 & 0.0085 & 0.0441 \\
+    FAISS-IVF, full pool & 0.2162 & 0.0597 & 0.0088 & 0.6876 \\
+    PDX-IVF,   full pool & 0.2514 & 0.0637 & 0.0091 & 0.6936 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -75,8 +82,8 @@ the $k$th-largest conservative lower bound over fully scored documents;
 500 deterministic prefix seeds (oracle arms receive the exact top-10 free);
 strict-inequality pruning with score tie tolerance $10^{-10}$; float64
 products and accumulation in both BOND and exhaustive arms. Offline vertical
-index construction: \SI{1.755}{\second} (SciFact raw),
-\SI{1.681}{\second} (SciFact PCA), \SI{1.224}{\second} (NFCorpus raw);
+index construction: \SI{1.665}{\second} (SciFact raw),
+\SI{1.692}{\second} (SciFact PCA), \SI{1.206}{\second} (NFCorpus raw);
 estimated vertical index footprint on SciFact: \SI{611}{\mega\byte} of values
 plus \SI{57}{\mega\byte} of residual norms.
 

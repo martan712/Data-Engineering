@@ -10,6 +10,11 @@ query- and document-length distributions. Only one candidate configuration
 ($L = 100$, $\texttt{nprobe} = 8$) appears in the held-out release; the
 quality--latency curves vary only the rerank budget $C$.
 
+PLAID is evaluated only through PyLate~1.5.0 and CPU
+\texttt{fast-plaid}~1.3.0.290 with four-bit residuals, four threads, and
+Triton disabled. These settings and corpus sizes are not representative of
+every PLAID deployment, especially its intended large-scale or GPU use cases.
+
 \paragraph{Baseline strength.}
 The compiled exact kernel is validated and independently implemented, but it
 is a project baseline, not a claim to be the fastest possible MaxSim
@@ -32,15 +37,25 @@ validation/test query split prevents new selector tuning on evaluation
 queries, but it cannot erase all historical knowledge encoded in the chosen
 configuration.
 
+The PLAID split is especially small: 10 validation queries select two
+operating points and 40 queries evaluate them. The resulting validation--test
+shift is reported rather than tuned away, but its magnitude may partly reflect
+sampling variance. The full-corpus score-budget arms were chosen after seeing
+that shift and are therefore labelled post hoc throughout.
+
 \paragraph{Engine internals.}
 PDX and FAISS may use different internal threading and memory layouts even
 under the same process-level thread limits; the stage timers bound, but do not
 eliminate, this confounder.
 
-\paragraph{Missing comparison points.}
-PLAID has not been rerun under a matched full-score budget, so no controlled
-PLAID comparison is reported. The historical PLAID numbers were withdrawn
-together with the other uncontrolled measurements (\cref{sec:audit}).
+\paragraph{Opaque PLAID work counts.}
+The current PLAID API exposes final rankings and the configured
+\texttt{n\_full\_scores} value but not realized candidate counts or per-stage
+work. Its complete online latency is measured fairly, but the configured
+budget cannot be interpreted as an observed rerank count or matched exactly to
+IVF's $C$. Even a corpus-sized full-score budget does not disable PLAID's
+earlier approximate and compressed-scoring stages, so it is a sensitivity
+upper bound rather than an exact MaxSim mode.
 
 \paragraph{Diagnostic arms are not methods.}
 The oracle seed policy receives the exact top-10 for free and is a mechanism

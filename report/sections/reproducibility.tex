@@ -5,9 +5,9 @@ The repository is organized so that every number in this report can be traced
 to an audited artifact:
 
 \begin{itemize}
-  \item \textbf{Release artifacts.} The five JSON files under
+  \item \textbf{Release artifacts.} The seven JSON files under
     \texttt{results/final/} are the authoritative evidence. Each records the
-    Git commit (\texttt{0cc6145}, \texttt{dirty=false}), SHA-256 hashes of the
+    Git commit (\texttt{0a11fda}, \texttt{dirty=false}), SHA-256 hashes of the
     embedding and qrels inputs, package versions, CPU affinity and thread
     environment, warm-up and repetition counts, raw outer-timer samples,
     per-stage timings, exact-ranking recovery, qrels metrics, and, for BOND,
@@ -19,22 +19,25 @@ to an audited artifact:
   \item \textbf{Pinned environments.} Python dependency manifests are pinned;
     the PDX library is checked out at the audited commit \texttt{fdc62f2}
     (the controlled runner refuses a dirty or unexpected PDX checkout).
-    Key package versions recorded in the artifacts include NumPy 2.4.6 and
-    faiss-cpu 1.14.2 on Python 3.14.4.
+    Key package versions recorded in the artifacts include NumPy 2.4.6,
+    faiss-cpu 1.14.2, PyLate 1.5.0, fast-plaid 1.3.0.290, and CPU
+    PyTorch 2.9.0 on Python 3.11.9.
   \item \textbf{Independent kernels and tests.} The compiled exact kernel
     (\texttt{cpp/exact\_maxsim/}) and the exact-safe BOND kernel
     (\texttt{cpp/bond\_maxsim/}) ship with build scripts and automated
     unit tests against the NumPy oracle, including tie, all-negative,
     forced-pruning, and invalid-input cases.
-  \item \textbf{Controlled runners.} \texttt{experiments/pipeline/08} (IVF)
-    and \texttt{experiments/pipeline/10} (BOND) implement the protocol of
+  \item \textbf{Controlled runners.} \texttt{experiments/pipeline/08}
+    (IVF and PLAID), \texttt{10} (BOND), \texttt{13} (validation-only PLAID
+    selection), and \texttt{14} (PLAID figure generation) implement the protocol of
     \cref{sec:protocol}; the repository \texttt{README.md} documents the
     exact \texttt{taskset} and environment-variable invocations used for the
     release runs.
-  \item \textbf{Figures from artifacts.} Figures
+  \item \textbf{Figures and tables.} Figures
     \ref{fig:quality-latency}--\ref{fig:bond} are generated directly from the
-    release JSON files by \texttt{experiments/pipeline/09}, \texttt{11}, and
-    \texttt{12}, without hard-coded headline values.
+    release JSON files by \texttt{experiments/pipeline/09}, \texttt{11},
+    \texttt{12}, and \texttt{14}; \texttt{tests/test\_report\_consistency.py}
+    checks the readable LaTeX tables against the same JSON values.
 \end{itemize}
 
 Large embedding inputs remain outside Git; their SHA-256 hashes inside each

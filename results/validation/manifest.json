@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "validation_only_parameter_selection",
+  "wall_clock_claims_allowed": false,
+  "scope": "First 10 SciFact validation queries only; used to freeze PLAID configurations before held-out evaluation.",
+  "files": [
+    {
+      "name": "plaid_release_selection.json",
+      "role": "deterministic_frozen_configuration",
+      "bytes": 2044,
+      "sha256": "83d7d37768928756b4a89b2fd2eed3eac40e35f105db97993cb564f3fbf312e7"
+    },
+    {
+      "name": "scifact_plaid_validation_expanded.json",
+      "role": "predeclared_full_score_budget_expansion",
+      "bytes": 69592,
+      "sha256": "afab614ff9af7fb18e8eace654819bcd5aed8946bb8a1eb4ee87cea58c04f379"
+    },
+    {
+      "name": "scifact_plaid_validation_grid.json",
+      "role": "predeclared_nprobe_and_full_score_grid",
+      "bytes": 158841,
+      "sha256": "5e1c7becad8454cbd64d2717492103f0dd61e60ebd874626dc0cd5ca511bca6e"
+    }
+  ]
+}
+

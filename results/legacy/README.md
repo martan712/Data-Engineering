@@ -17,5 +17,5 @@ claims remain auditable while the final benchmark is rebuilt.
 | `scifact_scaling_curve.json`, `scifact_timing_breakdown.json` | Historical scaling and component diagnosis | Final same-stack wall-clock comparison |
 
 README Figures 1-4 are generated from these files and explicitly labeled as
-exploratory evidence. Figures 5-8 and all release tables are generated from
+exploratory evidence. Figures 5-9 and all release tables are generated from
 `results/final/`.

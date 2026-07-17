@@ -30,6 +30,47 @@ Approximate methods are evaluated against the compiled exact ranking using:
 - qrels Recall@k and MRR@10;
 - online latency and throughput.
 
+### Controlled PLAID addition
+
+PLAID is an external ColBERT-specific baseline, not a PDX component. Its
+historical result is excluded because it used up to 8,192 full scores while the
+IVF arms commonly reranked 50 documents. The replacement comparison uses the
+same Linux process, CPU affinity, resident query embeddings, output contract,
+warm-up schedule, and five interleaved measured repetitions as exact, FAISS-IVF,
+and PDX-IVF.
+
+Parameter selection is isolated from the held-out release queries:
+
+- build one CPU fast-plaid index with `nbits=4`, Triton disabled, and normalized
+  document token vectors, then record a content hash of the resulting index;
+- on the first 10 SciFact validation queries, sweep `n_ivf_probe` in
+  `{8, 16, 32, 64, 128}` and `n_full_scores` in `{50, 100, 200, 400}`;
+- retain the fastest validation configuration reaching exact recall@10 of at
+  least 0.85, the fastest reaching at least 0.95, and the highest-recall
+  configuration (deduplicated, with deterministic ties);
+- if no configuration reaches 0.95, hold `n_ivf_probe` at the fastest value
+  among the maximum-recall arms and run one validation-only expansion with
+  `n_full_scores` in `{800, 1600, 3200, number of documents}`. This expansion
+  is permitted once and must still be frozen before viewing test results;
+- freeze the selected configurations and evaluate them on queries 10--49 of
+  both SciFact and NFCorpus.
+
+`n_full_scores` is PLAID's configured full-scoring budget. PyLate/fast-plaid
+does not expose the realized candidate count through the API used here, so it
+must not be reported as measured work or treated as exactly equivalent to the
+realized IVF rerank count. PLAID is therefore compared through its complete
+online latency, exact-ranking recovery, qrels metrics, configured budget, and
+offline index size/build time. Quality-matched points and frontiers are valid;
+an unqualified same-work claim is not.
+
+The frozen validation outcome is preserved under `results/validation/`.
+Changing `n_ivf_probe` from 8 through 128 left validation exact recall@10
+unchanged at every tested full-score budget and only increased latency. At
+`n_ivf_probe=8`, recall rose from 0.74 (`n_full_scores=50`) to 0.92
+(`n_full_scores=400`) and then remained 0.92 through full-corpus scoring. The
+selection rule therefore freezes `(8,100)` as the fastest arm exceeding 0.85
+and `(8,400)` as the maximum-recall arm. No arm met the 0.95 target.
+
 ## Timing boundaries
 
 Report index construction separately as offline cost. Query encoding is also a
@@ -100,8 +141,9 @@ Every final JSON result must include:
 - exact-ranking recovery and qrels metrics;
 - errors, skipped configurations, and the reason for each skip.
 
-Figures and report tables must be generated from these artifacts, without
-hard-coded headline values.
+Figures must be generated from these artifacts without hard-coded headline
+values. Report tables remain readable LaTeX, and `tests/test_report_consistency.py`
+must verify their rounded values against the same artifacts.
 
 ## Status of current evidence
 
@@ -113,7 +155,7 @@ hard-coded headline values.
 | NumPy MaxSim BOND work-ratio/oracle study | Mechanism evidence; not kernel wall-clock evidence |
 | IVF candidate-pool and selector-recall measurements | Clean controlled quality-latency evidence under `results/final/` |
 | Reported 30x/100x IVF speedups | Withdrawn; clean same-stack measurements replace them |
-| Current PLAID versus IVF wall-clock bars | Withdraw pending matched budgets and timing boundaries |
+| Historical PLAID versus IVF wall-clock bars | Withdrawn; replaced by validation-selected same-process PLAID points and separately labelled post-hoc sensitivity arms |
 
 ## Claim language
 

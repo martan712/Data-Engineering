@@ -1,8 +1,9 @@
 # LaTeX Project Report
 
-Academic report generated from the Markdown documentation and the audited
-release artifacts under `results/final/`. All numbers in the tables and text
-were cross-checked against those JSON artifacts (clean commit `0cc6145`).
+Academic report based on the Markdown documentation and the audited release
+artifacts under `results/final/`. Figures are generated from those JSON files,
+and `tests/test_report_consistency.py` checks the main table values against the
+same artifacts (clean commit `0a11fda`).
 
 ## Layout
 
@@ -16,6 +17,7 @@ report/
 |   |-- architecture.tex
 |   |-- methodology.tex
 |   |-- results_ivf.tex
+|   |-- results_plaid.tex
 |   |-- results_bond.tex
 |   |-- results_pca.tex
 |   |-- discussion.tex
@@ -29,7 +31,8 @@ report/
 Figures are **not** duplicated: `main.tex` sets
 `\graphicspath{{../docs/figures/}}` and references
 `fig5_controlled_quality_latency.png`, `fig6_controlled_stage_breakdown.png`,
-`fig7_controlled_bond.png`, and `fig8_controlled_transfer.png` in place.
+`fig7_controlled_bond.png`, `fig8_controlled_transfer.png`, and
+`fig9_controlled_plaid.png` in place.
 The report must therefore be compiled from inside the `report/` directory of
 this repository (or with the `docs/figures/` tree present one level up).
 
@@ -60,6 +63,11 @@ pdflatex -interaction=nonstopmode main.tex
 On MiKTeX, allow on-the-fly package installation the first time
 (`--enable-installer` or via the MiKTeX console) so that missing packages are
 fetched automatically.
+
+The manual sequence above was last verified on 2026-07-16 and produced the
+tracked 24-page `main.pdf` without undefined references, citation warnings, or
+layout warnings. `latexmk` was not available in that Windows environment
+because MiKTeX could not find Perl.
 
 Clean auxiliary files with `latexmk -c` (keeps the PDF) or `latexmk -C`.
 

@@ -4,13 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
-PYTHON="${PYTHON:-/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python}"
+PYTHON="${PYTHON:-python3}"
 CXX="${CXX:-clang++}"
 OPT_FLAGS="${OPT_FLAGS:--O3 -march=native}"
 USE_OPENMP="${USE_OPENMP:-auto}"
 
-if [[ ! -x "${PYTHON}" ]]; then
-    echo "Python interpreter is not executable: ${PYTHON}" >&2
+if ! command -v "${PYTHON}" >/dev/null 2>&1; then
+    echo "Python interpreter is not available: ${PYTHON}" >&2
     exit 1
 fi
 if ! command -v "${CXX}" >/dev/null 2>&1; then
@@ -68,4 +68,4 @@ fi
 cp "${BUILD_OUTPUT}" "${OUTPUT_PATH}"
 cd "${REPO_ROOT}"
 "${PYTHON}" -c \
-    'from experiments.kernels import _exact_maxsim; print(f"built { _exact_maxsim.__file__ } (OpenMP={_exact_maxsim.openmp_enabled})")'
+    'from experiments.kernels import _exact_maxsim; print(f"built {_exact_maxsim.__file__} (OpenMP={_exact_maxsim.openmp_enabled})")'

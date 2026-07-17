@@ -39,11 +39,11 @@ def main() -> None:
     ivf = {
         "SciFact": load(
             "scifact_ivf_test_40q_final.json",
-            "controlled_ivf_pilot_v1",
+            "controlled_ivf_plaid_v2",
         ),
         "NFCorpus": load(
             "nfcorpus_ivf_test_40q_final.json",
-            "controlled_ivf_pilot_v1",
+            "controlled_ivf_plaid_v2",
         ),
     }
     bond = {
@@ -56,6 +56,14 @@ def main() -> None:
             "controlled_bond_pilot_v1",
         ),
     }
+
+    query_counts = {result["dataset"]["queries"] for result in ivf.values()}
+    top_l_values = {result["config"]["top_l"] for result in ivf.values()}
+    nprobe_values = {result["config"]["nprobe"] for result in ivf.values()}
+    thread_counts = {result["config"]["threads"] for result in ivf.values()}
+    shared_settings = (query_counts, top_l_values, nprobe_values, thread_counts)
+    if any(len(values) != 1 for values in shared_settings):
+        raise SystemExit("Transfer artifacts do not share one benchmark configuration")
 
     fig, axes = plt.subplots(1, 3, figsize=(13.2, 4.6))
 
@@ -155,8 +163,10 @@ def main() -> None:
     fig.text(
         0.5,
         0.01,
-        "40 held-out queries per dataset; L=100, nprobe=8; BOND prefix seeds=500; "
-        "same WSL stack, four pinned physical cores, and online boundary.",
+        f"{query_counts.pop()} held-out queries per dataset; "
+        f"L={top_l_values.pop()}, nprobe={nprobe_values.pop()}; "
+        "BOND prefix seeds=500; same WSL stack, "
+        f"{thread_counts.pop()} threads, and online boundary.",
         ha="center",
         fontsize=8,
         color="#555555",

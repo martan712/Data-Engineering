@@ -28,10 +28,10 @@ From the repository root:
 bash cpp/exact_maxsim/build_wsl.sh
 ```
 
-The script defaults to:
+The script uses the active `python3` interpreter by default:
 
 ```text
-/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python
+python3
 ```
 
 Override the interpreter or compiler when needed:
@@ -52,6 +52,5 @@ is loaded through the Python wrapper in `experiments.kernels`.
 ## Verify
 
 ```bash
-/home/telle/data-engineering-pdx-clean/.venv-pdx/bin/python \
-    -m unittest tests.test_exact_maxsim_kernel -v
+python3 -m unittest tests.test_exact_maxsim_kernel -v
 ```
