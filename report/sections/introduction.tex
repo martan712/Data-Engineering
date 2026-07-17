@@ -29,6 +29,9 @@ investigation, we also ask three secondary questions:
   \item \textbf{RQ2.} Can a flat token-vector index generate document candidates with high exact-MaxSim recall?
   \item \textbf{RQ3.} At matched rerank budgets, how do PDX-IVF and FAISS-IVF trade exact-ranking 
   recovery for online latency?
+  \item \textbf{RQ4.} Under the same machine, query split, and complete online
+    timing boundary, how does a validation-selected CPU PLAID configuration
+    compare with the exact and IVF pipelines?
 \end{itemize}
 We explicitly do not claim inverted-file (IVF) candidate generation as a novel contribution. IVF 
 is standard approximate nearest-neighbor practice; in this project it serves as a practical comparison 
