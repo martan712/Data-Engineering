@@ -1,7 +1,7 @@
-\section*{Methodology}
+\section{Methodology}
 \label{sec:methodology}
 
-\subsection*{Measurement audit and withdrawn results}
+\subsection{Measurement audit and withdrawn results}
 \label{sec:audit}
 
 % Before the controlled campaign, an internal audit examined the project's early
@@ -24,7 +24,7 @@
 Before the controlled campaign, an internal audit examined the project's early 
 wall-clock comparisons and found them unsuitable as performance evidence. The 
 principal defects were the following:
-\begin{itemize}
+\begin{itemize}[noitemsep]
   \item PDX and FAISS candidate timers excluded token-to-document aggregation, 
   candidate selection, reranking, and final ranking.
   \item PLAID was allowed up to 8,192 full scores per query while the IVF 
@@ -42,14 +42,14 @@ consequently withdrawn. Legacy artifacts are preserved under \texttt{results/leg
 for mechanism and quality analysis only; no performance claim in this report relies 
 on them.
 
-\subsection*{Controlled benchmark protocol}
+\subsection{Controlled benchmark protocol}
 \label{sec:protocol}
 
 All results in \cref{sec:results-ivf,sec:results-plaid,sec:results-bond,sec:results-pca} were
 produced under the replacement protocol recorded in
 \texttt{docs/benchmark\_protocol.md}, whose core requirements are:
 
-\begin{itemize}
+\begin{itemize}[noitemsep]
   \item \textbf{One machine, one process.} All compared arms run in a single
     Python process on one machine (Ubuntu WSL2 on an AMD Ryzen~7~5800H),
     pinned to CPU affinity $\{0, 2, 4, 6\}$ (one hardware thread on each of
@@ -78,12 +78,12 @@ produced under the replacement protocol recorded in
     manifest accepts only artifacts from clean commit \texttt{0a11fda}.
 \end{itemize}
 
-\subsection*{Qualitative metrics}
+\subsection{Qualitative metrics}
 \label{sec:metrics}
 
 Two families of qualitative metrics are kept strictly separate:
 
-\begin{description}
+\begin{description}[noitemsep]
   \item[Exact-ranking recovery.] The primary architecture metric. For each
     query, the fraction of the \emph{exact} MaxSim top-$k$ documents that the
     approximate arm returns in its top-$k$ (reported at $k = 10$ as exact
@@ -96,7 +96,7 @@ Two families of qualitative metrics are kept strictly separate:
     only.
 \end{description}
 
-\subsection*{Datasets, splits, and configuration}
+\subsection{Datasets, splits, and configuration}
 
 For each dataset the first 10 queries were used for pilot validation and
 selector-policy freezing, and the remaining \textbf{40 held-out queries} form
@@ -120,7 +120,7 @@ After the unexpectedly large validation--test shift was observed, one
 full-corpus \texttt{n\_full\_scores} arm per dataset was added as an explicitly
 post-hoc sensitivity analysis; it is not treated as a selected operating point.
 
-\subsection*{Numerical precision contracts}
+\subsection{Numerical precision contracts}
 \label{sec:precision}
 
 Two distinct precision contracts are used, and their timings are never mixed:

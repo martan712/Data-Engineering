@@ -1,23 +1,25 @@
-\section{IVF Candidate-Generation Results}
+\section{Results: IVF Candidate-Generation}
 \label{sec:results-ivf}
 
-This section evaluates the approximate two-stage architecture of
-\cref{sec:three-stages}: IVF token retrieval, document selection at budget
-$C$, and exact float32 MaxSim reranking. Results are approximate by
-construction and are evaluated against the exact ranking; they are reported
-separately from the exact-safe BOND results of \cref{sec:results-bond}.
+This section evaluates the approximate two-stage architecture described in
+\cref{sec:three-stages}.The architecture consists of IVF token retrieval, 
+document selection at budget $C$, and exact float32 MaxSim reranking.The 
+results are approximate by construction and are evaluated against the 
+exact ranking. We report these findings separately from the exact-safe 
+BOND results (\cref{sec:results-bond}).
 
 \subsection{SciFact}
 \label{sec:ivf-scifact}
 
-\begin{table}[tb]
+\begin{table*}[t!]
   \centering
-  \caption{Controlled SciFact release comparison on 40 held-out queries
-    (5{,}183 documents; $L=100$, $\texttt{nprobe}=8$; medians and p95 over
-    five interleaved repetitions of the complete online boundary for all 40
-    queries). Exact R@10 is exact-ranking recovery against compiled exact
-    MaxSim; the rerank ratio is the fraction of all query--document pairs
-    evaluated exactly. Source: \texttt{scifact\_ivf\_test\_40q\_final.json}.}
+  \caption{Controlled SciFact release comparison on 40 held-out queries.
+    The configuration uses 5,183 documents, $L=100$, and an $\texttt{nprobe}$ 
+    of 8. Values represent medians and the 95th percentile over five interleaved 
+    repetitions of the complete online boundary for all 40 queries. Exact R@10 
+    the exact ranking recovery against compiled exact MaxSim, and the rerank 
+    ratio is the fraction of all query-document pairs evaluated exactly.
+    Source: \texttt{scifact\_ivf\_test\_40q\_final.json}.}
   \label{tab:scifact-ivf}
   \small
   \begin{tabular}{@{}l S[table-format=1.4] S[table-format=1.4] S[table-format=1.4] S[table-format=4.1] S[table-format=1.4]@{}}
@@ -38,10 +40,10 @@ separately from the exact-safe BOND results of \cref{sec:results-bond}.
     PDX-IVF,   full pool  & 1.0322 & 1.2016 & 1.0000 &  619.3 & 0.1195 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 \Cref{tab:scifact-ivf} presents the held-out SciFact comparison and
-\cref{fig:quality-latency} plots the resulting quality--latency frontier.
+\cref{fig:quality-latency} plots the resulting quality and latency frontier.
 Four observations follow directly from the artifacts.
 
 \paragraph{Candidate pools are complete; residual loss is selector loss.}
@@ -70,7 +72,7 @@ Recall@10 (0.985) and MRR@10 (0.902) are \emph{identical} for every arm in
 With incomplete qrels and 40 queries, exact-ranking recovery is the sensitive
 metric; qrels metrics are reported for completeness only.
 
-\begin{figure}[tb]
+\begin{figure*}[tb]
   \centering
   \includegraphics[width=0.9\textwidth]{fig5_controlled_quality_latency.png}
   \caption{SciFact held-out quality--latency frontier from the controlled
@@ -82,9 +84,9 @@ metric; qrels metrics are reported for completeness only.
     candidate pool ($\approx 619$ documents) is reranked, well below the
     compiled exhaustive latency (star).}
   \label{fig:quality-latency}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[tb]
+\begin{figure*}[tb]
   \centering
   \includegraphics[width=0.9\textwidth]{fig6_controlled_stage_breakdown.png}
   \caption{Online stage breakdown for the controlled SciFact run (40 held-out
@@ -95,7 +97,7 @@ metric; qrels metrics are reported for completeness only.
     dominates for both engines. Stage medians are diagnostic and need not sum
     exactly to the outer-timer median.}
   \label{fig:stage-breakdown}
-\end{figure}
+\end{figure*}
 
 \Cref{fig:stage-breakdown} decomposes the online time by stage. At $C = 50$
 token search dominates for both engines; at the full pool, exact reranking
@@ -112,7 +114,7 @@ $\texttt{nprobe} = 8$, frozen selector) were applied to NFCorpus
 \Cref{tab:nfcorpus-ivf} reports the results and the left panel of
 \cref{fig:transfer} compares the recovery curves of both datasets.
 
-\begin{table}[tb]
+\begin{table*}[tb]
   \centering
   \caption{NFCorpus transfer comparison on 40 held-out queries
     (3{,}633 documents; same configuration and online boundary as
@@ -134,7 +136,7 @@ $\texttt{nprobe} = 8$, frozen selector) were applied to NFCorpus
     PDX-IVF,   full pool & 0.5358 & 0.6432 & 0.9750 &  388.1 & 0.1068 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 The transfer is less forgiving than SciFact in one specific way: reranking the
 \emph{entire} candidate pool reaches only 0.975 exact recall@10, and the pool

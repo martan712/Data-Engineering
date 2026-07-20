@@ -1,7 +1,7 @@
-\section*{System Design and Data Representation}
+\section{System Design and Data Representation}
 \label{sec:architecture}
 
-\subsection*{Packed variable-length token representation}
+\subsection{Packed variable-length token representation}
 
 ColBERT produces a variable number of token vectors per document and per
 query. The project stores each collection in a packed format consisting of:
@@ -22,7 +22,7 @@ All methods therefore score exactly the same embeddings.
 On SciFact the corpus comprises 5,183 documents and 1,193,945 document token vectors; 
 on NFCorpus, 3,633 documents and 864,703 token vectors.
 
-\subsection*{Flattened token index and token-to-document mapping}
+\subsection{Flattened token index and token-to-document mapping}
 
 For candidate generation, all document token vectors are indexed
 \emph{independently} as points in $\mathbb{R}^{128}$, discarding document
@@ -32,7 +32,7 @@ document. This flattened design allows any off-the-shelf vector index to serve
 multi-vector retrieval, at the cost of an explicit aggregation step at query
 time.
 
-\subsection*{Token retrieval, document selection, and exact reranking}
+\subsection{Token retrieval, document selection, and exact reranking}
 \label{sec:three-stages}
 
 Online query processing distinguishes three conceptually different stages:
@@ -64,7 +64,7 @@ confirmed empirically that ranking by this aggregate disagrees with exact
 MaxSim rankings. It is retained only as a cheap selection heuristic whose loss
 is measured explicitly (\cref{sec:results-ivf}).
 
-\subsection*{Candidate engines}
+\subsection{Candidate engines}
 
 The controlled release compares two engines over the same flattened token
 index contents:

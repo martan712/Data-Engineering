@@ -1,4 +1,4 @@
-\section*{Background}
+\section{Background}
 
 Dense retrieval has evolved from single-vector representations, where a query or 
 document is compressed into one embedding, toward multi-vector representations 
@@ -108,7 +108,7 @@ scanning within probed buckets. In this project both engines index individual
 document token vectors, and their retrieved token hits are aggregated into document 
 candidates that are subsequently reranked exactly.
 
-\subsection*{Distance equivalence for normalized vectors}
+\subsection{Distance equivalence for normalized vectors}
 
 The PDX Python API exposes squared Euclidean distance only. For
 unit-normalized vectors $x$ and $y$,
@@ -122,7 +122,7 @@ similarities as $s = 1 - \lVert x - y \rVert_2^2 / 2$. All indexes in this
 study therefore operate on identical geometry despite exposing different
 metrics.
 
-\subsection*{Benchmark datasets}
+\subsection{Benchmark datasets}
 
 We conduct experiments on SciFact and NFCorpus, drawn from BEIR \citep{thakur2021beir}, 
 a heterogeneous zero-shot retrieval benchmark. SciFact is a scientific claim-verification 
