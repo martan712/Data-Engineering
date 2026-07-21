@@ -3,47 +3,45 @@
 
 \subsection{Answering the research questions}
 
-\paragraph{RQ1 (BOND acceleration): answered in the negative for this
-setting.} Exact-safe BOND dimension pruning did not accelerate exact ColBERT
-MaxSim over the project's compiled exhaustive kernel. On raw 128-dimensional
-embeddings the kernel retained 95.47\% (SciFact) and 94.16\% (NFCorpus) of the
-exhaustive component products and ran 10.76$\times$ and 9.84$\times$ slower
-than the precision-matched exhaustive arm of the same interleaved run. The
-result is a controlled measurement with identical inputs, precision, thread
-budgets, and timing boundaries in both arms, and it replicates across two
-datasets.
+\paragraph{PRQ (BOND acceleration).} Exact-safe BOND dimension pruning did 
+not accelerate exact ColBERT MaxSim over the project's compiled exhaustive 
+kernel. On raw 128-dimensional embeddings, the kernel retained 95.47\% of 
+exhaustive component products on SciFact and 94.16\% on NFCorpus, while running 
+10.76 times and 9.84 times slower than the precision-matched exhaustive arm of 
+the same interleaved run. This result is a controlled measurement with identical 
+inputs, precision, thread budgets, and timing boundaries in both arms, and it 
+replicates across two datasets.
 
-\paragraph{RQ2 (bound behavior).} The residual Cauchy--Schwarz bound stays
+\paragraph{RQ1 (bound behavior).} The residual Cauchy-Schwarz bound stays
 loose because normalized ColBERT embeddings spread score energy almost
-uniformly across dimensions: on raw embeddings, every SciFact prune and almost
+uniformly across dimensions. On raw embeddings, every SciFact prune and almost
 every NFCorpus prune occurred at checkpoint 96 of 128, after 75\% of the
 arithmetic was already spent. The PCA experiment isolates the two remaining
 obstacles. Concentrating 90.91\% of energy in eight components moves pruning
-earlier and removes 31--38\% of products, so dimension order is genuinely part
-of the problem; but the persisting 8.38--8.51$\times$ slowdown shows that
-bound-maintenance and memory-irregularity costs, not multiply--accumulate
+earlier and removes 31 to 38\% of products, so dimension order is genuinely part
+of the problem. However, the persisting 8.38 to 8.51$\times$ slowdown shows that
+bound-maintenance and memory-irregularity costs, not multiply   -accumulate
 volume, dominate this kernel. An exact-safe pruning kernel for MaxSim would
 need per-pair bookkeeping that is nearly free before it could profit from
 even a favorable dimension order.
 
-\paragraph{RQ3 (flat token index as candidate generator): answered in the
-affirmative, with a dataset-dependent ceiling.} With $L = 100$ and
+\paragraph{RQ2 (flat token index as candidate generator).} With $L = 100$ and
 $\texttt{nprobe} = 8$, the flattened token index produced candidate pools
 containing the complete exact top-10 for all 40 SciFact queries and for 37 of
 40 NFCorpus queries. Token-hit aggregation is not a valid final scorer
 (\cref{sec:three-stages}), but as a selector feeding exact MaxSim reranking
-it supports a smooth, controllable quality--work curve.
+it supports a smooth, controllable quality-work curve.
 
-\paragraph{RQ4 (PDX-IVF versus FAISS-IVF).} The two engines produced
+\paragraph{RQ3 (PDX-IVF versus FAISS-IVF).} The two engines produced
 identical candidate pools, identical exact-ranking recovery curves, and no
-consistent latency ordering across budgets and datasets; PDX token search was
+consistent latency ordering across budgets and datasets. PDX token search was
 slightly slower in every matched NFCorpus arm while total latencies were
 nearly tied. The evidence indicates that, in this workload and at these corpus
 sizes, the vertically decomposed IVF implementation neither helps nor hurts
 candidate generation relative to a conventional IVF.
 
-\paragraph{RQ5 (controlled PLAID comparison).} The two PLAID configurations
-selected on 10 SciFact validation queries do not transfer: validation exact
+\paragraph{RQ4 (controlled PLAID comparison).} The two PLAID configurations
+selected on 10 SciFact validation queries do not transfer. Validation exact
 recall@10 of 0.89/0.92 falls to 0.2875/0.4375 on held-out SciFact and to
 0.3100/0.3950 on NFCorpus. They are also slower than compiled exact MaxSim on
 these small CPU workloads. The post-hoc full-score sensitivity arms improve
@@ -68,7 +66,7 @@ kernel on the tested embeddings, a document-oriented research prototype, not
 an upstream PDX block kernel, so it bounds this design point rather than the
 entire idea of dimension pruning for late interaction.
 
-PLAID adds a fourth boundary: its \texttt{n\_full\_scores} parameter is a
+PLAID adds a fourth boundary. Its \texttt{n\_full\_scores} parameter is a
 configured budget, while the current API hides realized candidates and
 intermediate stages. The selected points are valid complete-boundary latency
 measurements, but their work cannot be equated one-for-one with IVF's observed
@@ -76,7 +74,7 @@ rerank counts. The full-score points are post-hoc mechanism checks and are not
 used to claim a tuned held-out frontier.
 
 Within those boundaries, the practical guidance for multi-vector retrieval
-systems is clear: engineering effort is better spent on candidate generation
+systems is clear. Engineering effort is better spent on candidate generation
 quality (where NFCorpus shows a real coverage ceiling) and on fast exhaustive
 reranking kernels than on exact-safe dimension pruning of raw ColBERT
 representations.
