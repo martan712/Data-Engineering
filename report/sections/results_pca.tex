@@ -11,37 +11,36 @@ ordering on the bound.
 
 \subsection{Oracle seeds}
 
-The implementable threshold uses the first 500 corpus documents as
-deterministic seeds, so seed quality could in principle limit pruning.
-To remove this confounder, an oracle arm receives the exact top-10 documents
-as \emph{free} seeds---their scoring cost is not charged---which yields the
-tightest threshold any seed policy could produce. On raw held-out SciFact
-embeddings (\cref{tab:bond}, second row), oracle seeding raises document
-pruning from 22.44\% to 36.32\%, but the evaluated component products drop
-only from 95.47\% to 92.43\%, because every prune still occurs at checkpoint
-96. The oracle arm is in fact marginally \emph{slower}
-(\SI{45.09}{\second} median, $11.50\times$ the same-run exhaustive arm):
-earlier threshold tightening increases bound-check activity without saving
-meaningful arithmetic. Seed selection is therefore not the bottleneck; the
-bound geometry is.
+The implementable threshold uses the first 500 corpus documents as 
+deterministic seeds, so seed quality could in principle limit pruning. 
+To remove this confounder, an oracle arm receives the exact top-10 documents 
+as free seeds, meaning that their scoring cost is not charged. This yields 
+the tightest threshold any seed policy could produce. On raw held-out 
+SciFact embeddings (Table~\ref{tab:bond}, second row), oracle seeding raises 
+document pruning from 22.44\% to 36.32\%, but the evaluated component products 
+drop only from 95.47\% to 92.43\%, because every prune still occurs at 
+checkpoint 96. The oracle arm is in fact marginally slower 
+(\SI{45.09}{\second} median, 11.50 times the same-run exhaustive arm). Earlier threshold tightening 
+increases bound-check activity without saving meaningful arithmetic. Seed 
+selection is therefore not the bottleneck; the bound geometry is.
 
 \subsection{Offline PCA rotation}
 
-An uncentered PCA is fitted offline on the document token vectors and the
-resulting orthogonal rotation is applied offline to both documents and
-queries. Because the rotation is orthogonal, it preserves inner products in
-exact arithmetic (measured float32 orthogonality error
-$2.53 \times 10^{-8}$), so the exact ranking is unchanged. The offline costs
-are small and reported separately: \SI{0.592}{\second} to fit,
-\SI{0.227}{\second} to transform, and \SI{1.692}{\second} to build the
-vertical index. After rotation, the first 8 of 128 components carry 90.91\%
-of total token energy, and the first 64 carry 97.76\%.
+We fit an uncentered PCA offline on the document token vectors and apply 
+the resulting orthogonal rotation offline to both documents and queries. 
+Because the rotation is orthogonal, it preserves inner products in exact 
+arithmetic (measured float32 orthogonality error $2.53 \times 10^{-8}$), 
+so the exact ranking is unchanged. The offline costs are small and we 
+report them separately: \SI{0.592}{\second} to fit, \SI{0.227}{\second} to transform, 
+and \SI{1.692}{\second} to build the vertical index. After rotation, the first 8 
+of 128 components carry 90.91\% of total token energy, and the first 64 
+carry 97.76\%.
 
-The effect on the mechanism is substantial (\cref{tab:bond}, rows 3--4, and
-\cref{fig:bond}). With the implementable prefix-500 seeds, document pruning
-rises to 86.30\% and evaluated component products fall to 69.02\%; with free
-oracle seeds, 97.91\% of documents prune and only 61.53\% of products are
-evaluated. Pruning also genuinely moves earlier: most prunes now occur at
+The effect on the mechanism is substantial (Table~\ref{tab:bond}, rows 3 
+and 4; Figure~\ref{fig:bond}). With the implementable prefix-500 seeds, 
+document pruning rises to 86.30\% and evaluated component products fall to 69.02\%. 
+With free oracle seeds, 97.91\% of documents prune and only 61.53\% of products 
+are evaluated. Pruning also genuinely moves earlier: most prunes now occur at 
 checkpoints 64 and 96 rather than exclusively at 96.
 
 \begin{figure}[tb]
@@ -50,26 +49,25 @@ checkpoints 64 and 96 rather than exclusively at 96.
   \caption{Exact-safe BOND-MaxSim on 40 held-out SciFact queries (5{,}183
     documents; four pinned physical cores; median of five interleaved
     repetitions; oracle seeds are free and diagnostic). Left: fraction of
-    exhaustive component products evaluated (solid) and query--document pairs
+    exhaustive component products evaluated (solid) and query-document pairs
     pruned (hatched) for raw and PCA-rotated embeddings under prefix-500 and
     oracle seed policies. Right: BOND median latency relative to the
     precision-matched exhaustive median of the same run. PCA rotation improves
     pruning substantially (69.0\% and 61.5\% of products evaluated) yet every
-    arm remains $8.4$--$11.5\times$ slower than exhaustive scoring.}
+    arm remains $8.4$ to $11.5\times$ slower than exhaustive scoring.}
   \label{fig:bond}
 \end{figure}
 
 \subsection{Arithmetic reduction does not become latency}
 
-Despite removing 31--38\% of the component products, both PCA arms remain
-8.38--8.51 times slower than the exhaustive arm interleaved in the same run
-(\SI{36.95}{\second} and \SI{37.55}{\second} versus \SI{4.41}{\second}
-median). The latency gap narrows from $10.76\times$ to 8.38--8.51 times while the
-arithmetic drops by nearly a third, which localizes the remaining cost: bound
-maintenance, threshold updates, branching, partial-state reads and writes, and
-the irregular access pattern of surviving documents dominate the runtime of
-this kernel, not the multiply--accumulate work itself. Dimension ordering
-demonstrably helps the \emph{bound}; it does not make this \emph{kernel}
-competitive. This completes the answer to RQ2 and explains why inverse
-operation counts (as reported by the earlier NumPy instrumentation) must not
-be read as speedups.
+Despite removing 31 to 38\% of the component products, both PCA arms remain 
+8.38 to 8.51 times slower than the exhaustive arm interleaved in the same 
+run (\SI{36.95}{\second} and \SI{37.55}{\second} versus \SI{4.41}{\second} median). The latency gap 
+narrows from 10.76 times to 8.38 to 8.51 times while the arithmetic drops by 
+nearly a third. This localises the remaining cost: bound maintenance, 
+threshold updates, branching, partial-state reads and writes, and the 
+irregular access pattern of surviving documents dominate the runtime of this 
+kernel, not the multiply-accumulate work itself. Dimension ordering 
+demonstrably helps the bound, but it does not make this kernel competitive. 
+This completes the answer to RQ2 and explains why inverse operation counts, 
+as reported by the earlier NumPy instrumentation, must not be read as speedups.
