@@ -14,9 +14,9 @@ by the release artifacts:
     token-hit aggregation itself, however, is not an exact document scorer and
     must be followed by exact MaxSim reranking.
   \item \textbf{Candidate generation plus exact reranking gives a controllable
-    quality--work curve---but it is standard IVF.} On SciFact, reranking 200
+    quality-work curve, but it is standard IVF.} On SciFact, reranking 200
     candidates per query recovers 97.5\% of the exact top-10 with 3.9\% of the
-    query--document pairs, and full-pool reranking recovers the exact ranking
+    query-document pairs, and full-pool reranking recovers the exact ranking
     with 12\% of the pairs. This effectiveness is not a PDX contribution.
   \item \textbf{FAISS-IVF and PDX-IVF are indistinguishable here.} Both
     engines produced identical candidate pools and recovery curves, and
@@ -25,20 +25,20 @@ by the release artifacts:
     tested scale.} Validation-selected CPU PLAID configurations suffer a
     strong held-out quality drop and are slower than compiled exact MaxSim. A
     post-hoc corpus-sized full-score budget improves exact recall@10 only to
-    0.6750 (SciFact) and 0.5975 (NFCorpus), while taking 24.65--35.86 times the
+    0.6750 (SciFact) and 0.5975 (NFCorpus), while taking 24.65 to 35.86 times the
     same-run exact latency. This is a result for the pinned implementation and
     small corpora, not a general rejection of PLAID.
   \item \textbf{Exact-safe BOND pruning on raw ColBERT dimensions is a clear
     negative result.} The kernel preserves every exact top-10 but retains
-    94--95\% of the exhaustive component products. Every SciFact prune and
+    94 to 95\% of the exhaustive component products. Every SciFact prune and
     almost every NFCorpus prune occurs at dimension 96 of 128, and the kernel
     runs about $10\times$ slower than the
     precision-matched compiled exhaustive baseline in the same interleaved
     run, on both SciFact and NFCorpus.
   \item \textbf{Dimension ordering helps the bound, not the kernel.} An
     offline PCA rotation concentrating 90.9\% of token energy in eight
-    components cuts evaluated products to 61.5--69.0\%, yet both PCA arms
-    remain 8.38--8.51 times slower than their same-run exhaustive reference;
+    components cuts evaluated products to 61.5 to 69.0\%, yet both PCA arms
+    remain 8.38 to 8.51 times slower than their same-run exhaustive reference;
     bound maintenance and irregular memory access dominate.
 \end{enumerate}
 
