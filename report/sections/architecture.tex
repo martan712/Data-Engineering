@@ -11,7 +11,7 @@ query. The project stores each collection in a packed format consisting of:
     $(\text{total tokens}) \times 128$ containing all token vectors
     contiguously;
   \item one terminal \texttt{offsets} array of length $(\text{items} + 1)$,
-    so that item $i$ owns the token rows
+    so that item $i$ owns the token rows\\
     $[\texttt{offsets}[i], \texttt{offsets}[i+1])$;
   \item parallel document and query identifier arrays.
 \end{itemize}

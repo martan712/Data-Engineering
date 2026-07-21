@@ -1,34 +1,34 @@
-\section{Controlled PLAID Comparison}
+\section{Results: PLAID Comparison}
 \label{sec:results-plaid}
 
 PLAID is a purpose-built engine for ColBERT-style late interaction and is
 therefore a more relevant system baseline than reducing MaxSim to ordinary
-single-vector search. The earlier project comparison was invalid because PLAID
-could rescore up to 8{,}192 documents while the IVF pipelines reranked only 50,
-used a different timing boundary, and came from a different runtime stack. This
-section replaces it with measurements made in the same Python process,
-interleaving schedule, CPU affinity, thread budget, query split, and online
-boundary as the IVF arms of \cref{sec:results-ivf}.
+single-vector search. Our earlier comparison was invalid because PLAID 
+could rescore up to 8,192 documents while the IVF pipelines reranked only 50, 
+and because the timing boundaries and runtime stacks differed. This section 
+replaces those measurements with results obtained under the same conditions 
+as the IVF experiments: the same Python process, interleaved repetition schedule, 
+CPU affinity, thread budget, query split, and online boundary.
 
 The controlled runner uses PyLate~1.5.0 and CPU
 \texttt{fast-plaid}~1.3.0.290 with four-bit residual compression
 ($\texttt{nbits}=4$), four k-means iterations, and Triton disabled. The public
 API returns final ranked documents but does not expose the realized candidate
-pool. Consequently, \texttt{n\_full\_scores} is reported as a configured
-full-scoring upper bound, not as an observed candidate count or a quantity
-strictly equivalent to IVF's reranked $C$.
+pool. We therefore report \texttt{n\_full\_scores} as a configured upper bound, 
+not as an observed candidate count or a quantity strictly equivalent to 
+IVF's rerank budget $C$.
 
 \subsection{Predeclared selection and held-out results}
 
-The first 10 SciFact queries were used only for parameter selection. Across the
-initial grid, $(\texttt{n\_ivf\_probe},\texttt{n\_full\_scores})=(8,100)$ was
-the fastest point above the predeclared validation exact-recall@10 threshold of
-0.85 (observed 0.89), while $(8,400)$ achieved the maximum observed validation
-recall (0.92). Increasing the full-score budget to 800, 1{,}600, 3{,}200, or
-5{,}183 did not improve that validation value. The two selected points were
-then frozen before evaluation on queries 10--49 of SciFact and NFCorpus.
+We used the first 10 SciFact queries only for parameter selection. On the initial 
+grid, the point $(\texttt{n\_ivf\_probe},\texttt{n\_full\_scores})=(8,100)$ was 
+the fastest point above the predeclared validation exact-recall@10 threshold of 
+0.85 (observed 0.89), while $(8,400)$ achieved the maximum observed validation 
+recall (0.92). Increasing the full-score budget to 800, 1,600, 3,200, or 5,183 
+did not improve that validation value. We then froze these two points before 
+evaluating them on queries 10-49 of SciFact and NFCorpus.
 
-\begin{table}[tb]
+\begin{table*}[tb]
   \centering
   \caption{Held-out results for the two validation-selected PLAID operating
     points (40 queries per dataset; five interleaved repetitions). Exact R@10
@@ -36,7 +36,7 @@ then frozen before evaluation on queries 10--49 of SciFact and NFCorpus.
     \texttt{n\_full\_scores} divided by corpus size and is an upper-bound
     configuration ratio, not an observed rerank ratio.}
   \label{tab:plaid-selected}
-  \small
+  \footnotesize
   \setlength{\tabcolsep}{4.5pt}
   \begin{tabular}{@{}l S[table-format=2.4] S[table-format=2.4] S[table-format=1.4] S[table-format=1.4] S[table-format=1.4]@{}}
     \toprule
@@ -48,17 +48,17 @@ then frozen before evaluation on queries 10--49 of SciFact and NFCorpus.
     NFCorpus, $F{=}400$ &  7.2505 &  7.3043 & 0.3950 & 0.1043 & 0.1101 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
-The held-out values in \cref{tab:plaid-selected} are much lower than the
-validation values: SciFact exact recall@10 falls from 0.89/0.92 to
-0.2875/0.4375. The same frozen points reach only 0.3100/0.3950 on NFCorpus.
-This is a real split shift rather than an embedding-normalization mismatch:
-the source token vectors already have unit norm to numerical tolerance, and
-the release index reproduces the validation scores before it is used on the
-held-out split. The selected PLAID arms are also slower than the compiled exact
-and IVF arms on these small CPU workloads. For example, the SciFact exact
-reference takes \SI{2.5774}{\second}, while the selected PLAID points take
+The held-out values in Table~\ref{tab:plaid-selected} are much lower than 
+the validation values. For SciFact, exact recall@10 drops from 0.89/0.92 to 
+0.2875/0.4375. The same frozen points reach only 0.3100/0.3950 on NFCorpus. 
+This is a real split shift rather than an embedding-normalisation mismatch: 
+the source token vectors already have unit norm to numerical tolerance, and 
+the release index reproduces the validation scores before it is used on the 
+held-out split. The selected PLAID arms are also slower than the compiled 
+exact and IVF arms on these small CPU workloads. For example, the SciFact 
+exact reference takes \SI{2.5774}{\second}, while the selected PLAID points take 
 \SI{14.5497}{\second} and \SI{16.6456}{\second}.
 
 \subsection{Post-hoc full-score sensitivity}
@@ -68,14 +68,14 @@ to determine whether $F=100/400$ alone caused the loss. Because this choice
 uses knowledge of held-out behavior, it is an explanatory sensitivity analysis
 and not a new selected operating point.
 
-\begin{table}[tb]
+\begin{table*}[tb]
   \centering
   \caption{Post-hoc full-score sensitivity. Exact and PLAID medians come from
     the same interleaved run. PLAID/exact is therefore a valid within-run
     online-latency ratio, but the PLAID configuration itself was chosen after
     observing held-out results.}
   \label{tab:plaid-full}
-  \small
+  \footnotesize
   \begin{tabular}{@{}l S[table-format=4.0] S[table-format=1.4] S[table-format=2.4] S[table-format=2.2] S[table-format=1.4] S[table-format=1.4]@{}}
     \toprule
     Dataset & {$F$} & {Exact med. (\si{\second})} & {PLAID med. (\si{\second})} & {Ratio ($\times$)} & {Exact R@10} & {Qrels R@10} \\
@@ -84,21 +84,20 @@ and not a new selected operating point.
     NFCorpus & 3633 & 1.2836 & 46.0245 & 35.86 & 0.5975 & 0.1302 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
-The larger budget improves exact-ranking recovery but does not reproduce exact
-MaxSim, showing that loss also occurs in earlier PLAID stages or compressed
-scoring. On this scale the full-score arms remain 24.65--35.86 times slower
-than their same-run compiled exact references. This does \emph{not} establish
-that PLAID is generally ineffective: PLAID is designed for much larger
-collections, and this experiment is limited to one pinned CPU implementation,
-four-bit configuration, and two small BEIR corpora. It does establish that no
-PLAID speed or quality advantage appears under the controlled conditions used
-for this report.
+The larger budget improves exact-ranking recovery but does not reproduce exact 
+MaxSim, indicating that loss also occurs in earlier PLAID stages or compressed 
+scoring. At this scale, the full-score arms remain 24.65 to 35.86 times slower 
+than their same-run compiled exact references. This does not establish that PLAID 
+is generally ineffective: PLAID is designed for much larger collections, and this 
+experiment is limited to one pinned CPU implementation, a four-bit configuration, 
+and two small BEIR corpora. It does establish that no PLAID speed or quality 
+advantage appears under the controlled conditions used for this report.
 
-\begin{figure}[tb]
+\begin{figure*}[tb]
   \centering
-  \includegraphics[width=\textwidth]{fig9_controlled_plaid.png}
+  \includegraphics[width=0.7\textwidth]{fig9_controlled_plaid.png}
   \caption{Controlled PLAID results. Selected operating points were frozen on
     the first 10 SciFact queries before held-out evaluation; the full-corpus
     score-budget points are explicitly post hoc. Quality is exact recall@10,
@@ -106,7 +105,7 @@ for this report.
     document IDs. PLAID is slower and less accurate than compiled exact MaxSim
     and the IVF frontiers at this tested CPU scale.}
   \label{fig:plaid}
-\end{figure}
+\end{figure*}
 
 Offline PLAID index construction took \SI{1415.73}{\second} on SciFact and
 \SI{527.82}{\second} on NFCorpus, producing 182.3 and 131.0 MB indices,

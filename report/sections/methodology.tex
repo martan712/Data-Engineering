@@ -46,11 +46,11 @@ on them.
 \label{sec:protocol}
 
 All results in \cref{sec:results-ivf,sec:results-plaid,sec:results-bond,sec:results-pca} were
-produced under the replacement protocol recorded in
+produced under the replacement protocol recorded in\\
 \texttt{docs/benchmark\_protocol.md}, whose core requirements are:
 
 \begin{itemize}[noitemsep]
-  \item \textbf{One machine, one process.} All compared arms run in a single
+  \item \textbf{Standardized setup.} All compared arms run in a single
     Python process on one machine (Ubuntu WSL2 on an AMD Ryzen~7~5800H),
     pinned to CPU affinity $\{0, 2, 4, 6\}$ (one hardware thread on each of
     four physical cores) with four OpenMP/BLAS threads.
@@ -119,37 +119,6 @@ selected configurations were frozen before either held-out dataset was run.
 After the unexpectedly large validation--test shift was observed, one
 full-corpus \texttt{n\_full\_scores} arm per dataset was added as an explicitly
 post-hoc sensitivity analysis; it is not treated as a selected operating point.
-
-\begin{table*}[t!]
-  \centering
-  \caption{Controlled SciFact release comparison on 40 held-out queries.
-    The configuration uses 5,183 documents, $L=100$, and an $\texttt{nprobe}$ 
-    of 8. Values represent medians and the 95th percentile over five interleaved 
-    repetitions of the complete online boundary for all 40 queries. Exact R@10 
-    the exact ranking recovery against compiled exact MaxSim, and the rerank 
-    ratio is the fraction of all query-document pairs evaluated exactly.
-    Source: \texttt{scifact\_ivf\_test\_40q\_final.json}.}
-  \label{tab:scifact-ivf}
-  \footnotesize
-  \begin{tabular}{@{}l S[table-format=1.4] S[table-format=1.4] S[table-format=1.4] S[table-format=4.1] S[table-format=1.4]@{}}
-    \toprule
-    Arm & {Median (\si{\second})} & {p95 (\si{\second})} & {Exact R@10} & {Mean $C$} & {Rerank ratio} \\
-    \midrule
-    Compiled exact      & 2.5774 & 2.9767 & 1.0000 & 5183.0 & 1.0000 \\
-    \midrule
-    FAISS-IVF, $C{=}50$   & 0.3550 & 0.3683 & 0.8600 &   50.0 & 0.0096 \\
-    PDX-IVF,   $C{=}50$   & 0.3735 & 0.3880 & 0.8600 &   50.0 & 0.0096 \\
-    FAISS-IVF, $C{=}100$  & 0.3913 & 0.4183 & 0.9325 &  100.0 & 0.0193 \\
-    PDX-IVF,   $C{=}100$  & 0.4257 & 0.4324 & 0.9325 &  100.0 & 0.0193 \\
-    FAISS-IVF, $C{=}200$  & 0.4770 & 0.5018 & 0.9750 &  200.0 & 0.0386 \\
-    PDX-IVF,   $C{=}200$  & 0.5060 & 0.5149 & 0.9750 &  200.0 & 0.0386 \\
-    FAISS-IVF, $C{=}400$  & 0.6949 & 0.7365 & 0.9900 &  390.9 & 0.0754 \\
-    PDX-IVF,   $C{=}400$  & 0.7262 & 0.8317 & 0.9900 &  390.9 & 0.0754 \\
-    FAISS-IVF, full pool  & 0.9773 & 1.0870 & 1.0000 &  619.3 & 0.1195 \\
-    PDX-IVF,   full pool  & 1.0322 & 1.2016 & 1.0000 &  619.3 & 0.1195 \\
-    \bottomrule
-  \end{tabular}
-\end{table*}
 
 \subsection{Numerical precision contracts}
 \label{sec:precision}

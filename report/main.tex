@@ -61,7 +61,7 @@
 \author{Mikel Telleria Iraeta \and Jason Kasdiran}
 \begin{document}
 	\maketitle
-\begin{multicols}{2}
+% \begin{multicols}{2}
 
 % \begin{document}
 
@@ -122,17 +122,17 @@ repetitions, and audited release artifacts; earlier uncontrolled speedup
 figures were withdrawn after a measurement audit.
 Four findings emerge. First, indexing all document token vectors in a flat
 inverted-file (IVF) index and reranking retrieved candidates with a compiled
-exact MaxSim kernel yields a controllable quality--latency trade-off: on
+exact MaxSim kernel yields a controllable quality-latency trade-off: on
 held-out SciFact queries, reranking 200 candidates per query recovers 97.5\% of
-the exact top-10 while evaluating 3.9\% of all query--document pairs. FAISS-IVF
+the exact top-10 while evaluating 3.9\% of all query-document pairs. FAISS-IVF
 and PDX-IVF produce identical candidate pools and recovery curves, and neither
 engine shows a consistent latency advantage; this architecture is standard IVF
 practice, not a PDX-specific contribution. Second, a controlled CPU PLAID
-comparison exposes a substantial validation--test shift: the two configurations
+comparison exposes a substantial validation-test shift: the two configurations
 frozen on 10 validation queries recover only 28.8\% and 43.8\% of the exact
-top-10 on 40 held-out SciFact queries and take 14.55--16.65 seconds. A clearly
+top-10 on 40 held-out SciFact queries and take 14.55 to \SI{16.65}{\second} . A clearly
 post-hoc full-score sensitivity arm improves recovery to 67.5\% but takes
-80.61 seconds, so it remains slower and less accurate than compiled exact
+\SI{80.61}{\second} , so it remains slower and less accurate than compiled exact
 MaxSim on this small workload. This result is specific to the pinned CPU
 implementation and scale. Third, and centrally, an
 independently implemented exact-safe BOND-MaxSim kernel preserves the exact
@@ -142,7 +142,7 @@ top-10 on every held-out query but prunes too late to be useful: on raw
 runs roughly ten times slower than a precision-matched compiled exhaustive
 baseline measured in the same interleaved run. Fourth, an offline PCA rotation
 concentrates 90.9\% of token energy in the first eight components and reduces
-evaluated products to 61.5--69.0\%, yet both PCA arms remain 8.4--8.5 times
+evaluated products to 61.5 to 69.0\%, yet both PCA arms remain 8.4 to 8.5 times
 slower than their same-run exhaustive reference: dimension ordering improves
 the bound, but bound maintenance and irregular memory access dominate. The
 evidence indicates that exact-safe BOND dimension pruning is a poor fit for the
@@ -176,7 +176,7 @@ remains the practical architecture.
 % ---------------------------------------------------------------------
 \bibliographystyle{plainnat}
 \bibliography{references}
-\end{multicols}
+% \end{multicols}
 \appendix
 \input{sections/appendix}
 
